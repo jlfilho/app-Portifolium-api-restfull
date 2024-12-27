@@ -23,7 +23,6 @@ import edu.uea.acadmanage.model.Curso;
 import edu.uea.acadmanage.model.Role;
 import edu.uea.acadmanage.model.Usuario;
 import edu.uea.acadmanage.repository.CursoRepository;
-import edu.uea.acadmanage.repository.RoleRepository;
 import edu.uea.acadmanage.repository.UsuarioRepository;
 import edu.uea.acadmanage.service.exception.AcessoNegadoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
@@ -139,6 +138,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     //TODO: Implementar o método changePassword e testar
+    
 
     @Transactional
     public void changePassword(Long usuarioId, PasswordChangeRequest passwordChangeRequest) {
