@@ -14,40 +14,61 @@ Esta API foi desenvolvida para gerenciar cursos, usuários, atividades e evidên
 
 ## Recursos Disponíveis
 
-### 1. Usuários
+### 1. Categorias
+
+#### Endpoints
+- **GET** `/categorias` - Listar todas as categorias.
+- **GET** `/categorias/{categoriaId}` - Buscar detalhes de uma categoria pelo ID.
+- **POST** `/categorias` - Criar uma nova categoria.
+- **PUT** `/categorias/{categoriaId}` - Atualizar informações de uma categoria.
+- **DELETE** `/categorias/{categoriaId}` - Deletar uma categoria.
+- **GET** `/categorias/usuario` - Listar categorias associadas ao usuário autenticado.
+
+### 2. Usuários
 
 #### Endpoints
 - **POST** `/api/usuarios` - Criar um novo usuário.
 - **GET** `/api/usuarios` - Listar todos os usuários.
-- **PUT** `/api/usuarios/{id}` - Atualizar informações de um usuário.
-- **DELETE** `/api/usuarios/{id}` - Deletar um usuário.
+- **PUT** `/api/usuarios/{usuarioId}` - Atualizar informações de um usuário.
+- **DELETE** `/api/usuarios/{usuarioId}` - Deletar um usuário.
+- **PUT** `/api/usuarios/{usuarioId}/change-password` - Alterar a senha de um usuário.
+- **GET** `/api/usuarios/checkAuthorities` - Verificar as autoridades (roles) do usuário autenticado.
 
-### 2. Cursos
+### 3. Cursos
 
 #### Endpoints
-- **POST** `/api/cursos` - Criar um novo curso.
 - **GET** `/api/cursos` - Listar todos os cursos.
-- **GET** `/api/cursos/{id}` - Buscar detalhes de um curso pelo ID.
-- **PUT** `/api/cursos/{id}` - Atualizar informações de um curso.
-- **DELETE** `/api/cursos/{id}` - Deletar um curso.
+- **GET** `/api/cursos/{cursoId}` - Buscar detalhes de um curso pelo ID.
+- **POST** `/api/cursos` - Criar um novo curso.
+- **PUT** `/api/cursos/{cursoId}` - Atualizar informações de um curso.
+- **DELETE** `/api/cursos/{cursoId}` - Deletar um curso.
+- **GET** `/api/cursos/usuario` - Listar cursos associados ao usuário autenticado.
 
-### 3. Atividades
+### 4. Atividades
 
 #### Endpoints
-- **POST** `/api/atividades` - Criar uma nova atividade.
 - **GET** `/api/atividades` - Listar todas as atividades.
-- **GET** `/api/atividades/{id}` - Buscar detalhes de uma atividade pelo ID.
-- **PUT** `/api/atividades/{id}` - Atualizar informações de uma atividade.
-- **DELETE** `/api/atividades/{id}` - Deletar uma atividade.
+- **GET** `/api/atividades/{atividadeId}` - Buscar detalhes de uma atividade pelo ID.
+- **POST** `/api/atividades` - Criar uma nova atividade.
+- **PUT** `/api/atividades/{atividadeId}` - Atualizar informações de uma atividade.
+- **DELETE** `/api/atividades/{atividadeId}` - Deletar uma atividade.
+- **GET** `/api/atividades/{atividadeId}/usuario/{usuarioId}` - Verificar a associação de uma atividade a um usuário.
+- **GET** `/api/atividades/filtros` - Consultar atividades com filtros avançados.
+- **GET** `/api/atividades/curso/{cursoId}` - Listar atividades associadas a um curso.
 
-### 4. Evidências
+### 5. Evidências
 
 #### Endpoints
+- **GET** `/api/evidencias/atividade/{atividadeId}` - Listar evidências associadas a uma atividade.
 - **POST** `/api/evidencias` - Criar uma nova evidência.
-- **GET** `/api/evidencias` - Listar todas as evidências.
-- **GET** `/api/evidencias/{id}` - Buscar detalhes de uma evidência pelo ID.
-- **PUT** `/api/evidencias/{id}` - Atualizar informações de uma evidência.
-- **DELETE** `/api/evidencias/{id}` - Deletar uma evidência.
+- **PUT** `/api/evidencias/{evidenciaId}` - Atualizar informações de uma evidência.
+- **DELETE** `/api/evidencias/{evidenciaId}` - Deletar uma evidência.
+
+### 6. Recuperação de Senha
+
+#### Endpoints
+- **POST** `/api/recovery/generate` - Gerar código de recuperação e enviar por email.
+- **POST** `/api/recovery/reset-password` - Redefinir senha usando o código de recuperação.
 
 ## Autenticação e Autorização
 
@@ -70,26 +91,17 @@ Esta API foi desenvolvida para gerenciar cursos, usuários, atividades e evidên
 - **PostgreSQL (Produção):**
   - Configurar no `application.properties` ou `application.yml`.
 
-### Dependências Importantes no `pom.xml`
-```xml
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-data-jpa</artifactId>
-</dependency>
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-security</artifactId>
-</dependency>
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-web</artifactId>
-</dependency>
-<dependency>
-    <groupId>org.springdoc</groupId>
-    <artifactId>springdoc-openapi-ui</artifactId>
-    <version>1.7.0</version>
-</dependency>
+### Configuração de Email
+Adicionar no `application.properties`:
+```properties
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=seu-email@gmail.com
+spring.mail.password=${EMAIL_PASSWORD}
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
 ```
+Utilize variáveis de ambiente para o campo `EMAIL_PASSWORD` para proteger a senha.
 
 ## Documentação da API
 
@@ -106,27 +118,6 @@ A documentação da API pode ser acessada através do Swagger:
    ```
 4. Acesse a aplicação em `http://localhost:8080`.
 
-## Estrutura de Pastas
-
-```
-acadmanage/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── edu/uea/acadmanage/
-│   │   │       ├── controller/
-│   │   │       ├── model/
-│   │   │       ├── repository/
-│   │   │       ├── service/
-│   │   │       └── security/
-│   └── resources/
-│       ├── application.properties
-│       └── data.sql
-└── pom.xml
-```
-
-## Contato
-Para dúvidas ou sugestões, entre em contato:
-- **E-mail:** jlfilho@uea.edu.br
-- **GitHub:** [github.com/acadmanage](https://github.com/acadmanage)
+---
+Se precisar de ajustes adicionais ou implementar novos recursos, entre em contato!
 
