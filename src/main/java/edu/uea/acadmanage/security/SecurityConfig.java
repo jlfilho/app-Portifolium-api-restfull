@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -22,6 +21,7 @@ public class SecurityConfig {
             .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
             .authorizeHttpRequests(auth -> auth
             .requestMatchers("/login", "/logout","/api/atividades/**", "/api/cursos/**", "/api/categorias/**").permitAll() // Permite acesso a login e logout sem autenticação
+            .requestMatchers("/api/recovery/generate/**", "/api/recovery/reset-password/**").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
                 .requestMatchers("/h2-console/**").hasRole("ADMINISTRADOR")
                 .anyRequest().authenticated() // Todas as outras requisições requerem autenticação

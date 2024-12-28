@@ -1741,3 +1741,9 @@ Caused by: org.h2.jdbc.JdbcSQLNonTransientConnectionException: The connection wa
 	at org.h2.message.DbException.getJdbcSQLException(DbException.java:690)
 	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
 	... 94 more
+2024-12-28 02:49:01.696441-04:00 jdbc[64]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "INSERT INTO curso_usuario (curso_id, usuario_id) VALUES (1, 1), (2, 1), (3, 1), INSERT [*]INTO curso_usuario (curso_id, usuario_id) VALUES (1, 8), (2, 8), (3, 8), (1, 2), (2, 3), (3, 4), (1, 5), (2, 6), (3, 7)"; SQL statement:
+INSERT INTO curso_usuario (curso_id, usuario_id) VALUES (1, 1), (2, 1), (3, 1), INSERT INTO curso_usuario (curso_id, usuario_id) VALUES (1, 8), (2, 8), (3, 8), (1, 2), (2, 3), (3, 4), (1, 5), (2, 6), (3, 7) [42000-224]
+2024-12-28 02:49:46.961844-04:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "INSERT INTO curso_usuario (curso_id, usuario_id) VALUES (1, 1), (2, 1), (3, 1), INSERT [*]INTO curso_usuario (curso_id, usuario_id) VALUES (1, 8), (2, 8), (3, 8), (1, 2), (2, 3), (3, 4), (1, 5), (2, 6), (3, 7)"; SQL statement:
+INSERT INTO curso_usuario (curso_id, usuario_id) VALUES (1, 1), (2, 1), (3, 1), INSERT INTO curso_usuario (curso_id, usuario_id) VALUES (1, 8), (2, 8), (3, 8), (1, 2), (2, 3), (3, 4), (1, 5), (2, 6), (3, 7) [42000-224]

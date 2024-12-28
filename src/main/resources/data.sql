@@ -27,7 +27,8 @@ INSERT INTO usuario (id, nome, email, senha) VALUES
 (4, 'Gerente Ciência', 'gerente3@uea.edu.br', '$2a$10$84EaPNF6J.4tAMWF8TrNduVFf7XOuUKJ8OmPMLbUR3vq3FiZilSk2'), -- Senha: gerente123
 (5, 'Secretário Software', 'secretario1@uea.edu.br', '$2a$10$X6ex54jciqS6vBx2agfhweVqN730u0R3BLD8wCP21ljBEfN2jZIW.'), -- Senha: secretario123
 (6, 'Secretário Sistemas', 'secretario2@uea.edu.br', '$2a$10$X6ex54jciqS6vBx2agfhweVqN730u0R3BLD8wCP21ljBEfN2jZIW.'), -- Senha: secretario123
-(7, 'Secretário Ciência', 'secretario3@uea.edu.br', '$2a$10$X6ex54jciqS6vBx2agfhweVqN730u0R3BLD8wCP21ljBEfN2jZIW.'); -- Senha: secretario123
+(7, 'Secretário Ciência', 'secretario3@uea.edu.br', '$2a$10$X6ex54jciqS6vBx2agfhweVqN730u0R3BLD8wCP21ljBEfN2jZIW.'), -- Senha: secretario123
+(8, 'João da Mata Libório Filho', 'jlfilho@uea.edu.br', '$2a$10$X6ex54jciqS6vBx2agfhweVqN730u0R3BLD8wCP21ljBEfN2jZIW.'); -- Senha: secretario123
 
 -- Populando a tabela Usuario_Roles para associar usuários a roles
 INSERT INTO usuario_roles (usuario_id, role_id) VALUES
@@ -37,7 +38,8 @@ INSERT INTO usuario_roles (usuario_id, role_id) VALUES
 (4, 2), -- Gerente Ciência
 (5, 3), -- Secretário Software
 (6, 3), -- Secretário Sistemas
-(7, 3); -- Secretário Ciência
+(7, 3), -- Secretário Ciência
+(8, 1); -- Admin
 
 -- Populando a tabela CURSO_USUARIO
 -- O administrador tem acesso a todos os cursos
@@ -45,6 +47,11 @@ INSERT INTO curso_usuario (curso_id, usuario_id) VALUES
 (1, 1), -- Administrador no Curso de Engenharia de Software
 (2, 1), -- Administrador no Curso de Sistemas de Informação
 (3, 1), -- Administrador no Curso de Ciência da Computação
+
+-- O administrador tem acesso a todos os cursos
+(1, 8), -- Administrador no Curso de Engenharia de Software
+(2, 8), -- Administrador no Curso de Sistemas de Informação
+(3, 8), -- Administrador no Curso de Ciência da Computação
 
 -- Gerentes associados aos cursos
 (1, 2), -- Gerente do Curso de Engenharia de Software
