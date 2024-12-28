@@ -6,8 +6,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import edu.uea.acadmanage.DTO.PasswordChangeRequest;
 import edu.uea.acadmanage.DTO.UsuarioDTO;
-import edu.uea.acadmanage.model.Usuario;
 import edu.uea.acadmanage.service.CustomUserDetailsService;
 
 @RestController
@@ -68,22 +70,21 @@ public class UsuarioController {
     }
 
     
-    
-    @PostMapping("/{usuarioId}/change-password")
+    @PutMapping("/{usuarioId}/change-password")
     @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIA')")
     public ResponseEntity<String> changePassword(
             @PathVariable Long usuarioId,
-            @RequestBody @Validated PasswordChangeRequest passwordChangeRequest) {
-        usuarioService.changePassword(usuarioId, passwordChangeRequest);
+            @RequestBody @Validated PasswordChangeRequest passwordChangeRequest,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        usuarioService.changePassword(usuarioId, passwordChangeRequest, userDetails.getUsername());
         return ResponseEntity.ok("Senha alterada com sucesso");
     }
 
-    @PutMapping("/{usuarioId}/role/{roleId}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<Usuario> updateRole(
-            @PathVariable Long usuarioId,
-            @PathVariable Long roleId) {
-        Usuario updatedUser = usuarioService.updateRoles(usuarioId, roleId);
-        return ResponseEntity.ok(updatedUser);
+    @DeleteMapping("/{usuarioId}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')") // Apenas administradores podem excluir usuários
+    public ResponseEntity<Void> deleteUsuario(@PathVariable Long usuarioId) {
+            usuarioService.deleteUsuario(usuarioId);
+            return ResponseEntity.noContent().build();
     }
+    
 }

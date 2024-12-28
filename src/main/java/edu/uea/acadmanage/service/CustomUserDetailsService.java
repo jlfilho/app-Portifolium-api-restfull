@@ -1,9 +1,7 @@
 package edu.uea.acadmanage.service;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.security.core.Authentication;
@@ -26,6 +24,7 @@ import edu.uea.acadmanage.repository.CursoRepository;
 import edu.uea.acadmanage.repository.UsuarioRepository;
 import edu.uea.acadmanage.service.exception.AcessoNegadoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
+import edu.uea.acadmanage.service.exception.SenhaIncorretaException;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -137,17 +136,32 @@ public class CustomUserDetailsService implements UserDetailsService {
         return toUsuarioDTO(usuarioAtualizado);
     }
 
-    //TODO: Implementar o método changePassword e testar
-    
-
     @Transactional
-    public void changePassword(Long usuarioId, PasswordChangeRequest passwordChangeRequest) {
+    public void deleteUsuario(Long usuarioId) {
+        if (!usuarioRepository.existsById(usuarioId)) {
+            throw new UsernameNotFoundException("Usuário não encontrado");
+        }
+        usuarioRepository.deleteById(usuarioId);
+    }
+    
+    @Transactional
+    public void changePassword(Long usuarioId, PasswordChangeRequest passwordChangeRequest, String username) {
+        // Buscar usuário pelo ID
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
 
+        // Busca usuario logado
+        Usuario usuarioLogado = usuarioRepository.findByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
+         //Verificar se usuário tem permissão para trocar senha
+         if (!usuarioLogado.getRoles().stream()
+         .anyMatch(role -> role.getNome().equals("ROLE_ADMINISTRADOR")) && usuarioLogado.getId() != usuarioId) {
+            throw new AcessoNegadoException("Usuário não tem permissão para alterar a senha de: " + usuario.getEmail());
+        }
+
         // Verificar se a senha atual está correta
         if (!passwordEncoder.matches(passwordChangeRequest.getCurrentPassword(), usuario.getSenha())) {
-            throw new RuntimeException("A senha atual está incorreta");
+            throw new SenhaIncorretaException("A senha atual está incorreta");
         }
 
         // Atualizar a senha
@@ -162,6 +176,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     }
 
+    // Verificar as permissoes do usuario autenticado
     public void checkAuthorities() {
         // Obtém o contexto de segurança atual
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -186,36 +201,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
-    public void deleteUsuario(Long usuarioId) {
-        if (!usuarioRepository.existsById(usuarioId)) {
-            throw new UsernameNotFoundException("Usuário não encontrado");
-        }
-        usuarioRepository.deleteById(usuarioId);
-    }
-
-    @Transactional
-    public Usuario updateRoles(Long usuarioId, Long roleId) {
-        // Buscar usuário pelo ID
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário com ID " + usuarioId + " não encontrado"));
-
-        // Buscar role pelo ID
-        Role role = roleService.getRoleById(roleId);
-
-        // Substituir as roles do usuário por apenas uma nova role
-        Set<Role> roles = new HashSet<>();
-        roles.add(role);
-        usuario.setRoles(roles);
-
-        if (usuario.getRoles().size() > 1) {
-            throw new RuntimeException("O usuário só pode ter um papel");
-        }
-
-        // Salvar alterações no banco
-        return usuarioRepository.save(usuario);
-    }
-
+    // Converte um CursoDTO para um Curso
     public Curso toCurso(CursoDTO cursoDTO) {
         if (cursoDTO == null) {
             throw new IllegalArgumentException("O CursoDTO não pode ser nulo.");
@@ -226,13 +212,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         return curso;
     }
 
-    // Método para buscar um curso por ID
-    private CursoDTO getCursoById(Long cursoId) {
-        return cursoRepository.findById(cursoId)
-                .map(curso -> new CursoDTO(curso.getId(), curso.getNome()))
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
-    }
-
+    // Método lista todos os cursos associados a um usuário
     private List<Curso> fetchAssociatedCursos(UsuarioDTO usuario) {
         if ("ROLE_ADMINISTRADOR".equals(usuario.role())) {
             return cursoRepository.findAll();
@@ -244,6 +224,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .toList();
     }
 
+    // Método para converter um usuário para um DTO
     private UsuarioDTO toUsuarioDTO(Usuario usuario) {
         return new UsuarioDTO(
                 usuario.getId(),

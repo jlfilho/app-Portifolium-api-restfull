@@ -43,7 +43,7 @@ public class Usuario implements Serializable {
     private String senha;
 
     @JsonIgnoreProperties("usuarios")
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.EAGER) //, cascade = CascadeType.ALL
     @JoinTable(
             name = "usuario_roles",
             joinColumns = @JoinColumn(name = "usuario_id"),
