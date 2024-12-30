@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import edu.uea.acadmanage.DTO.EvidenciaDTO;
+import edu.uea.acadmanage.config.FileStorageProperties;
 import edu.uea.acadmanage.model.Atividade;
 import edu.uea.acadmanage.model.Evidencia;
 import edu.uea.acadmanage.repository.AtividadeRepository;
@@ -36,11 +37,12 @@ public class EvidenciaService {
     public EvidenciaService(
             EvidenciaRepository evidenciaRepository,
             AtividadeRepository atividadeRepository,
-            CursoService cursoService) throws IOException {
+            CursoService cursoService,
+            FileStorageProperties fileStorageProperties) throws IOException {
         this.evidenciaRepository = evidenciaRepository;
         this.atividadeRepository = atividadeRepository;
         this.cursoService = cursoService;
-        this.fileStorageLocation = Paths.get("/evidencias").toAbsolutePath().normalize();
+        this.fileStorageLocation = Paths.get(fileStorageProperties.getStorageLocation()+"/evidencias").toAbsolutePath().normalize();
         Files.createDirectories(this.fileStorageLocation);
     }
 
