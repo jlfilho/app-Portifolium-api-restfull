@@ -20,7 +20,7 @@ public class SecurityConfig {
             // Desabilita proteção de frames para o H2 Console
             .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
             .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/login", "/logout","/api/atividades/**", "/api/cursos/**", "/api/categorias/**").permitAll() // Permite acesso a login e logout sem autenticação
+            .requestMatchers("/login", "/logout","/api/atividades/**", "/api/cursos/**", "/api/categorias/**", "/api/evidencias/**", "/api/evidencias/atividade/**").permitAll() // Permite acesso a login e logout sem autenticação
             .requestMatchers("/api/recovery/generate/**", "/api/recovery/reset-password/**").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
                 .requestMatchers("/h2-console/**").hasRole("ADMINISTRADOR")

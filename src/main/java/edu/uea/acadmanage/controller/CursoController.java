@@ -51,7 +51,7 @@ public class CursoController {
 
     
     @GetMapping("/usuario")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIA')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
     public List<CursoDTO> getCursosByUsuarioId(@AuthenticationPrincipal UserDetails userDetails) {
         Usuario usuario = usuarioService.getUsuarioByEmail(userDetails.getUsername());
 

@@ -57,4 +57,8 @@ public class Atividade implements Serializable {
         this.id = id;
     }
 
+    public Boolean IsPublicada() {
+        return this.statusPublicacao;
+    }
+
 }

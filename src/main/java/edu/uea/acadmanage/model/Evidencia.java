@@ -25,9 +25,10 @@ public class Evidencia implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(nullable = false)
-    private String foto;
+    private String urlFoto;
     @Column(length = 500)
     private String legenda;
+    private String criadoPor;
 
     @JsonIgnoreProperties("evidencias")
     @ManyToOne

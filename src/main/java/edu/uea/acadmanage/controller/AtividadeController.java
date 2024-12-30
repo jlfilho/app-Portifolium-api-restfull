@@ -1,7 +1,10 @@
 package edu.uea.acadmanage.controller;
 
+import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.data.repository.query.Param;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -56,9 +59,19 @@ public class AtividadeController {
         return ResponseEntity.ok(atividade); // Retorna 200 OK com a atividade encontrada
     }
 
-    // Endpoint para pesquisar atividades com múltiplos filtros, incluindo statusPublicacao
+    // Endpoint para pesquisar atividades com múltiplos filtros, incluindo
+    // statusPublicacao
     @GetMapping("/filtros")
-    public ResponseEntity<List<AtividadeDTO>> getAtividadesPorFiltros(@Valid @RequestParam AtividadeFiltroDTO filtros) {
+    public ResponseEntity<List<AtividadeDTO>> getAtividadesPorFiltros(
+            @Valid @RequestParam(required = false) Long cursoId,
+            @RequestParam(required = false) Long categoriaId,
+            @RequestParam(required = false) String nome,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim,
+            @RequestParam(required = false) Boolean statusPublicacao) {
+
+        AtividadeFiltroDTO filtros = new AtividadeFiltroDTO(cursoId, categoriaId, nome, dataInicio, dataFim,
+                statusPublicacao);
 
         List<AtividadeDTO> atividades = atividadeService.getAtividadesPorFiltros(filtros);
 
@@ -69,8 +82,9 @@ public class AtividadeController {
 
     // Endpoint para salvar uma atividade
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIA')")
-    public ResponseEntity<AtividadeDTO> salvarAtividade(@Valid @RequestBody AtividadeDTO atividadeDTO, @AuthenticationPrincipal UserDetails userDetails) {
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    public ResponseEntity<AtividadeDTO> salvarAtividade(@Valid @RequestBody AtividadeDTO atividadeDTO,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
         AtividadeDTO atividadeSalva = atividadeService.salvarAtividade(atividadeDTO, userDetails.getUsername());
         return ResponseEntity.status(201).body(atividadeSalva); // 201 Created
@@ -78,19 +92,21 @@ public class AtividadeController {
 
     // Endpoint para atualizar uma atividade
     @PutMapping("/{atividadeId}")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIA')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
     public ResponseEntity<AtividadeDTO> atualizarAtividade(
             @PathVariable Long atividadeId,
             @Valid @RequestBody AtividadeDTO atividadeDTO,
             @AuthenticationPrincipal UserDetails userDetails) {
-        AtividadeDTO atividadeAtualizada = atividadeService.atualizarAtividade(atividadeId, atividadeDTO, userDetails.getUsername());
+        AtividadeDTO atividadeAtualizada = atividadeService.atualizarAtividade(atividadeId, atividadeDTO,
+                userDetails.getUsername());
         return ResponseEntity.ok(atividadeAtualizada); // Retorna 200 OK com a atividade atualizada
     }
 
     // Endpoint para excluir uma atividade
     @DeleteMapping("/{atividadeId}")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIA')")
-    public ResponseEntity<Void> excluirAtividade(@PathVariable Long atividadeId, @AuthenticationPrincipal UserDetails userDetails) {
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    public ResponseEntity<Void> excluirAtividade(@PathVariable Long atividadeId,
+            @AuthenticationPrincipal UserDetails userDetails) {
         atividadeService.excluirAtividade(atividadeId, userDetails.getUsername());
         return ResponseEntity.noContent().build(); // Retorna 204 No Content
     }

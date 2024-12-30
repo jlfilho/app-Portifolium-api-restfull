@@ -54,7 +54,7 @@ public class CategoriaController {
     }
 
     @GetMapping("/usuario")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIA')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
     public ResponseEntity<List<CategoriaDTO>> getCategoriasComAtividades(
             @AuthenticationPrincipal UserDetails userDetails) {
         List<CategoriaDTO> categorias = categoriaService.getCategoriasComAtividadesByUsuario(userDetails.getUsername());

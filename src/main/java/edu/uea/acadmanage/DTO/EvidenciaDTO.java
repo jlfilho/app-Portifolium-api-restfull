@@ -10,5 +10,6 @@ public record EvidenciaDTO(
         @NotBlank(message = "O caminho da foto não pode ser vazio.")
         String foto,
         @NotBlank(message = "A legenda não pode ser vazia.")
-        String legenda
+        String legenda,
+        String criadoPor
 ) {}

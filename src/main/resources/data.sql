@@ -82,21 +82,21 @@ INSERT INTO atividade (id, nome, objetivo, publico_alvo, status_publicacao, data
 (15, 'Atividade 5 Ciência', 'Objetivo 5', 'Estudantes', FALSE, '2024-03-25', 5, 3);
 
 -- Populando a tabela Evidencia
-INSERT INTO evidencia (id, foto, legenda, atividade_id) VALUES
-(1, 'foto1.jpg', 'Legenda 1', 1),
-(2, 'foto2.jpg', 'Legenda 2', 1),
-(3, 'foto3.jpg', 'Legenda 3', 1),
-(4, 'foto4.jpg', 'Legenda 4', 1),
-(5, 'foto5.jpg', 'Legenda 5', 1),
-(6, 'foto6.jpg', 'Legenda 1', 2),
-(7, 'foto7.jpg', 'Legenda 2', 2),
-(8, 'foto8.jpg', 'Legenda 3', 2),
-(9, 'foto9.jpg', 'Legenda 4', 2),
-(10, 'foto10.jpg', 'Legenda 5', 2),
+INSERT INTO evidencia (id, url_foto, legenda, criado_por, atividade_id) VALUES
+(1, 'foto1.jpg', 'Legenda 1', 'admin', 1),
+(2, 'foto2.jpg', 'Legenda 2','admin', 1),
+(3, 'foto3.jpg', 'Legenda 3','admin', 1),
+(4, 'foto4.jpg', 'Legenda 4','admin', 1),
+(5, 'foto5.jpg', 'Legenda 5','admin', 1),
+(6, 'foto6.jpg', 'Legenda 1','admin', 2),
+(7, 'foto7.jpg', 'Legenda 2','admin', 2),
+(8, 'foto8.jpg', 'Legenda 3','admin', 2),
+(9, 'foto9.jpg', 'Legenda 4','admin', 2),
+(10, 'foto10.jpg', 'Legenda 5','admin', 2),
 -- Repita para cada atividade
-(11, 'foto11.jpg', 'Legenda 1', 3),
-(12, 'foto12.jpg', 'Legenda 2', 3),
-(13, 'foto13.jpg', 'Legenda 3', 3),
-(14, 'foto14.jpg', 'Legenda 4', 3),
-(15, 'foto15.jpg', 'Legenda 5', 3);
+(11, 'foto11.jpg', 'Legenda 1','admin', 3),
+(12, 'foto12.jpg', 'Legenda 2','admin', 3),
+(13, 'foto13.jpg', 'Legenda 3','admin', 3),
+(14, 'foto14.jpg', 'Legenda 4','admin', 3),
+(15, 'foto15.jpg', 'Legenda 5','admin', 3);
 
