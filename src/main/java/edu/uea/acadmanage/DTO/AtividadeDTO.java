@@ -1,7 +1,9 @@
 package edu.uea.acadmanage.DTO;
 
 import java.time.LocalDate;
+import java.util.List;
 
+import edu.uea.acadmanage.model.FonteFinanciadora;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -19,5 +21,6 @@ public record AtividadeDTO(
         @NotNull(message = "O ID do curso deve ser informado.")
         Long cursoId,
         @NotNull(message = "O ID da categoria deve ser informado.")
-        Long categoriaId
+        Long categoriaId,
+        List<FonteFinanciadora> fontesFinanciadora
 ) {}

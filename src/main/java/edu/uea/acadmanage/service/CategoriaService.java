@@ -13,6 +13,7 @@ import edu.uea.acadmanage.model.Curso;
 import edu.uea.acadmanage.model.Usuario;
 import edu.uea.acadmanage.repository.CategoriaRepository;
 import edu.uea.acadmanage.repository.UsuarioRepository;
+import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
 
 @Service
 public class CategoriaService {
@@ -35,7 +36,7 @@ public class CategoriaService {
 
         public CategoriaResumidaDTO recuperarCategoriaPorId(Long categoriaId) {
                 Categoria categoria = categoriaRepository.findById(categoriaId)
-                .orElseThrow(() -> new IllegalArgumentException("Categoria não encontrada com o ID: " + categoriaId));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Categoria não encontrada com o ID: " + categoriaId));
                 return new CategoriaResumidaDTO(categoria.getId(), categoria.getNome());
 
         }
@@ -43,7 +44,7 @@ public class CategoriaService {
 
         public List<CategoriaDTO> getCategoriasComAtividadesByUsuario(String email) {
                 Usuario usuario = usuarioRepository.findByEmail(email)
-                                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+                                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado"));
 
                 List<Long> cursoIds = usuario.getCursos().stream()
                                 .map(Curso::getId)
@@ -68,30 +69,29 @@ public class CategoriaService {
                                                 atividade.getObjetivo(),
                                                 atividade.getPublicoAlvo(),
                                                 atividade.getStatusPublicacao(),
+                                                atividade.getFotoCapa(),
                                                 atividade.getDataRealizacao(),
                                                 atividade.getCurso().getId(),
-                                                atividade.getCategoria().getId())).
+                                                atividade.getCategoria().getId(),
+                                                atividade.getFontesFinanciadora())).
                                                 toList())).
                                                 toList();
         }
 
         public Categoria salvar(Categoria categoria) {
-                if (categoria.getNome() == null || categoria.getNome().isEmpty()) {
-                    throw new IllegalArgumentException("O nome da categoria não pode ser vazio.");
-                }
                 return categoriaRepository.save(categoria);
         }
         
         public void deletar(Long categoriaId) {
                 if (!categoriaRepository.existsById(categoriaId)) {
-                    throw new IllegalArgumentException("Categoria não encontrada com o ID: " + categoriaId);
+                    throw new RecursoNaoEncontradoException("Categoria não encontrada com o ID: " + categoriaId);
                 }
                 categoriaRepository.deleteById(categoriaId);
         }
 
         public Categoria atualizar(Long categoriaId, Categoria novaCategoria) {
                 Categoria categoriaExistente = categoriaRepository.findById(categoriaId)
-                        .orElseThrow(() -> new IllegalArgumentException("Categoria não encontrada com o ID: " + categoriaId));
+                        .orElseThrow(() -> new RecursoNaoEncontradoException("Categoria não encontrada com o ID: " + categoriaId));
                 // Atualizando os campos permitidos
                 categoriaExistente.setNome(novaCategoria.getNome());
         

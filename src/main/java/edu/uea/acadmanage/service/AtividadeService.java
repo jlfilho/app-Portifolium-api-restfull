@@ -16,12 +16,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import edu.uea.acadmanage.DTO.AtividadeDTO;
 import edu.uea.acadmanage.DTO.AtividadeFiltroDTO;
-import edu.uea.acadmanage.DTO.EvidenciaDTO;
 import edu.uea.acadmanage.config.FileStorageProperties;
 import edu.uea.acadmanage.model.Atividade;
 import edu.uea.acadmanage.model.Categoria;
 import edu.uea.acadmanage.model.Curso;
-import edu.uea.acadmanage.model.Evidencia;
+import edu.uea.acadmanage.model.FonteFinanciadora;
 import edu.uea.acadmanage.model.Usuario;
 import edu.uea.acadmanage.repository.AtividadeRepository;
 import edu.uea.acadmanage.repository.UsuarioRepository;
@@ -35,6 +34,7 @@ public class AtividadeService {
     private final UsuarioRepository usuarioRepository;
     private final CursoService cursoService;
     private final CategoriaService categoriaService;
+    private final FonteFinanciadoraService fonteFinanciadoraService;
     private final Path fileStorageLocation;
 
     public AtividadeService(
@@ -42,11 +42,13 @@ public class AtividadeService {
             UsuarioRepository usuarioRepository,
             CursoService cursoService,
             CategoriaService categoriaService,
+            FonteFinanciadoraService fonteFinanciadoraService,
             FileStorageProperties fileStorageProperties) throws IOException {
         this.atividadeRepository = atividadeRepository;
         this.usuarioRepository = usuarioRepository;
         this.cursoService = cursoService;
         this.categoriaService = categoriaService;
+        this.fonteFinanciadoraService = fonteFinanciadoraService;
         this.fileStorageLocation = Paths.get(fileStorageProperties.getStorageLocation() + "/fotos-capa")
                 .toAbsolutePath().normalize();
         Files.createDirectories(this.fileStorageLocation);
@@ -114,11 +116,13 @@ public class AtividadeService {
             throw new RecursoNaoEncontradoException(
                     "Curso não encontrado com o ID: " + atividadeDTO.cursoId());
         }
+
         // Verificar se a categoria existe
         if (!categoriaService.verificarSeCategoriaExiste(atividadeDTO.categoriaId())) {
             throw new RecursoNaoEncontradoException(
                     "Categoria não encontrada com o ID: " + atividadeDTO.categoriaId());
         }
+
 
         // Verificar se o usuário tem permissão para salvar a atividade
         if (!cursoService.verificarAcessoAoCurso(username, atividadeDTO.cursoId())) {
@@ -221,6 +225,9 @@ public class AtividadeService {
         atividadeExistente.setDataRealizacao(atividadeDTO.dataRealizacao());
         atividadeExistente.setCurso(new Curso(atividadeDTO.cursoId()));
         atividadeExistente.setCategoria(new Categoria(atividadeDTO.categoriaId()));
+        atividadeExistente.setFontesFinanciadora(atividadeDTO.fontesFinanciadora().stream()
+                .map(fonte -> new FonteFinanciadora(fonte.getId()))
+                .collect(Collectors.toList()));
 
         // Salvar no banco
         Atividade atividadeAtualizada = atividadeRepository.save(atividadeExistente);
@@ -280,7 +287,8 @@ public class AtividadeService {
                 atividade.getFotoCapa(),
                 atividade.getDataRealizacao(),
                 atividade.getCurso().getId(),
-                atividade.getCategoria().getId());
+                atividade.getCategoria().getId(),
+                atividade.getFontesFinanciadora());
     }
 
     // Método privado para converter AtividadeDTO para Atividade
@@ -293,6 +301,9 @@ public class AtividadeService {
         atividade.setDataRealizacao(atividadeDTO.dataRealizacao());
         atividade.setCurso(new Curso(atividadeDTO.cursoId()));
         atividade.setCategoria(new Categoria(atividadeDTO.categoriaId()));
+        atividade.setFontesFinanciadora(atividadeDTO.fontesFinanciadora().stream()
+                .map(fonte -> new FonteFinanciadora(fonte.getId()))
+                .collect(Collectors.toList()));
         return atividade;
     }
 

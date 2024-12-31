@@ -13,6 +13,14 @@ INSERT INTO curso (id, nome) VALUES
 (2, 'Curso de Sistemas de Informação'),
 (3, 'Curso de Ciência da Computação');
 
+-- Populando a tabela Fonte Financiadora
+INSERT INTO fonte_financiadora (id, nome) VALUES 
+(1, 'UEA'),
+(2, 'FAPEAM'),
+(3, 'CAPES'),
+(4, 'CNPq'),
+(5, 'Outros');
+
 -- Populando a tabela Role
 INSERT INTO role (id, nome) VALUES
 (1, 'ROLE_ADMINISTRADOR'),
