@@ -1,10 +1,12 @@
 package edu.uea.acadmanage.controller;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.springframework.data.repository.query.Param;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import edu.uea.acadmanage.DTO.AtividadeDTO;
 import edu.uea.acadmanage.DTO.AtividadeFiltroDTO;
@@ -87,7 +90,19 @@ public class AtividadeController {
             @AuthenticationPrincipal UserDetails userDetails) {
 
         AtividadeDTO atividadeSalva = atividadeService.salvarAtividade(atividadeDTO, userDetails.getUsername());
-        return ResponseEntity.status(201).body(atividadeSalva); // 201 Created
+        return ResponseEntity.status(HttpStatus.CREATED).body(atividadeSalva); // 201 Created
+    }
+
+    // Endpoint para salvar foto de capa
+    @PutMapping(value = "/foto-capa/{atividadeId}", consumes = {"multipart/form-data"})
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    public ResponseEntity<AtividadeDTO> salvarFotoCapa(
+        @PathVariable Long atividadeId,
+        @RequestParam("file") MultipartFile file,
+        @AuthenticationPrincipal UserDetails userDetails) throws IOException {
+
+        AtividadeDTO atividadeSalva = atividadeService.atualizarFotoCapa(atividadeId, file, userDetails.getUsername());
+        return ResponseEntity.status(HttpStatus.OK).body(atividadeSalva); 
     }
 
     // Endpoint para atualizar uma atividade
@@ -101,6 +116,16 @@ public class AtividadeController {
                 userDetails.getUsername());
         return ResponseEntity.ok(atividadeAtualizada); // Retorna 200 OK com a atividade atualizada
     }
+
+    // Endpoint para excluir uma atividade
+    @DeleteMapping(value = "/{atividadeId}/foto-capa")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    public ResponseEntity<Void> excluirFotoCapa(@PathVariable Long atividadeId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        atividadeService.excluirFotoCapa(atividadeId, userDetails.getUsername());
+        return ResponseEntity.noContent().build(); // Retorna 204 No Content
+    }
+    
 
     // Endpoint para excluir uma atividade
     @DeleteMapping("/{atividadeId}")

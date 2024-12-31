@@ -36,6 +36,7 @@ public class Atividade implements Serializable {
     private String publicoAlvo;
     @Column(nullable = false)
     private Boolean statusPublicacao;
+    private String fotoCapa;
     @Column(nullable = false)
     private LocalDate dataRealizacao;
 
