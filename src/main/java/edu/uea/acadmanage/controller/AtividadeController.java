@@ -94,15 +94,15 @@ public class AtividadeController {
     }
 
     // Endpoint para salvar foto de capa
-    @PutMapping(value = "/foto-capa/{atividadeId}", consumes = {"multipart/form-data"})
+    @PutMapping(value = "/foto-capa/{atividadeId}", consumes = { "multipart/form-data" })
     @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
     public ResponseEntity<AtividadeDTO> salvarFotoCapa(
-        @PathVariable Long atividadeId,
-        @RequestParam("file") MultipartFile file,
-        @AuthenticationPrincipal UserDetails userDetails) throws IOException {
+            @PathVariable Long atividadeId,
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal UserDetails userDetails) throws IOException {
 
         AtividadeDTO atividadeSalva = atividadeService.atualizarFotoCapa(atividadeId, file, userDetails.getUsername());
-        return ResponseEntity.status(HttpStatus.OK).body(atividadeSalva); 
+        return ResponseEntity.status(HttpStatus.OK).body(atividadeSalva);
     }
 
     // Endpoint para atualizar uma atividade
@@ -125,7 +125,6 @@ public class AtividadeController {
         atividadeService.excluirFotoCapa(atividadeId, userDetails.getUsername());
         return ResponseEntity.noContent().build(); // Retorna 204 No Content
     }
-    
 
     // Endpoint para excluir uma atividade
     @DeleteMapping("/{atividadeId}")
