@@ -70,7 +70,7 @@ public class CategoriaController {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<CategoriaResumidaDTO> atualizarCategoria(
             @PathVariable Long categoriaId,
-            @RequestBody CategoriaResumidaDTO categoria) {
+            @Validated @RequestBody CategoriaResumidaDTO categoria) {
         Categoria novaCategoria = new Categoria(categoriaId, categoria.nome(), null);
         Categoria categoriaAtualizada = categoriaService.atualizar(categoriaId, novaCategoria);
         return ResponseEntity.ok(new CategoriaResumidaDTO(categoriaAtualizada.getId(), categoriaAtualizada.getNome()));
