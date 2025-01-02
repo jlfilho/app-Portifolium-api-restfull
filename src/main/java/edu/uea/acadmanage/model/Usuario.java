@@ -18,6 +18,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -34,8 +35,11 @@ public class Usuario implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(nullable = false)
-    private String nome;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "pessoa_id", referencedColumnName = "id")
+    private Pessoa pessoa;
+    
     @Column(nullable = false, unique = true)
     @Email(message = "E-mail inválido")
     private String email;

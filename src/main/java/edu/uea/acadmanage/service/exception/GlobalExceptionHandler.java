@@ -22,4 +22,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleSenhaIncorretaException(SenhaIncorretaException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
     }
+
+    @ExceptionHandler(ConflitoException.class)
+    public ResponseEntity<String> handleConflitoException(ConflitoException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
+    
 }

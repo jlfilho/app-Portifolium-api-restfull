@@ -18,6 +18,7 @@ import edu.uea.acadmanage.DTO.CursoDTO;
 import edu.uea.acadmanage.DTO.PasswordChangeRequest;
 import edu.uea.acadmanage.DTO.UsuarioDTO;
 import edu.uea.acadmanage.model.Curso;
+import edu.uea.acadmanage.model.Pessoa;
 import edu.uea.acadmanage.model.Role;
 import edu.uea.acadmanage.model.Usuario;
 import edu.uea.acadmanage.repository.CursoRepository;
@@ -59,7 +60,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     // Listar todos os usuários
     public List<UsuarioDTO> getAllUsuarios() {
         return usuarioRepository.findAll().stream()
-                .map(usuario -> new UsuarioDTO(usuario.getId(), usuario.getNome(), usuario.getEmail(),
+                .map(usuario -> new UsuarioDTO(usuario.getId(), usuario.getPessoa().getNome(), usuario.getPessoa().getCpf(), usuario.getEmail(),
                         null,
                         usuario.getRoles().stream()
                                 .map(r -> r.getNome())
@@ -87,7 +88,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         // Criar novo usuário
         Usuario novoUsuario = new Usuario();
-        novoUsuario.setNome(usuario.nome());
+        novoUsuario.setPessoa(new Pessoa(null, usuario.nome(), usuario.cpf()));
         novoUsuario.setEmail(usuario.email());
         novoUsuario.setSenha(passwordEncoder.encode(usuario.senha()));
         novoUsuario.getRoles().add(role);
@@ -111,7 +112,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado: " + userId));
 
         // Atualizar informações básicas
-        usuarioExistente.setNome(usuario.nome());
+        usuarioExistente.getPessoa().setNome(usuario.nome());
         usuarioExistente.setEmail(usuario.email());
 
         // Atualizar senha, se fornecida
@@ -228,7 +229,8 @@ public class CustomUserDetailsService implements UserDetailsService {
     private UsuarioDTO toUsuarioDTO(Usuario usuario) {
         return new UsuarioDTO(
                 usuario.getId(),
-                usuario.getNome(),
+                usuario.getPessoa().getNome(),
+                usuario.getPessoa().getCpf(),
                 usuario.getEmail(),
                 null,
                 usuario.getRoles().stream()

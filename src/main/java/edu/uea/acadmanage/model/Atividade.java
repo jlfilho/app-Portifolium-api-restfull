@@ -2,6 +2,7 @@ package edu.uea.acadmanage.model;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -65,6 +66,9 @@ public class Atividade implements Serializable {
         inverseJoinColumns = @JoinColumn(name = "financiadora_id") // Chave estrangeira de Usuario
         )
     private List<FonteFinanciadora> fontesFinanciadora;
+
+    @OneToMany(mappedBy = "atividade", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AtividadePessoaPapel> pessoas = new ArrayList<>();
 
     public Atividade(Long id) {
         this.id = id;
