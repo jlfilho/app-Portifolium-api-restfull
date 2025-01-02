@@ -2,6 +2,8 @@ package edu.uea.acadmanage.controller;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -70,7 +72,7 @@ public class CategoriaController {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<CategoriaResumidaDTO> atualizarCategoria(
             @PathVariable Long categoriaId,
-            @RequestBody CategoriaResumidaDTO categoria) {
+            @Validated @RequestBody CategoriaResumidaDTO categoria) {
         Categoria novaCategoria = new Categoria(categoriaId, categoria.nome(), null);
         Categoria categoriaAtualizada = categoriaService.atualizar(categoriaId, novaCategoria);
         return ResponseEntity.ok(new CategoriaResumidaDTO(categoriaAtualizada.getId(), categoriaAtualizada.getNome()));
@@ -82,7 +84,7 @@ public class CategoriaController {
         System.out.println("Salvando categoria: " + categoriaDTO);
         Categoria categoria = new Categoria(categoriaDTO.id(), categoriaDTO.nome(), null);
         Categoria novaCategoria = categoriaService.salvar(categoria);
-        return ResponseEntity.ok(new CategoriaResumidaDTO(novaCategoria.getId(), novaCategoria.getNome()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new CategoriaResumidaDTO(novaCategoria.getId(), novaCategoria.getNome()));
     }
 
     // Endpoint para deletar uma categoria
