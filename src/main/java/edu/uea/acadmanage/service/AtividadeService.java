@@ -34,7 +34,6 @@ public class AtividadeService {
     private final UsuarioRepository usuarioRepository;
     private final CursoService cursoService;
     private final CategoriaService categoriaService;
-    private final FonteFinanciadoraService fonteFinanciadoraService;
     private final Path fileStorageLocation;
 
     public AtividadeService(
@@ -42,13 +41,11 @@ public class AtividadeService {
             UsuarioRepository usuarioRepository,
             CursoService cursoService,
             CategoriaService categoriaService,
-            FonteFinanciadoraService fonteFinanciadoraService,
             FileStorageProperties fileStorageProperties) throws IOException {
         this.atividadeRepository = atividadeRepository;
         this.usuarioRepository = usuarioRepository;
         this.cursoService = cursoService;
         this.categoriaService = categoriaService;
-        this.fonteFinanciadoraService = fonteFinanciadoraService;
         this.fileStorageLocation = Paths.get(fileStorageProperties.getStorageLocation() + "/fotos-capa")
                 .toAbsolutePath().normalize();
         Files.createDirectories(this.fileStorageLocation);

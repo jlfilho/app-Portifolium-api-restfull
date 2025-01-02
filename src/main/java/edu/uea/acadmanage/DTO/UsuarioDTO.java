@@ -8,7 +8,8 @@ import jakarta.validation.constraints.NotNull;
 public record UsuarioDTO(
     Long id, 
     @NotNull(message = "O nome é obrigatório.")
-    String nome, 
+    String nome,
+    String cpf, 
     @NotNull(message = "O email obrigatório.")
     @Email(message = "E-mail inválido")
     String email,

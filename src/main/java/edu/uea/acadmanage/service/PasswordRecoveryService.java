@@ -13,7 +13,6 @@ import edu.uea.acadmanage.model.Usuario;
 import edu.uea.acadmanage.repository.RecoveryCodeRepository;
 import edu.uea.acadmanage.repository.UsuarioRepository;
 import edu.uea.acadmanage.service.exception.AcessoNegadoException;
-import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
 
 @Service
 public class PasswordRecoveryService {
@@ -54,7 +53,7 @@ public class PasswordRecoveryService {
         String subject = "Código de Recuperação";
         String message = String.format(
                 "Olá, %s! Use este código para recuperar sua senha: %s\nO código expira em 30 minutos.",
-                usuario.getNome(), recoveryCode);
+                usuario.getPessoa().getNome(), recoveryCode);
 
         emailService.sendSimpleEmail(email, subject, message);
     }
