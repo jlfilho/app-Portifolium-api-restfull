@@ -6,11 +6,11 @@ import java.util.List;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -86,7 +86,7 @@ public class AtividadeController {
     // Endpoint para salvar uma atividade
     @PostMapping
     @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
-    public ResponseEntity<AtividadeDTO> salvarAtividade(@Valid @RequestBody AtividadeDTO atividadeDTO,
+    public ResponseEntity<AtividadeDTO> salvarAtividade(@Validated @RequestBody AtividadeDTO atividadeDTO,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         AtividadeDTO atividadeSalva = atividadeService.salvarAtividade(atividadeDTO, userDetails.getUsername());

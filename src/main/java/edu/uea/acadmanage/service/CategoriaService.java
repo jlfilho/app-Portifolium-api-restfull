@@ -13,6 +13,8 @@ import edu.uea.acadmanage.model.Curso;
 import edu.uea.acadmanage.model.Usuario;
 import edu.uea.acadmanage.repository.CategoriaRepository;
 import edu.uea.acadmanage.repository.UsuarioRepository;
+import edu.uea.acadmanage.service.exception.AcessoNegadoException;
+import edu.uea.acadmanage.service.exception.ConflitoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
 
 @Service
@@ -79,6 +81,9 @@ public class CategoriaService {
         }
 
         public Categoria salvar(Categoria categoria) {
+                if (categoriaRepository.findByNomeIgnoreCase(categoria.getNome()).isPresent()) {
+                    throw new AcessoNegadoException("Já existe uma categoria com o nome: " + categoria.getNome());
+                }
                 return categoriaRepository.save(categoria);
         }
         
@@ -92,6 +97,10 @@ public class CategoriaService {
         public Categoria atualizar(Long categoriaId, Categoria novaCategoria) {
                 Categoria categoriaExistente = categoriaRepository.findById(categoriaId)
                         .orElseThrow(() -> new RecursoNaoEncontradoException("Categoria não encontrada com o ID: " + categoriaId));
+
+                if (categoriaRepository.findByNomeIgnoreCase(novaCategoria.getNome()).isPresent() && !categoriaExistente.getNome().equalsIgnoreCase(novaCategoria.getNome())) {  
+                                throw new AcessoNegadoException("Já existe uma categoria com o nome: " + novaCategoria.getNome());
+                            }
                 // Atualizando os campos permitidos
                 categoriaExistente.setNome(novaCategoria.getNome());
         
