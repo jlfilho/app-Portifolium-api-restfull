@@ -21,14 +21,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import edu.uea.acadmanage.DTO.PasswordChangeRequest;
 import edu.uea.acadmanage.DTO.UsuarioDTO;
-import edu.uea.acadmanage.service.CustomUserDetailsService;
+import edu.uea.acadmanage.service.UsuarioService;
 
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioController {
-    private final CustomUserDetailsService usuarioService;
+    private final UsuarioService usuarioService;
 
-    public UsuarioController(CustomUserDetailsService usuarioService) {
+    public UsuarioController(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
     }
 
