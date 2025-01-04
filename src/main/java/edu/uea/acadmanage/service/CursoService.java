@@ -2,6 +2,7 @@ package edu.uea.acadmanage.service;
 
 import java.util.List;
 
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import edu.uea.acadmanage.DTO.CursoDTO;
@@ -15,16 +16,13 @@ import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
 public class CursoService {
 
     private final CursoRepository cursoRepository;
-    private final CustomUserDetailsService customUserDetailsService;
     private final UsuarioRepository usuarioRepository;
 
     public CursoService(
         CursoRepository cursoRepository, 
-        UsuarioRepository usuarioRepository,
-        CustomUserDetailsService customUserDetailsService) {
+        UsuarioRepository usuarioRepository) {
         this.cursoRepository = cursoRepository;
         this.usuarioRepository = usuarioRepository;
-        this.customUserDetailsService = customUserDetailsService;
     }
 
     // Método para buscar um curso por ID
@@ -94,7 +92,8 @@ public class CursoService {
     // Método para verificar se um usuário tem acesso a um curso
     public boolean verificarAcessoAoCurso(String email, Long cursoId) {
         // Recupera o usuário do banco
-        Usuario usuario = customUserDetailsService.getUsuarioByEmail(email);
+        Usuario usuario = this.usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + email));
 
         // Verifica se o cursoId está na lista de cursos associados ao usuário
         return usuario.getCursos().stream()

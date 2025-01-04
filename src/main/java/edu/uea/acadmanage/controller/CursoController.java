@@ -19,16 +19,16 @@ import org.springframework.web.bind.annotation.RestController;
 import edu.uea.acadmanage.DTO.CursoDTO;
 import edu.uea.acadmanage.model.Usuario;
 import edu.uea.acadmanage.service.CursoService;
-import edu.uea.acadmanage.service.CustomUserDetailsService;
+import edu.uea.acadmanage.service.UsuarioService;
 
 @RestController
 @RequestMapping("/api/cursos")
 public class CursoController {
 
     private final CursoService cursoService;
-    private final CustomUserDetailsService usuarioService;
+    private final UsuarioService usuarioService;
 
-    public CursoController(CursoService cursoService, CustomUserDetailsService usuarioService) {
+    public CursoController(CursoService cursoService, UsuarioService usuarioService) {
         this.cursoService = cursoService;
         this.usuarioService = usuarioService;
     }

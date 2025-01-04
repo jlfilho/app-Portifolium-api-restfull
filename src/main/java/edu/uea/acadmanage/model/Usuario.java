@@ -1,10 +1,18 @@
 package edu.uea.acadmanage.model;
 
-import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -30,7 +38,7 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(exclude = "roles")
 @AllArgsConstructor
 @NoArgsConstructor
-public class Usuario implements Serializable {
+public class Usuario implements UserDetails {    
     private static final long serialVersionUID = 1L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,6 +53,13 @@ public class Usuario implements Serializable {
     private String email;
     @Column(nullable = false)
     private String senha;
+    @CreationTimestamp
+    @Column(updatable = false, name = "created_at")
+    private Date createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private Date updatedAt;
 
     @JsonIgnoreProperties("usuarios")
     @ManyToMany(fetch = FetchType.EAGER) //, cascade = CascadeType.ALL
@@ -64,5 +79,43 @@ public class Usuario implements Serializable {
         inverseJoinColumns = @JoinColumn(name = "curso_id") // Chave estrangeira de Usuario
         )
     private List<Curso> cursos = new ArrayList<>();
+
+
+    @Override
+    public String getUsername() {
+        return this.email;
+    }
+
+    @Override
+    public String getPassword() {
+        return this.senha;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return this.roles.stream()
+                .map(role -> new SimpleGrantedAuthority(role.getNome()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 
 }
