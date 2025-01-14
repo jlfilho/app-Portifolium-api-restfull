@@ -42,7 +42,7 @@ public class JwtSecurityConfig {
                                 "/api/categorias/**", "/api/evidencias/**", "/api/evidencias/atividade/**")
                         .permitAll() // Permite acesso a login e logout sem autenticação
                         .requestMatchers("/api/recovery/generate/**", "/api/recovery/reset-password/**").permitAll()
-                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/css/**", "/js/**", "/images/**","/api/files/**").permitAll()
                         .requestMatchers("/h2-console/**").hasRole("ADMINISTRADOR")
                         .anyRequest().authenticated() // Todas as outras requisições requerem autenticação
                 )

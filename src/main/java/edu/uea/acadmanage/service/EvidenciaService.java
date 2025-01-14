@@ -116,6 +116,7 @@ public class EvidenciaService {
 
         // Excluir a evidência
         evidenciaRepository.deleteById(evidenciaId);
+        excluirImagem(evidenciaExistente.getUrlFoto());
     }
 
     // Método para salvar uma evidência
