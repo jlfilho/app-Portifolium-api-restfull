@@ -33,6 +33,7 @@ public class EvidenciaService {
     private final AtividadeRepository atividadeRepository;
     private final CursoService cursoService;
     private final Path fileStorageLocation;
+    private final String baseStorageLocation;
 
     public EvidenciaService(
             EvidenciaRepository evidenciaRepository,
@@ -42,7 +43,8 @@ public class EvidenciaService {
         this.evidenciaRepository = evidenciaRepository;
         this.atividadeRepository = atividadeRepository;
         this.cursoService = cursoService;
-        this.fileStorageLocation = Paths.get(fileStorageProperties.getStorageLocation()+"/evidencias").toAbsolutePath().normalize();
+        this.baseStorageLocation = "/evidencias";
+        this.fileStorageLocation = Paths.get(fileStorageProperties.getStorageLocation()+this.baseStorageLocation).toAbsolutePath().normalize();
         Files.createDirectories(this.fileStorageLocation);
     }
 
@@ -223,7 +225,7 @@ public class EvidenciaService {
         Files.createDirectories(targetLocation);
         Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
-        return uniqueFileName;
+        return this.baseStorageLocation+"/"+uniqueFileName;
     }
 
     // Método para excluir uma imagem
