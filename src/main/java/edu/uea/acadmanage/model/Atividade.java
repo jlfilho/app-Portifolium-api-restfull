@@ -78,4 +78,13 @@ public class Atividade implements Serializable {
         return this.statusPublicacao;
     }
 
+    public String getCoordenador() {
+        for (AtividadePessoaPapel pessoa : this.pessoas) {
+            if (pessoa.getPapel().equals(Papel.COORDENADOR)) {
+                return pessoa.getPessoa().getNome();
+            }
+        }
+        return null;
+    }
+
 }

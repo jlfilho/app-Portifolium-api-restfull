@@ -14,7 +14,6 @@ import edu.uea.acadmanage.model.Usuario;
 import edu.uea.acadmanage.repository.CategoriaRepository;
 import edu.uea.acadmanage.repository.UsuarioRepository;
 import edu.uea.acadmanage.service.exception.AcessoNegadoException;
-import edu.uea.acadmanage.service.exception.ConflitoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
 
 @Service
@@ -72,6 +71,7 @@ public class CategoriaService {
                                                 atividade.getPublicoAlvo(),
                                                 atividade.getStatusPublicacao(),
                                                 atividade.getFotoCapa(),
+                                                atividade.getCoordenador(),
                                                 atividade.getDataRealizacao(),
                                                 atividade.getCurso().getId(),
                                                 atividade.getCategoria().getId(),

@@ -16,6 +16,7 @@ public record AtividadeDTO(
         @NotNull(message = "O status de publicação deve ser informado.")
         Boolean statusPublicacao,
         String fotoCapa,
+        String coordenador,
         @NotNull(message = "A data de realização deve ser informada.")
         LocalDate dataRealizacao,
         @NotNull(message = "O ID do curso deve ser informado.")

@@ -282,6 +282,7 @@ public class AtividadeService {
                 atividade.getPublicoAlvo(),
                 atividade.getStatusPublicacao(),
                 atividade.getFotoCapa(),
+                atividade.getCoordenador(),
                 atividade.getDataRealizacao(),
                 atividade.getCurso().getId(),
                 atividade.getCategoria().getId(),
