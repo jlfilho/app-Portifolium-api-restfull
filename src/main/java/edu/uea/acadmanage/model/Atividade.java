@@ -54,7 +54,7 @@ public class Atividade implements Serializable {
     @JoinColumn(name = "curso_id", nullable = false)
     private Curso curso;
     
-    @JsonIgnoreProperties("atividade")
+    @JsonIgnoreProperties({"atividade","curso"})
     @OneToMany(mappedBy = "atividade", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Evidencia> evidencias;
 
@@ -86,17 +86,4 @@ public class Atividade implements Serializable {
         }
         return null;
     }
-
-    public String getCategoriaNome() {
-        return this.categoria.getNome();
-    }
-
-    public String getCursoNome() {
-        return this.curso.getNome();
-    }
-
-    
-
-
-
 }

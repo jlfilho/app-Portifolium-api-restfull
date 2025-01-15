@@ -30,7 +30,6 @@ public class FonteFinanciadora implements Serializable {
     @Column(nullable = false, unique = true)
     private String nome;
 
-    
     @ManyToMany(mappedBy = "fontesFinanciadora", fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Atividade> atividades;

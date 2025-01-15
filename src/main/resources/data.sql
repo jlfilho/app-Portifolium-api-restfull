@@ -140,6 +140,23 @@ VALUES
     (15, 1, 'COORDENADOR'),
     (15, 3, 'BOLSISTA');
 
+INSERT INTO atividade_financiadora (atividade_id, financiadora_id) VALUES
+(1, 1), 
+(2, 2), 
+(3, 2),
+(4, 1), 
+(5, 2), 
+(6, 2),
+(7, 1), 
+(8, 2), 
+(9, 2),
+(10, 1), 
+(11, 2), 
+(12, 2),
+(13, 1), 
+(14, 2), 
+(15, 3);     
+
 -- Populando a tabela Evidencia
 INSERT INTO evidencia (id, url_foto, legenda, criado_por, atividade_id) VALUES
 (1, '/evidencias/1/1/62988d12-6561-412a-9bce-ab8cac4a48ce.jpg', 'Legenda 1', 'admin', 1),

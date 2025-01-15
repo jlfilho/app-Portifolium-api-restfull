@@ -31,7 +31,7 @@ public class Categoria implements Serializable {
     @Column(nullable = false, unique = true)
     private String nome;
 
-    @JsonIgnoreProperties("categoria")
+    @JsonIgnoreProperties({"categoria", "curso"})
     @OneToMany(mappedBy = "categoria", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Atividade> atividades;
 

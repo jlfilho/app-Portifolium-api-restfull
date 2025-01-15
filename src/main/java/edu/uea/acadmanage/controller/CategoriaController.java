@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import edu.uea.acadmanage.DTO.CategoriaDTO;
@@ -42,6 +43,22 @@ public class CategoriaController {
             return ResponseEntity.noContent().build(); // 204 No Content
         }
         return ResponseEntity.ok(categorias); // 200 OK com a lista de categorias
+    }
+
+    // Endpoint para consultar categorias de atividades por curso, com filtro opcional.
+    @GetMapping("/curso/{cursoId}")
+    public ResponseEntity<List<CategoriaDTO>> getCategoriasPorCurso(
+        @PathVariable Long cursoId,
+        @RequestParam(required = false) List<Long> categorias,
+        @RequestParam(required = false) Boolean statusPublicacao,
+        @RequestParam(required = false) String nomeAtividade) {
+
+        List<CategoriaDTO> result = categoriaService.getCategoriasPorCurso(cursoId, categorias, statusPublicacao, nomeAtividade);
+
+        if (result.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{categoriaId}")

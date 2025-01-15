@@ -39,7 +39,7 @@ public class JwtSecurityConfig {
                                 "/swagger-resources/**")
                         .permitAll()
                         .requestMatchers("/api/auth/login/**", "/logout**", "/api/atividades/**", "/api/cursos/**",
-                                "/api/categorias/**", "/api/evidencias/**", "/api/evidencias/atividade/**")
+                                "/api/categorias/**", "/api/evidencias/**", "/api/evidencias/atividade/**","/api/categorias/curso/**")
                         .permitAll() // Permite acesso a login e logout sem autenticação
                         .requestMatchers("/api/recovery/generate/**", "/api/recovery/reset-password/**").permitAll()
                         .requestMatchers("/css/**", "/js/**", "/images/**","/api/files/**").permitAll()

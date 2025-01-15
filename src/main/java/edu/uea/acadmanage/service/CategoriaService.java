@@ -1,6 +1,7 @@
 package edu.uea.acadmanage.service;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 
@@ -41,6 +42,24 @@ public class CategoriaService {
                 return new CategoriaResumidaDTO(categoria.getId(), categoria.getNome());
 
         }
+
+        // Consulta categorias de atividades por curso, com possibilidade de filtrar por uma, mais de uma ou todas.
+        public List<CategoriaDTO> getCategoriasPorCurso(Long cursoId, List<Long> categorias, Boolean statusPublicacao, String nomeAtividade) {
+                // Obtém categorias e filtra atividades diretamente no Stream
+                return categoriaRepository.findCategoriasPorCurso(cursoId, categorias, statusPublicacao, nomeAtividade).stream()
+                        .map(categoria -> {
+                            // Filtra atividades para garantir que pertencem ao curso especificado
+                            List<AtividadeDTO> atividadesFiltradas = categoria.getAtividades().stream()
+                                    .filter(atividade -> cursoId.equals(atividade.getCurso().getId()))
+                                    .map(this::toAtividadeDTO) // Converte para DTO
+                                    .toList();
+            
+                            // Apenas inclui categorias com atividades após o filtro
+                            return atividadesFiltradas.isEmpty() ? null : toCategoriaDTO(categoria, atividadesFiltradas);
+                        })
+                        .filter(Objects::nonNull) // Remove categorias vazias
+                        .toList();
+            }
 
 
         public List<CategoriaDTO> getCategoriasComAtividadesByUsuario(String email) {
@@ -111,4 +130,30 @@ public class CategoriaService {
         public boolean verificarSeCategoriaExiste(Long categoriaId) {
                 return categoriaRepository.existsById(categoriaId);
         }
+
+        // Converte uma entidade Categoria para CategoriaDTO
+private CategoriaDTO toCategoriaDTO(Categoria categoria, List<AtividadeDTO> atividades) {
+        return new CategoriaDTO(
+                categoria.getId(),
+                categoria.getNome(),
+                atividades
+        );
+    }
+    
+    // Converte uma entidade Atividade para AtividadeDTO
+    private AtividadeDTO toAtividadeDTO(Atividade atividade) {
+        return new AtividadeDTO(
+                atividade.getId(),
+                atividade.getNome(),
+                atividade.getObjetivo(),
+                atividade.getPublicoAlvo(),
+                atividade.getStatusPublicacao(),
+                atividade.getFotoCapa(),
+                atividade.getCoordenador(),
+                atividade.getDataRealizacao(),
+                atividade.getCurso(),
+                atividade.getCategoria(),
+                atividade.getFontesFinanciadora()
+        );
+    }
 }
