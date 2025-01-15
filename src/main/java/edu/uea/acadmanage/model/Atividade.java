@@ -87,4 +87,16 @@ public class Atividade implements Serializable {
         return null;
     }
 
+    public String getCategoriaNome() {
+        return this.categoria.getNome();
+    }
+
+    public String getCursoNome() {
+        return this.curso.getNome();
+    }
+
+    
+
+
+
 }

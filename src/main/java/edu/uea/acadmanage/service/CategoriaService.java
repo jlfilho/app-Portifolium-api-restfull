@@ -73,8 +73,8 @@ public class CategoriaService {
                                                 atividade.getFotoCapa(),
                                                 atividade.getCoordenador(),
                                                 atividade.getDataRealizacao(),
-                                                atividade.getCurso().getId(),
-                                                atividade.getCategoria().getId(),
+                                                atividade.getCurso(),
+                                                atividade.getCategoria(),
                                                 atividade.getFontesFinanciadora())).
                                                 toList())).
                                                 toList();

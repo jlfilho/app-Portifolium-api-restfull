@@ -100,7 +100,7 @@ public class AtividadeController {
             @PathVariable Long atividadeId,
             @RequestParam("file") MultipartFile file,
             @AuthenticationPrincipal UserDetails userDetails) throws IOException {
-
+        System.out.println("atividadeId: " + atividadeId);        
         AtividadeDTO atividadeSalva = atividadeService.atualizarFotoCapa(atividadeId, file, userDetails.getUsername());
         return ResponseEntity.status(HttpStatus.OK).body(atividadeSalva);
     }

@@ -35,6 +35,7 @@ public class AtividadeService {
     private final CursoService cursoService;
     private final CategoriaService categoriaService;
     private final Path fileStorageLocation;
+    private final String baseStorageLocation;
 
     public AtividadeService(
             AtividadeRepository atividadeRepository,
@@ -46,7 +47,8 @@ public class AtividadeService {
         this.usuarioRepository = usuarioRepository;
         this.cursoService = cursoService;
         this.categoriaService = categoriaService;
-        this.fileStorageLocation = Paths.get(fileStorageProperties.getStorageLocation() + "/fotos-capa")
+        this.baseStorageLocation = "/fotos-capa";
+        this.fileStorageLocation = Paths.get(fileStorageProperties.getStorageLocation() + this.baseStorageLocation)
                 .toAbsolutePath().normalize();
         Files.createDirectories(this.fileStorageLocation);
     }
@@ -109,22 +111,22 @@ public class AtividadeService {
     // Método para salvar uma atividade
     public AtividadeDTO salvarAtividade(AtividadeDTO atividadeDTO, String username) {
         // Verificar se o curso existe
-        if (!cursoService.verificarSeCursoExiste(atividadeDTO.cursoId())) {
+        if (!cursoService.verificarSeCursoExiste(atividadeDTO.curso().getId())) {
             throw new RecursoNaoEncontradoException(
-                    "Curso não encontrado com o ID: " + atividadeDTO.cursoId());
+                    "Curso não encontrado com o ID: " + atividadeDTO.curso().getId());
         }
 
         // Verificar se a categoria existe
-        if (!categoriaService.verificarSeCategoriaExiste(atividadeDTO.categoriaId())) {
+        if (!categoriaService.verificarSeCategoriaExiste(atividadeDTO.categoria().getId())) {
             throw new RecursoNaoEncontradoException(
-                    "Categoria não encontrada com o ID: " + atividadeDTO.categoriaId());
+                    "Categoria não encontrada com o ID: " + atividadeDTO.categoria().getId());
         }
 
 
         // Verificar se o usuário tem permissão para salvar a atividade
-        if (!cursoService.verificarAcessoAoCurso(username, atividadeDTO.cursoId())) {
+        if (!cursoService.verificarAcessoAoCurso(username, atividadeDTO.categoria().getId())) {
             throw new AcessoNegadoException(
-                    "Usuário não tem permissão para salvar atividade no curso: " + atividadeDTO.cursoId());
+                    "Usuário não tem permissão para salvar atividade no curso: " + atividadeDTO.categoria().getId());
         }
 
         // Criar a entidade Atividade
@@ -198,21 +200,21 @@ public class AtividadeService {
                         () -> new RecursoNaoEncontradoException("Atividade não encontrada com o ID: " + atividadeId));
 
         // Verificar se o curso existe
-        if (!cursoService.verificarSeCursoExiste(atividadeDTO.cursoId())) {
+        if (!cursoService.verificarSeCursoExiste(atividadeDTO.curso().getId())) {
             throw new RecursoNaoEncontradoException(
-                    "Curso não encontrado com o ID: " + atividadeDTO.cursoId());
+                    "Curso não encontrado com o ID: " + atividadeDTO.curso().getId());
         }
 
         // Verificar se a categoria existe
-        if (!categoriaService.verificarSeCategoriaExiste(atividadeDTO.categoriaId())) {
+        if (!categoriaService.verificarSeCategoriaExiste(atividadeDTO.categoria().getId())) {
             throw new RecursoNaoEncontradoException(
-                    "Categoria não encontrada com o ID: " + atividadeDTO.categoriaId());
+                    "Categoria não encontrada com o ID: " + atividadeDTO.categoria().getId());
         }
 
         // Verificar se o usuário tem permissão para salvar a atividade
-        if (!cursoService.verificarAcessoAoCurso(username, atividadeDTO.cursoId())) {
+        if (!cursoService.verificarAcessoAoCurso(username, atividadeDTO.curso().getId())) {
             throw new AcessoNegadoException(
-                    "Usuário não tem permissão para atualizar atividade no curso: " + atividadeDTO.cursoId());
+                    "Usuário não tem permissão para atualizar atividade no curso: " + atividadeDTO.curso().getId());
         }
 
         atividadeExistente.setNome(atividadeDTO.nome());
@@ -220,8 +222,8 @@ public class AtividadeService {
         atividadeExistente.setPublicoAlvo(atividadeDTO.publicoAlvo());
         atividadeExistente.setStatusPublicacao(atividadeDTO.statusPublicacao());
         atividadeExistente.setDataRealizacao(atividadeDTO.dataRealizacao());
-        atividadeExistente.setCurso(new Curso(atividadeDTO.cursoId()));
-        atividadeExistente.setCategoria(new Categoria(atividadeDTO.categoriaId()));
+        atividadeExistente.setCurso(atividadeDTO.curso());
+        atividadeExistente.setCategoria(atividadeDTO.categoria());
         atividadeExistente.setFontesFinanciadora(atividadeDTO.fontesFinanciadora().stream()
                 .map(fonte -> new FonteFinanciadora(fonte.getId()))
                 .collect(Collectors.toList()));
@@ -284,8 +286,8 @@ public class AtividadeService {
                 atividade.getFotoCapa(),
                 atividade.getCoordenador(),
                 atividade.getDataRealizacao(),
-                atividade.getCurso().getId(),
-                atividade.getCategoria().getId(),
+                atividade.getCurso(),
+                atividade.getCategoria(),
                 atividade.getFontesFinanciadora());
     }
 
@@ -297,8 +299,8 @@ public class AtividadeService {
         atividade.setPublicoAlvo(atividadeDTO.publicoAlvo());
         atividade.setStatusPublicacao(atividadeDTO.statusPublicacao());
         atividade.setDataRealizacao(atividadeDTO.dataRealizacao());
-        atividade.setCurso(new Curso(atividadeDTO.cursoId()));
-        atividade.setCategoria(new Categoria(atividadeDTO.categoriaId()));
+        atividade.setCurso(atividadeDTO.curso());
+        atividade.setCategoria(atividadeDTO.categoria());
         atividade.setFontesFinanciadora(atividadeDTO.fontesFinanciadora().stream()
                 .map(fonte -> new FonteFinanciadora(fonte.getId()))
                 .collect(Collectors.toList()));
@@ -331,7 +333,7 @@ public class AtividadeService {
         Files.createDirectories(targetLocation);
         Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
-        return uniqueFileName;
+        return this.baseStorageLocation+"/"+uniqueFileName;
     }
 
     // Método para excluir uma imagem

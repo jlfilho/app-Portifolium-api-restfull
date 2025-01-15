@@ -3,6 +3,8 @@ package edu.uea.acadmanage.DTO;
 import java.time.LocalDate;
 import java.util.List;
 
+import edu.uea.acadmanage.model.Categoria;
+import edu.uea.acadmanage.model.Curso;
 import edu.uea.acadmanage.model.FonteFinanciadora;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -20,8 +22,8 @@ public record AtividadeDTO(
         @NotNull(message = "A data de realização deve ser informada.")
         LocalDate dataRealizacao,
         @NotNull(message = "O ID do curso deve ser informado.")
-        Long cursoId,
+        Curso curso,
         @NotNull(message = "O ID da categoria deve ser informado.")
-        Long categoriaId,
+        Categoria categoria,
         List<FonteFinanciadora> fontesFinanciadora
 ) {}
