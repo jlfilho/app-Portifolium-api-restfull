@@ -46,7 +46,7 @@ public class CategoriaController {
     }
 
     // Endpoint para consultar categorias de atividades por curso, com filtro opcional.
-    @GetMapping("/curso/{cursoId}")
+    @GetMapping("/cursos/{cursoId}")
     public ResponseEntity<List<CategoriaDTO>> getCategoriasPorCurso(
         @PathVariable Long cursoId,
         @RequestParam(required = false) List<Long> categorias,
