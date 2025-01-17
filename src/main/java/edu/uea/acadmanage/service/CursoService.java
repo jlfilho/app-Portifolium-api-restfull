@@ -1,6 +1,7 @@
 package edu.uea.acadmanage.service;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -53,10 +54,12 @@ public class CursoService {
     }
 
 
-    public CursoDTO saveCurso(CursoDTO cursoDTO) {
+    public CursoDTO saveCurso(CursoDTO cursoDTO, Usuario usuario) {
         // Criar uma entidade Curso a partir do DTO
         Curso novoCurso = new Curso();
         novoCurso.setNome(cursoDTO.nome());
+        Set<Usuario> usuarios = Set.of(usuario);
+        novoCurso.setUsuarios(usuarios);
 
         // Salvar no banco de dados
         Curso cursoSalvo = cursoRepository.save(novoCurso);

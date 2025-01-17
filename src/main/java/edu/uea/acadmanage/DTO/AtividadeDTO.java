@@ -29,5 +29,6 @@ public record AtividadeDTO(
         @JsonIgnoreProperties({"atividades"})
         @NotNull(message = "O ID da categoria deve ser informado.")
         Categoria categoria,
-        List<FonteFinanciadora> fontesFinanciadora
+        List<FonteFinanciadora> fontesFinanciadora,
+        List<PessoaPapelDTO> integrantes
 ) {}

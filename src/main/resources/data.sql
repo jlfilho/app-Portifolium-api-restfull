@@ -2,10 +2,7 @@
 INSERT INTO categoria (id, nome) VALUES 
 (1, 'Ensino'),
 (2, 'Pesquisa'),
-(3, 'Extensão'),
-(4, 'Visita Técnica'),
-(5, 'Aula Prática Externa'),
-(6, 'Aula de Laboratório');
+(3, 'Extensão');
 
 -- Populando a tabela Curso
 INSERT INTO curso (id, nome) VALUES
@@ -92,18 +89,18 @@ INSERT INTO atividade (id, nome, objetivo, foto_capa, publico_alvo, status_publi
 (1, 'Atividade 1 Engenharia', 'Objetivo 1',  '/fotos-capa/1/1/def25309-ede6-41aa-a1ae-a253c3c5cd04.jpg', 'Estudantes' , TRUE, '2023-01-15', 1, 1),
 (2, 'Atividade 2 Engenharia', 'Objetivo 2',  '/fotos-capa/1/2/3719e99b-a2da-49b9-a32e-c1baedc2abdb.jpg', 'Estudantes' , TRUE, '2023-02-20', 2, 1),
 (3, 'Atividade 3 Engenharia', 'Objetivo 3',  '/fotos-capa/1/3/f046031d-7d4c-4f1f-af52-a09cd3190249.jpg', 'Estudantes' , TRUE, '2023-03-10', 3, 1),
-(4, 'Atividade 4 Engenharia', 'Objetivo 4',  '/fotos-capa/1/4/c8c782ce-779e-46ac-bb30-a6dabc716ea9.jpg', 'Estudantes' , FALSE, '2023-04-05', 4, 1),
-(5, 'Atividade 5 Engenharia', 'Objetivo 5',  '/fotos-capa/1/5/637787c4-1771-40d3-a150-48cf59fbfc3c.jpg', 'Estudantes' , FALSE, '2023-05-18', 5, 1),
-(6, 'Atividade 1 Sistemas', 'Objetivo 1',  '/fotos-capa/2/6/91b93f4b-4324-41c5-b12e-9fe1d561dbd9.jpg', 'Estudantes' , TRUE, '2023-06-12', 1, 2),
+(4, 'Atividade 4 Engenharia', 'Objetivo 4',  '/fotos-capa/1/4/c8c782ce-779e-46ac-bb30-a6dabc716ea9.jpg', 'Estudantes' , FALSE, '2023-04-05', 1, 1),
+(5, 'Atividade 5 Engenharia', 'Objetivo 5',  '/fotos-capa/1/5/637787c4-1771-40d3-a150-48cf59fbfc3c.jpg', 'Estudantes' , FALSE, '2023-05-18', 2, 1),
+(6, 'Atividade 1 Sistemas', 'Objetivo 1',  '/fotos-capa/2/6/91b93f4b-4324-41c5-b12e-9fe1d561dbd9.jpg', 'Estudantes' , TRUE, '2023-06-12', 3, 2),
 (7, 'Atividade 2 Sistemas', 'Objetivo 2',  '/fotos-capa/2/7/4bc4ec42-a823-4379-8c4e-fd17f566a1ae.jpg', 'Estudantes' , TRUE, '2023-07-08', 2, 2),
 (8, 'Atividade 3 Sistemas', 'Objetivo 3',  '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes' , TRUE, '2023-08-22', 3, 2),
-(9, 'Atividade 4 Sistemas', 'Objetivo 4',  '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes' , FALSE, '2023-09-15', 4, 2),
-(10, 'Atividade 5 Sistemas', 'Objetivo 5',  '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes' , FALSE, '2023-10-30', 5, 2),
+(9, 'Atividade 4 Sistemas', 'Objetivo 4',  '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes' , FALSE, '2023-09-15', 2, 2),
+(10, 'Atividade 5 Sistemas', 'Objetivo 5',  '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes' , FALSE, '2023-10-30', 1, 2),
 (11, 'Atividade 1 Ciência', 'Objetivo 1',  '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes' , TRUE, '2023-11-05', 1, 3),
 (12, 'Atividade 2 Ciência', 'Objetivo 2',  '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes' , TRUE, '2023-12-15', 2, 3),
 (13, 'Atividade 3 Ciência', 'Objetivo 3',  '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes' , TRUE, '2024-01-10', 3, 3),
-(14, 'Atividade 4 Ciência', 'Objetivo 4',  '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes' , FALSE, '2024-02-20', 4, 3),
-(15, 'Atividade 5 Ciência', 'Objetivo 5',  '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes' , FALSE, '2024-03-25', 5, 3);
+(14, 'Atividade 4 Ciência', 'Objetivo 4',  '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes' , FALSE, '2024-02-20', 3, 3),
+(15, 'Atividade 5 Ciência', 'Objetivo 5',  '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes' , FALSE, '2024-03-25', 1, 3);
 
 -- Associar atividades a pessoas com seus respectivos papéis
 -- Cada atividade terá um coordenador e um bolsista ou voluntário
@@ -175,4 +172,3 @@ INSERT INTO evidencia (id, url_foto, legenda, criado_por, atividade_id) VALUES
 (13, '/evidencias/1/3/42db7ab7-ac5c-4503-8177-5115b9a291e7.jpg', 'Legenda 3','admin', 3),
 (14, '/evidencias/1/3/42db7ab7-ac5c-4503-8177-5115b9a291e7.jpg', 'Legenda 4','admin', 3),
 (15, '/evidencias/1/3/42db7ab7-ac5c-4503-8177-5115b9a291e7.jpg', 'Legenda 5','admin', 3);
-

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import edu.uea.acadmanage.DTO.AtividadeDTO;
 import edu.uea.acadmanage.DTO.CategoriaDTO;
 import edu.uea.acadmanage.DTO.CategoriaResumidaDTO;
+import edu.uea.acadmanage.DTO.PessoaPapelDTO;
 import edu.uea.acadmanage.model.Atividade;
 import edu.uea.acadmanage.model.Categoria;
 import edu.uea.acadmanage.model.Curso;
@@ -94,7 +95,8 @@ public class CategoriaService {
                                                 atividade.getDataRealizacao(),
                                                 atividade.getCurso(),
                                                 atividade.getCategoria(),
-                                                atividade.getFontesFinanciadora())).
+                                                atividade.getFontesFinanciadora(),
+                                                atividade.getPessoas().stream().map(p -> new PessoaPapelDTO(p.getPessoa().getId(), p.getPessoa().getNome(), p.getPessoa().getCpf(), p.getPapel().name())).toList())).
                                                 toList())).
                                                 toList();
         }
@@ -153,7 +155,8 @@ private CategoriaDTO toCategoriaDTO(Categoria categoria, List<AtividadeDTO> ativ
                 atividade.getDataRealizacao(),
                 atividade.getCurso(),
                 atividade.getCategoria(),
-                atividade.getFontesFinanciadora()
+                atividade.getFontesFinanciadora(),
+                atividade.getPessoas().stream().map(p -> new PessoaPapelDTO(p.getPessoa().getId(), p.getPessoa().getNome(), p.getPessoa().getCpf(), p.getPapel().name())).toList()
         );
     }
 }

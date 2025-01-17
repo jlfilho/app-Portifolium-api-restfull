@@ -13,6 +13,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
@@ -37,7 +39,12 @@ public class Curso implements Serializable {
     @OneToMany(mappedBy = "curso", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Atividade> atividades;
 
-    @ManyToMany(mappedBy = "cursos") // Relacionamento inverso
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}) 
+    @JoinTable(
+        name = "curso_usuario", // Nome da tabela intermediária
+        joinColumns = @JoinColumn(name = "curso_id"), // Coluna que referencia Curso
+        inverseJoinColumns = @JoinColumn(name = "usuario_id") // Coluna que referencia Usuario
+    )
     @JsonIgnoreProperties("cursos")
     private Set<Usuario> usuarios = new HashSet<>();
 

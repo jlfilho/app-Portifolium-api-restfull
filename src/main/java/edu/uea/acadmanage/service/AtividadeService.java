@@ -16,9 +16,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import edu.uea.acadmanage.DTO.AtividadeDTO;
 import edu.uea.acadmanage.DTO.AtividadeFiltroDTO;
+import edu.uea.acadmanage.DTO.PessoaPapelDTO;
 import edu.uea.acadmanage.config.FileStorageProperties;
 import edu.uea.acadmanage.model.Atividade;
-import edu.uea.acadmanage.model.Categoria;
 import edu.uea.acadmanage.model.Curso;
 import edu.uea.acadmanage.model.FonteFinanciadora;
 import edu.uea.acadmanage.model.Usuario;
@@ -288,7 +288,14 @@ public class AtividadeService {
                 atividade.getDataRealizacao(),
                 atividade.getCurso(),
                 atividade.getCategoria(),
-                atividade.getFontesFinanciadora());
+                atividade.getFontesFinanciadora(),
+                atividade.getPessoas().stream()
+                        .map(pessoa -> new PessoaPapelDTO(
+                                pessoa.getPessoa().getId(),
+                                pessoa.getPessoa().getNome(),
+                                pessoa.getPessoa().getCpf(),
+                                pessoa.getPapel().name()))
+                        .toList());
     }
 
     // Método privado para converter AtividadeDTO para Atividade

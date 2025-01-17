@@ -72,12 +72,7 @@ public class Usuario implements UserDetails {
 
     
     @JsonIgnoreProperties("usuarios")
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-        name = "curso_usuario", // Nome da tabela de junção
-        joinColumns = @JoinColumn(name = "usuario_id"), // Chave estrangeira de Curso
-        inverseJoinColumns = @JoinColumn(name = "curso_id") // Chave estrangeira de Usuario
-        )
+    @ManyToMany(mappedBy = "usuarios", fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<Curso> cursos = new ArrayList<>();
 
 

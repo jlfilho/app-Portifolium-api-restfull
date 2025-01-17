@@ -60,8 +60,9 @@ public class CursoController {
     // Endpoint para salvar um curso
     @PostMapping
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<CursoDTO> salvarCurso(@Validated @RequestBody CursoDTO cursoDTO) {
-        CursoDTO cursoSalvo = cursoService.saveCurso(cursoDTO);
+    public ResponseEntity<CursoDTO> salvarCurso(@Validated @RequestBody CursoDTO cursoDTO, @AuthenticationPrincipal Usuario userDetails) {
+        Usuario usuario = usuarioService.getUsuarioByEmail(userDetails.getUsername());
+        CursoDTO cursoSalvo = cursoService.saveCurso(cursoDTO,usuario);
         return ResponseEntity.status(201).body(cursoSalvo); // 201 Created
     }
 
