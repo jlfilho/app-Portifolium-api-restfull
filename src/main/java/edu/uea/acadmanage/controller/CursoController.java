@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import edu.uea.acadmanage.DTO.CursoDTO;
+import edu.uea.acadmanage.DTO.PermissaoCursoDTO;
 import edu.uea.acadmanage.model.Usuario;
 import edu.uea.acadmanage.service.CursoService;
 import edu.uea.acadmanage.service.UsuarioService;
@@ -48,6 +49,14 @@ public class CursoController {
         return ResponseEntity.ok(curso); // 200 OK se encontrado
     }
 
+    @GetMapping("/permissoes/{cursoId}")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    public ResponseEntity<List<PermissaoCursoDTO>> getAllUsuarioByCurso(@PathVariable Long cursoId, @AuthenticationPrincipal Usuario userDetails) {
+        Usuario usuario = usuarioService.getUsuarioByEmail(userDetails.getUsername());
+        List<PermissaoCursoDTO> permissaoCursoDTO = cursoService.getAllUsuarioByCurso(cursoId, usuario.getEmail());
+        return ResponseEntity.ok(permissaoCursoDTO);
+    }
+
     
     @GetMapping("/usuarios")
     @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
@@ -76,11 +85,39 @@ public class CursoController {
         return ResponseEntity.ok(cursoAtualizado); // Retorna 200 OK com o curso atualizado
     }
 
+    // Endpoint para atualizar um curso
+    @PutMapping("/{cursoId}/status")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<CursoDTO> atualizarStatusCurso(
+            @PathVariable Long cursoId,
+            @Validated @RequestBody CursoDTO cursoDTO) {
+        CursoDTO cursoAtualizado = cursoService.updateStatusCurso(cursoId, cursoDTO.ativo());
+        return ResponseEntity.ok(cursoAtualizado); // Retorna 200 OK com o curso atualizado
+    }
+
+    // Endpoint para excluir um curso
+    @PutMapping("/{cursoId}/usuarios/{usuarioId}")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE')")
+    public ResponseEntity<List<PermissaoCursoDTO>> adicionarUsuarioCurso(@PathVariable Long cursoId, 
+    @PathVariable Long usuarioId) {
+        List<PermissaoCursoDTO> permissaoCurso = cursoService.adicionarUsuarioCurso(cursoId, usuarioId);
+        return ResponseEntity.ok(permissaoCurso); // Retorna 204 No Content
+    }
+
     // Endpoint para excluir um curso
     @DeleteMapping("/{cursoId}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> excluirCurso(@PathVariable Long cursoId) {
         cursoService.excluirCurso(cursoId);
         return ResponseEntity.noContent().build(); // Retorna 204 No Content
+    }
+
+    // Endpoint para excluir um curso
+    @DeleteMapping("/{cursoId}/usuarios/{usuarioId}")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE')")
+    public ResponseEntity<List<PermissaoCursoDTO>> excluirUsuarioCurso(@PathVariable Long cursoId, 
+    @PathVariable Long usuarioId) {
+        List<PermissaoCursoDTO> permissaoCurso =  cursoService.removerUsuarioCurso(cursoId, usuarioId);
+        return ResponseEntity.ok(permissaoCurso); // Retorna 204 No Content
     }
 }

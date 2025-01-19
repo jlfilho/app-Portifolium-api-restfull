@@ -13,4 +13,6 @@ public interface CursoRepository extends JpaRepository<Curso, Long> {
     @Query("SELECT c FROM Curso c JOIN c.usuarios u WHERE u.id = :usuarioId")
     List<Curso> findCursosByUsuarioId(@Param("usuarioId") Long usuarioId);
 
+    
+
 }

@@ -29,11 +29,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Curso implements Serializable {
     private static final long serialVersionUID = 1L;
-     @Id
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(nullable = false, unique = true)
     private String nome;
+
+    private Boolean ativo = true;
 
     @JsonIgnoreProperties("curso")
     @OneToMany(mappedBy = "curso", cascade = CascadeType.ALL, orphanRemoval = true)

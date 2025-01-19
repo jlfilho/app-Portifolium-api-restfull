@@ -53,7 +53,7 @@ public class UsuarioService {
                                 .toList().get(0),
                         usuario.getCursos().stream()
                                 .map(curso -> new CursoDTO(
-                                        curso.getId(), curso.getNome()))
+                                        curso.getId(), curso.getNome(), curso.getAtivo()))
                                 .toList()))
                 .collect(Collectors.toList());
     }
@@ -184,7 +184,7 @@ public class UsuarioService {
 
         // Recupera os cursos associados ao usuário
         return usuario.getCursos().stream()
-                .map(curso -> new CursoDTO(curso.getId(), curso.getNome()))
+                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getAtivo()))
                 .collect(Collectors.toList());
     }
 
@@ -224,7 +224,7 @@ public class UsuarioService {
                         .findFirst()
                         .orElse("Sem Role"),
                 usuario.getCursos().stream()
-                        .map(curso -> new CursoDTO(curso.getId(), curso.getNome()))
+                        .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getAtivo()))
                         .toList());
     }
 

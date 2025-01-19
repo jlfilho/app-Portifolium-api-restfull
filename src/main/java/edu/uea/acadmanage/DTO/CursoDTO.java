@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 public record CursoDTO(
         Long id,
         @NotBlank(message = "O nome do curso não pode ser vazio.")
-        String nome
+        String nome,
+        Boolean ativo
 ) {}
 
