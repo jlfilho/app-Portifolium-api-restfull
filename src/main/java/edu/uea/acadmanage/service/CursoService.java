@@ -1,18 +1,22 @@
 package edu.uea.acadmanage.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import jakarta.transaction.Transactional;
+
 import edu.uea.acadmanage.DTO.CursoDTO;
 import edu.uea.acadmanage.DTO.PermissaoCursoDTO;
-import edu.uea.acadmanage.DTO.UsuarioDTO;
 import edu.uea.acadmanage.model.Curso;
 import edu.uea.acadmanage.model.Usuario;
 import edu.uea.acadmanage.repository.CursoRepository;
 import edu.uea.acadmanage.repository.UsuarioRepository;
+import edu.uea.acadmanage.service.exception.ConflitoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
 
 @Service
@@ -57,20 +61,48 @@ public class CursoService {
 
     // Método para buscar todos os usuários e suas permissões associados a um curso
     public List<PermissaoCursoDTO> getAllUsuarioByCurso(Long cursoId, String username) {
-        if (!verificarAcessoAoCurso(username, cursoId)) {
+        // Buscar usuário logado
+        Usuario usuarioLogado = usuarioRepository.findByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + username));
+        
+        // Verificar se é ADMINISTRADOR
+        boolean isAdmin = usuarioLogado.getRoles().stream()
+                .anyMatch(role -> role.getNome().equals("ROLE_ADMINISTRADOR"));
+        
+        // Se NÃO for admin, verificar se tem acesso ao curso
+        if (!isAdmin && !verificarAcessoAoCurso(username, cursoId)) {
             throw new RecursoNaoEncontradoException("Usuário não tem permissão para acessar este curso: " + cursoId);
         }
 
+        // Buscar o curso
         Curso curso = cursoRepository.findById(cursoId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
 
+        // Retornar usuários do curso com tratamento seguro de roles
         return curso.getUsuarios().stream()
-        .map(usuario -> new PermissaoCursoDTO(curso.getId(), usuario.getId(), usuario.getPessoa().getNome(), usuario.getRoles().iterator().next().getNome()))
-        .toList();
+                .map(usuario -> new PermissaoCursoDTO(
+                        curso.getId(), 
+                        usuario.getId(), 
+                        usuario.getPessoa().getNome(), 
+                        getPrimaryRole(usuario)))
+                .toList();
+    }
+    
+    // Método auxiliar para obter a role principal do usuário de forma segura
+    private String getPrimaryRole(Usuario usuario) {
+        return usuario.getRoles().stream()
+                .map(role -> role.getNome())
+                .findFirst()
+                .orElse("SEM_ROLE");
     }
 
 
     public CursoDTO saveCurso(CursoDTO cursoDTO, Usuario usuario) {
+        // Validar que o nome não seja nulo ou vazio
+        if (cursoDTO.nome() == null || cursoDTO.nome().trim().isEmpty()) {
+            throw new IllegalArgumentException("O nome do curso é obrigatório");
+        }
+        
         // Criar uma entidade Curso a partir do DTO
         Curso novoCurso = new Curso();
         novoCurso.setNome(cursoDTO.nome());
@@ -87,6 +119,11 @@ public class CursoService {
 
     // Método para atualizar um curso
     public CursoDTO updateCurso(Long cursoId, CursoDTO cursoDTO) {
+        // Validar que o nome não seja nulo ou vazio
+        if (cursoDTO.nome() == null || cursoDTO.nome().trim().isEmpty()) {
+            throw new IllegalArgumentException("O nome do curso é obrigatório");
+        }
+        
         Curso cursoExistente = cursoRepository.findById(cursoId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
         // Atualizando os campos permitidos
@@ -97,36 +134,85 @@ public class CursoService {
         return new CursoDTO(cursoAtualizado.getId(), cursoAtualizado.getNome(), cursoAtualizado.getAtivo());
     }
 
-    // Método para atualizar usuarios de um curso
+    // Método para adicionar usuário a um curso
+    @Transactional
     public List<PermissaoCursoDTO> adicionarUsuarioCurso(Long cursoId, Long usuarioId) {
+        // Buscar curso
         Curso cursoExistente = cursoRepository.findById(cursoId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
+        
+        // Buscar usuário
         Usuario usuarioExistente = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado com o ID: " + usuarioId));
-        // Atualizando os campos permitidos
+        
+        // Verificar se o usuário já está associado ao curso
+        if (cursoExistente.getUsuarios().contains(usuarioExistente)) {
+            throw new ConflitoException("O usuário já está associado a este curso.");
+        }
+        
+        // Adicionar usuário ao curso (lado owner)
         cursoExistente.getUsuarios().add(usuarioExistente);
-        // Salvando no banco
-        Curso cursoAtualizado = cursoRepository.save(cursoExistente);
-        return cursoAtualizado.getUsuarios().stream()
-                .map(usuario -> new PermissaoCursoDTO(cursoAtualizado.getId(), usuario.getId(), usuario.getPessoa().getNome(), usuario.getRoles().iterator().next().getNome()))
+        
+        // Adicionar curso ao usuário (lado inverse) - IMPORTANTE para relacionamento bidirecional
+        if (!usuarioExistente.getCursos().contains(cursoExistente)) {
+            usuarioExistente.getCursos().add(cursoExistente);
+        }
+        
+        // Salvar ambos os lados do relacionamento
+        cursoRepository.save(cursoExistente);
+        usuarioRepository.save(usuarioExistente);
+        
+        // Retornar lista atualizada de usuários do curso
+        return cursoExistente.getUsuarios().stream()
+                .map(usuario -> new PermissaoCursoDTO(
+                    cursoExistente.getId(), 
+                    usuario.getId(), 
+                    usuario.getPessoa().getNome(), 
+                    usuario.getRoles().iterator().next().getNome()))
                 .toList();
     }
 
-    // Método para atualizar um curso
+    // Método para remover usuário de um curso
+    @Transactional
     public List<PermissaoCursoDTO> removerUsuarioCurso(Long cursoId, Long usuarioId) {
+        // Buscar curso
         Curso cursoExistente = cursoRepository.findById(cursoId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
+        
+        // Buscar usuário
         Usuario usuarioExistente = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado com o ID: " + usuarioId));
-        if(usuarioExistente.getRoles().iterator().next().getNome().equals("ROLE_ADMINISTRADOR")) {
-            throw new RecursoNaoEncontradoException("Usuário administrdor não pode ser removido.");
+        
+        // Verificar se o usuário é ADMINISTRADOR (não pode ser removido)
+        boolean isAdmin = usuarioExistente.getRoles().stream()
+                .anyMatch(role -> role.getNome().equals("ROLE_ADMINISTRADOR"));
+        
+        if (isAdmin) {
+            throw new ConflitoException("Usuário administrador não pode ser removido do curso.");
         }
-        // Atualizando os campos permitidos
-        cursoExistente.getUsuarios().removeIf(usuario -> usuario.getId().equals(usuarioId));
-        // Salvando no banco
-        Curso cursoAtualizado = cursoRepository.save(cursoExistente);
-        return cursoAtualizado.getUsuarios().stream()
-                .map(usuario -> new PermissaoCursoDTO(cursoExistente.getId(), usuario.getId(), usuario.getPessoa().getNome(), usuario.getRoles().iterator().next().getNome()))
+        
+        // Verificar se o usuário está realmente associado ao curso
+        if (!cursoExistente.getUsuarios().contains(usuarioExistente)) {
+            throw new ConflitoException("O usuário não está associado a este curso.");
+        }
+        
+        // Remover usuário do curso (lado owner)
+        cursoExistente.getUsuarios().remove(usuarioExistente);
+        
+        // Remover curso do usuário (lado inverse) - IMPORTANTE para relacionamento bidirecional
+        usuarioExistente.getCursos().remove(cursoExistente);
+        
+        // Salvar ambos os lados do relacionamento
+        cursoRepository.save(cursoExistente);
+        usuarioRepository.save(usuarioExistente);
+        
+        // Retornar lista atualizada de usuários do curso
+        return cursoExistente.getUsuarios().stream()
+                .map(usuario -> new PermissaoCursoDTO(
+                    cursoExistente.getId(), 
+                    usuario.getId(), 
+                    usuario.getPessoa().getNome(), 
+                    usuario.getRoles().iterator().next().getNome()))
                 .toList();
     }
 
@@ -142,11 +228,31 @@ public class CursoService {
     }
 
     // Método para excluir um curso
+    @Transactional
     public void excluirCurso(Long cursoId) {
-        if (!cursoRepository.existsById(cursoId)) {
-            throw new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId);
+        // Verificar se o curso existe
+        Curso curso = cursoRepository.findById(cursoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
+        
+        // Verificar se o curso tem atividades associadas
+        if (curso.getAtividades() != null && !curso.getAtividades().isEmpty()) {
+            throw new ConflitoException("Não é possível excluir o curso. Existem " + 
+                curso.getAtividades().size() + " atividade(s) associada(s) a este curso.");
         }
-        cursoRepository.deleteById(cursoId);
+        
+        // Remover associações com usuários antes de deletar
+        List<Usuario> usuariosAssociados = new ArrayList<>(curso.getUsuarios());
+        for (Usuario usuario : usuariosAssociados) {
+            usuario.getCursos().remove(curso);
+        }
+        curso.getUsuarios().clear();
+        
+        // Tentar deletar o curso
+        try {
+            cursoRepository.delete(curso);
+        } catch (DataIntegrityViolationException e) {
+            throw new ConflitoException("Não é possível excluir o curso. Existem registros dependentes associados.");
+        }
     }
 
     // Método para verificar se um curso existe    

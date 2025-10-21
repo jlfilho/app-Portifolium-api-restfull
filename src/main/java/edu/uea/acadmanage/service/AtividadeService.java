@@ -5,12 +5,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,10 +22,15 @@ import edu.uea.acadmanage.DTO.AtividadeFiltroDTO;
 import edu.uea.acadmanage.DTO.PessoaPapelDTO;
 import edu.uea.acadmanage.config.FileStorageProperties;
 import edu.uea.acadmanage.model.Atividade;
+import edu.uea.acadmanage.model.AtividadePessoaId;
+import edu.uea.acadmanage.model.AtividadePessoaPapel;
 import edu.uea.acadmanage.model.Curso;
 import edu.uea.acadmanage.model.FonteFinanciadora;
+import edu.uea.acadmanage.model.Papel;
+import edu.uea.acadmanage.model.Pessoa;
 import edu.uea.acadmanage.model.Usuario;
 import edu.uea.acadmanage.repository.AtividadeRepository;
+import edu.uea.acadmanage.repository.PessoaRepository;
 import edu.uea.acadmanage.repository.UsuarioRepository;
 import edu.uea.acadmanage.service.exception.AcessoNegadoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
@@ -34,6 +42,8 @@ public class AtividadeService {
     private final UsuarioRepository usuarioRepository;
     private final CursoService cursoService;
     private final CategoriaService categoriaService;
+    private final FonteFinanciadoraService fonteFinanciadoraService;
+    private final PessoaRepository pessoaRepository;
     private final Path fileStorageLocation;
     private final String baseStorageLocation;
 
@@ -42,11 +52,15 @@ public class AtividadeService {
             UsuarioRepository usuarioRepository,
             CursoService cursoService,
             CategoriaService categoriaService,
+            FonteFinanciadoraService fonteFinanciadoraService,
+            PessoaRepository pessoaRepository,
             FileStorageProperties fileStorageProperties) throws IOException {
         this.atividadeRepository = atividadeRepository;
         this.usuarioRepository = usuarioRepository;
         this.cursoService = cursoService;
         this.categoriaService = categoriaService;
+        this.fonteFinanciadoraService = fonteFinanciadoraService;
+        this.pessoaRepository = pessoaRepository;
         this.baseStorageLocation = "/fotos-capa";
         this.fileStorageLocation = Paths.get(fileStorageProperties.getStorageLocation() + this.baseStorageLocation)
                 .toAbsolutePath().normalize();
@@ -93,10 +107,16 @@ public class AtividadeService {
 
     // Método para pesquisar atividades por filtros
     public List<AtividadeDTO> getAtividadesPorFiltros(AtividadeFiltroDTO filtro) {
-        // Verificar se o curso existe
-        if (!categoriaService.verificarSeCategoriaExiste(filtro.cursoId())) {
+        // Validar se o curso existe (apenas se cursoId foi fornecido)
+        if (filtro.cursoId() != null && !cursoService.verificarSeCursoExiste(filtro.cursoId())) {
             throw new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + filtro.cursoId());
         }
+        
+        // Validar se a categoria existe (apenas se categoriaId foi fornecido)
+        if (filtro.categoriaId() != null && !categoriaService.verificarSeCategoriaExiste(filtro.categoriaId())) {
+            throw new RecursoNaoEncontradoException("Categoria não encontrada com o ID: " + filtro.categoriaId());
+        }
+        
         // Buscar atividades usando filtros no repositório
         List<Atividade> atividades = atividadeRepository.findByFiltros(
                 filtro.cursoId(), filtro.categoriaId(), filtro.nome(), filtro.dataInicio(), filtro.dataFim(),
@@ -106,6 +126,27 @@ public class AtividadeService {
         return atividades.stream()
                 .map(this::toAtividadeDTO)
                 .collect(Collectors.toList());
+    }
+
+    // Método para pesquisar atividades por filtros com paginação
+    public Page<AtividadeDTO> getAtividadesPorFiltrosPaginado(AtividadeFiltroDTO filtro, Pageable pageable) {
+        // Validar se o curso existe (apenas se cursoId foi fornecido)
+        if (filtro.cursoId() != null && !cursoService.verificarSeCursoExiste(filtro.cursoId())) {
+            throw new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + filtro.cursoId());
+        }
+        
+        // Validar se a categoria existe (apenas se categoriaId foi fornecido)
+        if (filtro.categoriaId() != null && !categoriaService.verificarSeCategoriaExiste(filtro.categoriaId())) {
+            throw new RecursoNaoEncontradoException("Categoria não encontrada com o ID: " + filtro.categoriaId());
+        }
+        
+        // Buscar atividades usando filtros no repositório com paginação
+        Page<Atividade> atividades = atividadeRepository.findByFiltrosPaginado(
+                filtro.cursoId(), filtro.categoriaId(), filtro.nome(), filtro.dataInicio(), filtro.dataFim(),
+                filtro.statusPublicacao(), pageable);
+
+        // Converter entidades em DTOs
+        return atividades.map(this::toAtividadeDTO);
     }
 
     // Método para salvar uma atividade
@@ -133,8 +174,14 @@ public class AtividadeService {
         Atividade novaAtividade = toAtividade(atividadeDTO);
         novaAtividade.setFotoCapa(null);
 
-        // Salvar no banco
+        // Salvar no banco primeiro para gerar o ID
         Atividade atividadeSalva = atividadeRepository.save(novaAtividade);
+
+        // Sincronizar integrantes (pessoas) da atividade (precisa do ID gerado)
+        sincronizarIntegrantes(atividadeSalva, atividadeDTO.integrantes());
+
+        // Salvar novamente com os integrantes
+        atividadeSalva = atividadeRepository.save(atividadeSalva);
 
         // Retornar o DTO da atividade salva
         return toAtividadeDTO(atividadeSalva);
@@ -224,9 +271,19 @@ public class AtividadeService {
         atividadeExistente.setDataRealizacao(atividadeDTO.dataRealizacao());
         atividadeExistente.setCurso(atividadeDTO.curso());
         atividadeExistente.setCategoria(atividadeDTO.categoria());
-        atividadeExistente.setFontesFinanciadora(atividadeDTO.fontesFinanciadora().stream()
-                .map(fonte -> new FonteFinanciadora(fonte.getId()))
-                .collect(Collectors.toList()));
+        
+        // Buscar fontes financiadoras do banco para associá-las corretamente (entidades gerenciadas)
+        if (atividadeDTO.fontesFinanciadora() != null && !atividadeDTO.fontesFinanciadora().isEmpty()) {
+            List<FonteFinanciadora> fontesGerenciadas = atividadeDTO.fontesFinanciadora().stream()
+                    .map(fonte -> fonteFinanciadoraService.recuperarFinanciadoraPorId(fonte.getId()))
+                    .collect(Collectors.toList());
+            atividadeExistente.setFontesFinanciadora(fontesGerenciadas);
+        } else {
+            atividadeExistente.setFontesFinanciadora(new ArrayList<>());
+        }
+
+        // Sincronizar integrantes (pessoas) da atividade
+        sincronizarIntegrantes(atividadeExistente, atividadeDTO.integrantes());
 
         // Salvar no banco
         Atividade atividadeAtualizada = atividadeRepository.save(atividadeExistente);
@@ -308,10 +365,51 @@ public class AtividadeService {
         atividade.setDataRealizacao(atividadeDTO.dataRealizacao());
         atividade.setCurso(atividadeDTO.curso());
         atividade.setCategoria(atividadeDTO.categoria());
-        atividade.setFontesFinanciadora(atividadeDTO.fontesFinanciadora().stream()
-                .map(fonte -> new FonteFinanciadora(fonte.getId()))
-                .collect(Collectors.toList()));
+        
+        // Buscar fontes financiadoras do banco para associá-las corretamente (entidades gerenciadas)
+        if (atividadeDTO.fontesFinanciadora() != null && !atividadeDTO.fontesFinanciadora().isEmpty()) {
+            List<FonteFinanciadora> fontesGerenciadas = atividadeDTO.fontesFinanciadora().stream()
+                    .map(fonte -> fonteFinanciadoraService.recuperarFinanciadoraPorId(fonte.getId()))
+                    .collect(Collectors.toList());
+            atividade.setFontesFinanciadora(fontesGerenciadas);
+        } else {
+            atividade.setFontesFinanciadora(new ArrayList<>());
+        }
+        
         return atividade;
+    }
+
+    // Método privado para sincronizar integrantes (adicionar/remover/atualizar)
+    private void sincronizarIntegrantes(Atividade atividade, List<PessoaPapelDTO> integrantesDTO) {
+        if (integrantesDTO == null) {
+            // Se não foi fornecida lista de integrantes, não faz nada (mantém os existentes)
+            return;
+        }
+
+        // Obter lista atual de pessoas na atividade
+        List<AtividadePessoaPapel> pessoasExistentes = atividade.getPessoas();
+        
+        // Limpar a lista existente (orphanRemoval cuidará da remoção no banco)
+        pessoasExistentes.clear();
+        
+        // Adicionar os novos integrantes
+        for (PessoaPapelDTO integranteDTO : integrantesDTO) {
+            // Buscar a pessoa no banco
+            Pessoa pessoa = pessoaRepository.findById(integranteDTO.id())
+                    .orElseThrow(() -> new RecursoNaoEncontradoException(
+                            "Pessoa não encontrada com o ID: " + integranteDTO.id()));
+            
+            // Criar a associação AtividadePessoaPapel
+            AtividadePessoaId id = new AtividadePessoaId(atividade.getId(), pessoa.getId());
+            AtividadePessoaPapel associacao = new AtividadePessoaPapel();
+            associacao.setId(id);
+            associacao.setAtividade(atividade);
+            associacao.setPessoa(pessoa);
+            associacao.setPapel(Papel.valueOf(integranteDTO.papel()));
+            
+            // Adicionar à lista
+            pessoasExistentes.add(associacao);
+        }
     }
 
     private Boolean validarImagem(MultipartFile file) {

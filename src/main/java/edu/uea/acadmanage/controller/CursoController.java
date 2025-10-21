@@ -43,12 +43,14 @@ public class CursoController {
         return ResponseEntity.ok(cursos); // Retorna 200 OK com a lista de cursos
     }
 
+    // Endpoint para buscar um curso por ID
     @GetMapping("/{cursoId}")
     public ResponseEntity<CursoDTO> getCursoById(@PathVariable Long cursoId) {
         CursoDTO curso = cursoService.getCursoById(cursoId);
         return ResponseEntity.ok(curso); // 200 OK se encontrado
     }
 
+    // Endpoint para buscar todos os usuários e suas permissões associados a um curso
     @GetMapping("/permissoes/{cursoId}")
     @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
     public ResponseEntity<List<PermissaoCursoDTO>> getAllUsuarioByCurso(@PathVariable Long cursoId, @AuthenticationPrincipal Usuario userDetails) {
@@ -58,6 +60,7 @@ public class CursoController {
     }
 
     
+    // Endpoint para buscar todos os cursos associados a um usuário
     @GetMapping("/usuarios")
     @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
     public List<CursoDTO> getCursosByUsuarioId(@AuthenticationPrincipal Usuario userDetails) {
@@ -66,7 +69,7 @@ public class CursoController {
         return cursoService.getCursosByUsuarioId(usuario.getId());
     }
 
-    // Endpoint para salvar um curso
+    // Endpoint para criar um novo curso
     @PostMapping
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<CursoDTO> salvarCurso(@Validated @RequestBody CursoDTO cursoDTO, @AuthenticationPrincipal Usuario userDetails) {
@@ -75,7 +78,7 @@ public class CursoController {
         return ResponseEntity.status(201).body(cursoSalvo); // 201 Created
     }
 
-    // Endpoint para atualizar um curso
+    // Endpoint para atualizar os dados de um curso
     @PutMapping("/{cursoId}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<CursoDTO> atualizarCurso(
@@ -85,7 +88,7 @@ public class CursoController {
         return ResponseEntity.ok(cursoAtualizado); // Retorna 200 OK com o curso atualizado
     }
 
-    // Endpoint para atualizar um curso
+    // Endpoint para atualizar o status de um curso
     @PutMapping("/{cursoId}/status")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<CursoDTO> atualizarStatusCurso(
@@ -95,7 +98,7 @@ public class CursoController {
         return ResponseEntity.ok(cursoAtualizado); // Retorna 200 OK com o curso atualizado
     }
 
-    // Endpoint para excluir um curso
+    // Endpoint para adicionar um usuário a um curso
     @PutMapping("/{cursoId}/usuarios/{usuarioId}")
     @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE')")
     public ResponseEntity<List<PermissaoCursoDTO>> adicionarUsuarioCurso(@PathVariable Long cursoId, 
@@ -112,7 +115,7 @@ public class CursoController {
         return ResponseEntity.noContent().build(); // Retorna 204 No Content
     }
 
-    // Endpoint para excluir um curso
+    // Endpoint para excluirUsuarioCurso de um curso
     @DeleteMapping("/{cursoId}/usuarios/{usuarioId}")
     @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE')")
     public ResponseEntity<List<PermissaoCursoDTO>> excluirUsuarioCurso(@PathVariable Long cursoId, 

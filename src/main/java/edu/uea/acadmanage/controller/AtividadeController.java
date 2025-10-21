@@ -4,6 +4,10 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -63,20 +67,28 @@ public class AtividadeController {
     }
 
     // Endpoint para pesquisar atividades com múltiplos filtros, incluindo
-    // statusPublicacao
+    // statusPublicacao (com paginação)
     @GetMapping("/filtros")
-    public ResponseEntity<List<AtividadeDTO>> getAtividadesPorFiltros(
-            @Valid @RequestParam(required = false) Long cursoId,
+    public ResponseEntity<Page<AtividadeDTO>> getAtividadesPorFiltros(
+            @RequestParam(required = false) Long cursoId,
             @RequestParam(required = false) Long categoriaId,
             @RequestParam(required = false) String nome,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim,
-            @RequestParam(required = false) Boolean statusPublicacao) {
+            @RequestParam(required = false) Boolean statusPublicacao,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDirection) {
 
         AtividadeFiltroDTO filtros = new AtividadeFiltroDTO(cursoId, categoriaId, nome, dataInicio, dataFim,
                 statusPublicacao);
 
-        List<AtividadeDTO> atividades = atividadeService.getAtividadesPorFiltros(filtros);
+        // Configurar paginação e ordenação
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+        Page<AtividadeDTO> atividades = atividadeService.getAtividadesPorFiltrosPaginado(filtros, pageable);
 
         return atividades.isEmpty()
                 ? ResponseEntity.noContent().build() // 204 No Content

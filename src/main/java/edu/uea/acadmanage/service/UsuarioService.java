@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -32,18 +34,20 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
     private final RoleService roleService;
     private final CursoRepository cursoRepository;
+    private final edu.uea.acadmanage.repository.PessoaRepository pessoaRepository;
 
     public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, RoleService roleService,
-            CursoRepository cursoRepository) {
+            CursoRepository cursoRepository, edu.uea.acadmanage.repository.PessoaRepository pessoaRepository) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleService = roleService;
         this.cursoRepository = cursoRepository;
+        this.pessoaRepository = pessoaRepository;
     }
 
 
 
-     // Listar todos os usuários
+     // Listar todos os usuários (sem paginação - mantido para compatibilidade)
     public List<UsuarioDTO> getAllUsuarios() {
         return usuarioRepository.findAll().stream()
                 .map(usuario -> new UsuarioDTO(usuario.getId(), usuario.getPessoa().getNome(), usuario.getPessoa().getCpf(), usuario.getEmail(),
@@ -58,6 +62,32 @@ public class UsuarioService {
                 .collect(Collectors.toList());
     }
 
+    // Listar usuários com paginação
+    public Page<UsuarioDTO> getAllUsuariosPaginados(Pageable pageable) {
+        return usuarioRepository.findAll(pageable)
+                .map(usuario -> new UsuarioDTO(
+                        usuario.getId(), 
+                        usuario.getPessoa().getNome(), 
+                        usuario.getPessoa().getCpf(), 
+                        usuario.getEmail(),
+                        null,
+                        usuario.getRoles().stream()
+                                .map(r -> r.getNome())
+                                .toList().get(0),
+                        usuario.getCursos().stream()
+                                .map(curso -> new CursoDTO(
+                                        curso.getId(), curso.getNome(), curso.getAtivo()))
+                                .toList()));
+    }
+
+    // Buscar um único usuário por ID
+    public UsuarioDTO getUsuarioById(Long usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado com ID: " + usuarioId));
+        
+        return toUsuarioDTO(usuario);
+    }
+
     // Método para salvar um usuário
     @Transactional
     public UsuarioDTO save(UsuarioDTO usuario) {
@@ -66,7 +96,12 @@ public class UsuarioService {
 
         // Verificar se o usuário já existe
         if (usuarioRepository.existsByEmail(usuario.email())) {
-            throw new AcessoNegadoException("Usuário já existe: " + usuario.email());
+            throw new AcessoNegadoException("Usuário já existe com email: " + usuario.email());
+        }
+
+        // Verificar se CPF já existe
+        if (usuario.cpf() != null && !usuario.cpf().isEmpty() && pessoaRepository.existsByCpf(usuario.cpf())) {
+            throw new AcessoNegadoException("CPF já cadastrado: " + usuario.cpf());
         }
 
         // Buscar cursos associados
@@ -99,7 +134,25 @@ public class UsuarioService {
 
         // Atualizar informações básicas
         usuarioExistente.getPessoa().setNome(usuario.nome());
-        usuarioExistente.setEmail(usuario.email());
+        
+        // Atualizar CPF se fornecido e diferente do atual
+        if (usuario.cpf() != null && !usuario.cpf().isEmpty()) {
+            if (!usuario.cpf().equals(usuarioExistente.getPessoa().getCpf())) {
+                // Verificar se o novo CPF já existe em outra pessoa
+                if (pessoaRepository.existsByCpf(usuario.cpf())) {
+                    throw new AcessoNegadoException("CPF já cadastrado: " + usuario.cpf());
+                }
+                usuarioExistente.getPessoa().setCpf(usuario.cpf());
+            }
+        }
+
+        // Atualizar email se diferente do atual
+        if (!usuario.email().equals(usuarioExistente.getEmail())) {
+            if (usuarioRepository.existsByEmail(usuario.email())) {
+                throw new AcessoNegadoException("Email já cadastrado: " + usuario.email());
+            }
+            usuarioExistente.setEmail(usuario.email());
+        }
 
         // Atualizar senha, se fornecida
         if (usuario.senha() != null && !usuario.senha().isEmpty()) {
@@ -111,10 +164,19 @@ public class UsuarioService {
         usuarioExistente.getRoles().clear();
         usuarioExistente.getRoles().add(role);
 
-        // Atualizar cursos associados
+        // Atualizar cursos associados - remover associações antigas primeiro
+        List<Curso> cursosAntigos = new ArrayList<>(usuarioExistente.getCursos());
+        cursosAntigos.forEach(curso -> curso.getUsuarios().remove(usuarioExistente));
+        usuarioExistente.getCursos().clear();
+
+        // Adicionar novos cursos
         List<Curso> cursosAtualizados = fetchAssociatedCursos(usuario);
-        cursosAtualizados.forEach(curso -> curso.getUsuarios().add(usuarioExistente));
-        usuarioExistente.setCursos(new ArrayList<>(cursosAtualizados)); // Evitar coleção imutável
+        cursosAtualizados.forEach(curso -> {
+            if (!curso.getUsuarios().contains(usuarioExistente)) {
+                curso.getUsuarios().add(usuarioExistente);
+            }
+        });
+        usuarioExistente.setCursos(new ArrayList<>(cursosAtualizados));
 
         // Salvar usuário atualizado no banco de dados
         Usuario usuarioAtualizado = usuarioRepository.save(usuarioExistente);
@@ -125,10 +187,30 @@ public class UsuarioService {
 
     @Transactional
     public void deleteUsuario(Long usuarioId) {
-        if (!usuarioRepository.existsById(usuarioId)) {
-            throw new UsernameNotFoundException("Usuário não encontrado");
+        // Buscar o usuário
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado com ID: " + usuarioId));
+        
+        // Remover associações com cursos (lado inverso do relacionamento)
+        // Criar uma cópia da lista para evitar ConcurrentModificationException
+        List<Curso> cursosAssociados = new ArrayList<>(usuario.getCursos());
+        for (Curso curso : cursosAssociados) {
+            curso.getUsuarios().remove(usuario);
         }
-        usuarioRepository.deleteById(usuarioId);
+        
+        // Limpar a lista de cursos do usuário
+        usuario.getCursos().clear();
+        
+        // Limpar a lista de roles
+        usuario.getRoles().clear();
+        
+        // Se a pessoa existir, limpar as atividades
+        if (usuario.getPessoa() != null) {
+            usuario.getPessoa().getAtividades().clear();
+        }
+        
+        // Agora podemos deletar o usuário (Pessoa será deletada em cascade)
+        usuarioRepository.delete(usuario);
     }
     
     @Transactional

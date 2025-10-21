@@ -32,10 +32,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Data
-@EqualsAndHashCode(exclude = "roles")
+@EqualsAndHashCode(exclude = {"roles", "cursos"})
+@ToString(exclude = {"roles", "cursos", "pessoa"})
 @AllArgsConstructor
 @NoArgsConstructor
 public class Usuario implements UserDetails {    
@@ -44,7 +46,7 @@ public class Usuario implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(cascade = CascadeType.MERGE)
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "pessoa_id", referencedColumnName = "id")
     private Pessoa pessoa;
     

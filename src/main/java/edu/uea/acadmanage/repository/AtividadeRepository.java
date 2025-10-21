@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -64,5 +66,23 @@ public interface AtividadeRepository extends JpaRepository<Atividade, Long> {
       @Param("dataInicio") LocalDate dataInicio,
       @Param("dataFim") LocalDate dataFim,
       @Param("statusPublicacao") Boolean statusPublicacao);
+
+  @Query("""
+          SELECT a FROM Atividade a
+          WHERE (:cursoId IS NULL OR a.curso.id = :cursoId)
+            AND (:categoriaId IS NULL OR a.categoria.id = :categoriaId)
+            AND (:nome IS NULL OR LOWER(a.nome) LIKE LOWER(CONCAT('%', :nome, '%')))
+            AND (:dataInicio IS NULL OR a.dataRealizacao >= :dataInicio)
+            AND (:dataFim IS NULL OR a.dataRealizacao <= :dataFim)
+            AND (:statusPublicacao IS NULL OR a.statusPublicacao = :statusPublicacao)
+      """)
+  Page<Atividade> findByFiltrosPaginado(
+      @Param("cursoId") Long cursoId,
+      @Param("categoriaId") Long categoriaId,
+      @Param("nome") String nome,
+      @Param("dataInicio") LocalDate dataInicio,
+      @Param("dataFim") LocalDate dataFim,
+      @Param("statusPublicacao") Boolean statusPublicacao,
+      Pageable pageable);
 
 }

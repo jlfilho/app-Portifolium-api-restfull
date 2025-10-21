@@ -1,0 +1,70 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "AcadManage Dashboard",
+    "tags": ["acadmanage", "spring-boot"],
+    "style": "dark",
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "HTTP Requests Total",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "http_server_requests_seconds_count",
+            "legendFormat": "Total Requests"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "displayMode": "list"
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "HTTP Response Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_server_requests_seconds_sum[5m]) / rate(http_server_requests_seconds_count[5m])",
+            "legendFormat": "Response Time"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "JVM Memory Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "jvm_memory_used_bytes",
+            "legendFormat": "Memory Used"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Database Connections",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "hikaricp_connections_active",
+            "legendFormat": "Active Connections"
+          }
+        ]
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "10s"
+  }
+}

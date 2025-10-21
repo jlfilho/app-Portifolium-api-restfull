@@ -124,6 +124,7 @@ A documentação da API pode ser acessada através do Swagger:
 
 ## Execução do Projeto
 
+### Opção 1: Execução Local
 1. Clone o repositório.
 2. Configure o arquivo `application.properties` conforme seu ambiente.
 3. Execute o projeto usando o comando:
@@ -131,6 +132,28 @@ A documentação da API pode ser acessada através do Swagger:
    ./mvnw spring-boot:run
    ```
 4. Acesse a aplicação em `http://localhost:8080`.
+
+### Opção 2: Execução com Docker
+1. Clone o repositório.
+2. Execute o ambiente completo com:
+   ```bash
+   docker-compose up -d
+   ```
+3. Acesse:
+   - **Aplicação:** http://localhost:8080
+   - **Grafana:** http://localhost:3000 (admin/admin)
+   - **Prometheus:** http://localhost:9090
+   - **H2 Console:** http://localhost:8080/h2-console
+
+### Opção 3: Deploy Automatizado
+Use o script de deploy:
+```bash
+# Deploy em staging
+./scripts/deploy.sh staging
+
+# Deploy em produção
+./scripts/deploy.sh production
+```
 
 ## Estrutura de Pastas
 
@@ -144,12 +167,50 @@ acadmanage/
 │   │   │       ├── model/
 │   │   │       ├── repository/
 │   │   │       ├── service/
-│   │   │       └── security/
+│   │   │       ├── security/
+│   │   │       └── config/
 │   └── resources/
 │       ├── application.properties
+│       ├── application-docker.properties
 │       └── data.sql
+├── monitoring/
+│   ├── prometheus.yml
+│   └── grafana/
+│       ├── dashboards/
+│       └── datasources/
+├── scripts/
+│   └── deploy.sh
+├── .github/
+│   └── workflows/
+├── Dockerfile
+├── docker-compose.yml
+├── docker-compose.staging.yml
 └── pom.xml
 ```
+
+## DevOps e Monitoramento
+
+### Docker
+- **Containerização:** Aplicação containerizada com Docker multi-stage build
+- **Orquestração:** Docker Compose para desenvolvimento e staging
+- **Segurança:** Usuário não-root e health checks nativos
+
+### CI/CD Pipeline
+- **GitHub Actions:** Pipeline automatizado para build, teste e deploy
+- **Segurança:** Scan de vulnerabilidades com Trivy
+- **Ambientes:** Deploy automático para staging e produção
+
+### Monitoramento
+- **Health Checks:** Spring Boot Actuator com endpoints de saúde
+- **Métricas:** Prometheus para coleta de métricas
+- **Visualização:** Grafana com dashboards personalizados
+- **Cache:** Redis para melhorar performance
+
+### Métricas Disponíveis
+- **Aplicação:** HTTP requests, response time, JVM memory
+- **Banco:** Conexões ativas, performance de queries
+- **Sistema:** CPU, memória, disco
+- **Customizadas:** Métricas de negócio específicas
 
 ## Contato
 Para dúvidas ou sugestões, entre em contato:

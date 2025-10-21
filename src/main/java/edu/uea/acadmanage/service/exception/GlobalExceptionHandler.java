@@ -39,7 +39,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleConflitoException(ConflitoException ex) {
         Map<String, String> error = new HashMap<>();
         error.put("error", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+        error.put("status", "CONFLICT");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -48,6 +49,22 @@ public class GlobalExceptionHandler {
         ex.getBindingResult().getFieldErrors().forEach(error -> 
             errors.put(error.getField(), error.getDefaultMessage()));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleGenericException(Exception ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", "Erro interno: " + ex.getMessage());
+        error.put("type", ex.getClass().getSimpleName());
+        ex.printStackTrace(); // Log para debug
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
     
 }

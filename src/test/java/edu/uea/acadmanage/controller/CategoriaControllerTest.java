@@ -72,11 +72,9 @@ class CategoriaControllerTest {
                                                                                    // exceções, se houver
                                 .build();
 
-                UserDetails mockUser = User.withUsername("admin@uea.edu.br")
-                                .password("admin123")
-                                .roles("ADMINISTRADOR")
-                                .build();
-                when(userDetailsService.loadUserByUsername("admin@uea.edu.br")).thenReturn(mockUser);
+                User mockUser = new User("admin@uea.edu.br", "admin123", 
+                                java.util.Collections.singletonList(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMINISTRADOR")));
+                when(userDetailsService.loadUserByUsername(eq("admin@uea.edu.br"))).thenReturn(mockUser);
         }
 
         /*

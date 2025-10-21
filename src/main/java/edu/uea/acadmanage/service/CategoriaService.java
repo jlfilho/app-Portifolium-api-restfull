@@ -3,6 +3,8 @@ package edu.uea.acadmanage.service;
 import java.util.List;
 import java.util.Objects;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import edu.uea.acadmanage.DTO.AtividadeDTO;
@@ -35,6 +37,14 @@ public class CategoriaService {
                                 categoria.getId(), 
                                 categoria.getNome()))
                         .toList();
+        }
+
+        // Listar categorias com paginação
+        public Page<CategoriaResumidaDTO> listarTodasCategoriasPaginadas(Pageable pageable) {
+                return categoriaRepository.findAll(pageable)
+                        .map(categoria -> new CategoriaResumidaDTO(
+                                categoria.getId(), 
+                                categoria.getNome()));
         }
 
         public CategoriaResumidaDTO recuperarCategoriaPorId(Long categoriaId) {

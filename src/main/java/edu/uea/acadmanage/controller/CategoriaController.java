@@ -2,6 +2,10 @@ package edu.uea.acadmanage.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -36,13 +40,19 @@ public class CategoriaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CategoriaResumidaDTO>> listarTodasCategorias() {
-        List<CategoriaResumidaDTO> categorias = categoriaService.listarTodasCategorias();
-
-        if (categorias.isEmpty()) {
-            return ResponseEntity.noContent().build(); // 204 No Content
-        }
-        return ResponseEntity.ok(categorias); // 200 OK com a lista de categorias
+    public ResponseEntity<Page<CategoriaResumidaDTO>> listarTodasCategorias(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "ASC") String direction) {
+        
+        Sort.Direction sortDirection = direction.equalsIgnoreCase("DESC") 
+            ? Sort.Direction.DESC 
+            : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+        
+        Page<CategoriaResumidaDTO> categorias = categoriaService.listarTodasCategoriasPaginadas(pageable);
+        return ResponseEntity.ok(categorias);
     }
 
     // Endpoint para consultar categorias de atividades por curso, com filtro opcional.

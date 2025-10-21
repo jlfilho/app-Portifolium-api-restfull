@@ -1,93 +1,188 @@
-body {
-    font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #6a11cb, #2575fc);
-    height: 100vh;
+/* Paleta de Cores da Aplicação AcadManage */
+:root {
+    --primary-color: #0D47A1;        /* Azul Escuro Acadêmico */
+    --primary-light: #1976D2;        /* Azul Médio */
+    --primary-dark: #01579B;         /* Azul Profundo */
+    --accent-color: #00897B;         /* Teal/Verde-Azulado */
+    --accent-light: #4DB6AC;         /* Teal Claro */
+    --background-gradient-start: #0D47A1;
+    --background-gradient-end: #00695C;
+    --text-primary: #212121;         /* Texto Principal */
+    --text-secondary: #757575;       /* Texto Secundário */
+    --error-color: #D32F2F;          /* Vermelho para erros */
+    --success-color: #388E3C;        /* Verde para sucesso */
+    --white: #FFFFFF;
+    --gray-light: #F5F5F5;
+    --gray-medium: #E0E0E0;
+    --shadow: rgba(0, 0, 0, 0.15);
+}
+
+* {
+    box-sizing: border-box;
     margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, var(--background-gradient-start), var(--background-gradient-end));
+    min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 20px;
 }
 
 form {
-    background: #fff;
-    padding: 30px 40px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    background: var(--white);
+    padding: 40px 50px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px var(--shadow);
     width: 100%;
-    max-width: 400px;
+    max-width: 420px;
     text-align: center;
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 h1 {
-    margin-bottom: 20px;
-    font-size: 24px;
-    color: #333;
+    margin-bottom: 30px;
+    font-size: 28px;
+    color: var(--primary-color);
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 1px;
+}
+
+h1::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 3px;
+    background: var(--accent-color);
+    margin: 10px auto 0;
 }
 
 label {
     display: block;
     margin-bottom: 8px;
-    color: #555;
+    color: var(--text-secondary);
     font-size: 14px;
     text-align: left;
+    font-weight: 500;
 }
 
 input[type="text"],
 input[type="password"] {
     width: 100%;
-    padding: 10px 15px;
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 14px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    border: 2px solid var(--gray-medium);
+    border-radius: 8px;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    background-color: var(--gray-light);
 }
 
 input[type="text"]:focus,
 input[type="password"]:focus {
-    border-color: #2575fc;
+    border-color: var(--primary-light);
+    background-color: var(--white);
     outline: none;
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+input[type="text"]::placeholder,
+input[type="password"]::placeholder {
+    color: #BDBDBD;
 }
 
 button {
-    background: #2575fc;
-    color: #fff;
-    padding: 10px 20px;
+    background: linear-gradient(135deg, var(--primary-light), var(--accent-color));
+    color: var(--white);
+    padding: 14px 32px;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     font-size: 16px;
+    font-weight: 600;
     cursor: pointer;
     text-transform: uppercase;
-    transition: background 0.3s ease;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    width: 100%;
+    margin-top: 10px;
+    box-shadow: 0 4px 12px rgba(13, 71, 161, 0.3);
 }
 
 button:hover {
-    background: #1a5bb8;
+    background: linear-gradient(135deg, var(--primary-dark), var(--accent-color));
+    box-shadow: 0 6px 16px rgba(13, 71, 161, 0.4);
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(13, 71, 161, 0.3);
 }
 
 p {
     font-size: 14px;
-    color: #555;
+    color: var(--text-secondary);
+    margin-top: 20px;
 }
 
 p.error {
-    color: red;
+    background-color: #FFEBEE;
+    color: var(--error-color);
     font-size: 14px;
-    margin-top: -10px;
-    margin-bottom: 15px;
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 20px;
+    border-left: 4px solid var(--error-color);
+    text-align: left;
 }
 
 p.success {
-    color: green;
+    background-color: #E8F5E9;
+    color: var(--success-color);
     font-size: 14px;
-    margin-top: -10px;
-    margin-bottom: 15px;
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 20px;
+    border-left: 4px solid var(--success-color);
+    text-align: left;
+}
+
+/* Logo ou ícone (se necessário adicionar depois) */
+form::before {
+    content: '🎓';
+    font-size: 48px;
+    display: block;
+    margin-bottom: 20px;
 }
 
 @media (max-width: 600px) {
     form {
-        padding: 20px;
-        width: 90%;
+        padding: 30px 25px;
+        width: 95%;
+    }
+    
+    h1 {
+        font-size: 24px;
+    }
+    
+    button {
+        padding: 12px 24px;
+        font-size: 15px;
     }
 }

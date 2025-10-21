@@ -1,0 +1,55 @@
+# Multi-stage build para otimizar tamanho da imagem
+FROM maven:3.9.6-eclipse-temurin-17 AS build
+
+# Definir diretório de trabalho
+WORKDIR /app
+
+# Copiar arquivos de dependências primeiro (para melhor cache)
+COPY pom.xml .
+COPY .mvn/ .mvn/
+COPY mvnw .
+COPY mvnw.cmd .
+
+# Dar permissão de execução ao mvnw e converter para Unix
+RUN chmod +x mvnw && \
+    dos2unix mvnw && \
+    dos2unix .mvn/wrapper/maven-wrapper.properties
+
+# Baixar dependências
+RUN ./mvnw dependency:go-offline -B
+
+# Copiar código fonte
+COPY src/ src/
+
+# Build da aplicação
+RUN ./mvnw clean package -DskipTests
+
+# Runtime stage
+FROM eclipse-temurin:17-jre-alpine
+
+# Criar usuário não-root para segurança
+RUN addgroup -g 1001 -S appgroup && \
+    adduser -u 1001 -S appuser -G appgroup
+
+# Definir diretório de trabalho
+WORKDIR /app
+
+# Copiar JAR do stage de build
+COPY --from=build /app/target/*.jar app.jar
+
+# Criar diretório para arquivos
+RUN mkdir -p /acadmanage-files && \
+    chown -R appuser:appgroup /acadmanage-files
+
+# Mudar para usuário não-root
+USER appuser
+
+# Expor porta
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
+
+# Comando para executar a aplicação
+ENTRYPOINT ["java", "-jar", "app.jar"]

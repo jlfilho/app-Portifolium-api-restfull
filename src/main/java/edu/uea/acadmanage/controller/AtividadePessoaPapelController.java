@@ -30,6 +30,7 @@ public class AtividadePessoaPapelController {
         this.atividadePessoaPapelService = atividadePessoaPapelService;
     }
 
+    // Método para associar uma pessoa a uma atividade
     @PostMapping("/{atividadeId}/pessoas/{pessoaId}")
     @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
     public ResponseEntity<AtividadePessoaPapel> associarPessoa(
@@ -41,6 +42,7 @@ public class AtividadePessoaPapelController {
         return ResponseEntity.status(201).body(associacao); // 201 Created
     }
 
+    // Método para alterar o papel de uma pessoa em uma atividade
     @PutMapping("/{atividadeId}/pessoas/{pessoaId}")
     @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
     public ResponseEntity<AtividadePessoaPapel> alterarPapel(
@@ -53,13 +55,15 @@ public class AtividadePessoaPapelController {
         return ResponseEntity.ok(atualizada); // 200 OK
     }
 
+    // Método para listar as pessoas associadas a uma atividade
     @GetMapping("/{atividadeId}/pessoas")
     @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
     public ResponseEntity<List<AtividadePessoaPapel>> listarPessoasPorAtividade(@PathVariable Long atividadeId) {
         List<AtividadePessoaPapel> pessoas = atividadePessoaPapelService.listarPorAtividade(atividadeId);
         return ResponseEntity.ok(pessoas); // 200 OK
     }
-
+    
+    // Método para remover uma pessoa de uma atividade
     @DeleteMapping("/{atividadeId}/pessoas/{pessoaId}")
     @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
     public ResponseEntity<Void> removerPessoaDaAtividade(
