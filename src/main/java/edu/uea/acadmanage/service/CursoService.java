@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -46,6 +48,46 @@ public class CursoService {
                 .toList();
     }
 
+    // Método para buscar todos os cursos com paginação
+    public Page<CursoDTO> getAllCursosPaginado(Pageable pageable) {
+        return cursoRepository.findAll(pageable)
+                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getAtivo()));
+    }
+
+    // Método para buscar todos os cursos com paginação e filtro por status
+    public Page<CursoDTO> getAllCursosPaginadoComFiltro(Boolean ativo, Pageable pageable) {
+        if (ativo == null) {
+            // Se o filtro não for informado, retorna todos os cursos
+            return cursoRepository.findAll(pageable)
+                    .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getAtivo()));
+        } else {
+            // Se o filtro for informado, retorna cursos filtrados por status
+            return cursoRepository.findByAtivo(ativo, pageable)
+                    .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getAtivo()));
+        }
+    }
+
+    // Método para buscar todos os cursos com paginação e filtros por status e nome
+    public Page<CursoDTO> getAllCursosPaginadoComFiltros(Boolean ativo, String nome, Pageable pageable) {
+        Page<Curso> cursos;
+        
+        if (ativo != null && nome != null && !nome.trim().isEmpty()) {
+            // Filtrar por status E nome
+            cursos = cursoRepository.findByAtivoAndNomeContainingIgnoreCase(ativo, nome.trim(), pageable);
+        } else if (ativo != null) {
+            // Filtrar apenas por status
+            cursos = cursoRepository.findByAtivo(ativo, pageable);
+        } else if (nome != null && !nome.trim().isEmpty()) {
+            // Filtrar apenas por nome
+            cursos = cursoRepository.findByNomeContainingIgnoreCase(nome.trim(), pageable);
+        } else {
+            // Sem filtros, retorna todos
+            cursos = cursoRepository.findAll(pageable);
+        }
+        
+        return cursos.map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getAtivo()));
+    }
+
     // Método para buscar cursos associados a um usuário
     public List<CursoDTO> getCursosByUsuarioId(Long usuarioId) {
         // Verificar existência do usuário e buscar cursos em uma única operação
@@ -57,6 +99,44 @@ public class CursoService {
         return cursoRepository.findCursosByUsuarioId(usuarioId).stream()
                 .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getAtivo()))
                 .toList();
+    }
+
+    // Método para buscar cursos associados a um usuário com paginação
+    public Page<CursoDTO> getCursosByUsuarioIdPaginado(Long usuarioId, Pageable pageable) {
+        // Verificar existência do usuário
+        if (!usuarioRepository.existsById(usuarioId)) {
+            throw new RecursoNaoEncontradoException("Usuário não encontrado com o ID: " + usuarioId);
+        }
+
+        // Buscar cursos associados ao usuário com paginação
+        return cursoRepository.findCursosByUsuarioIdPaginado(usuarioId, pageable)
+                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getAtivo()));
+    }
+
+    // Método para buscar cursos associados a um usuário com paginação e filtros
+    public Page<CursoDTO> getCursosByUsuarioIdPaginadoComFiltros(Long usuarioId, Boolean ativo, String nome, Pageable pageable) {
+        // Verificar existência do usuário
+        if (!usuarioRepository.existsById(usuarioId)) {
+            throw new RecursoNaoEncontradoException("Usuário não encontrado com o ID: " + usuarioId);
+        }
+
+        Page<Curso> cursos;
+        
+        if (ativo != null && nome != null && !nome.trim().isEmpty()) {
+            // Filtrar por status E nome
+            cursos = cursoRepository.findCursosByUsuarioIdAndAtivoAndNomeContaining(usuarioId, ativo, nome.trim(), pageable);
+        } else if (ativo != null) {
+            // Filtrar apenas por status
+            cursos = cursoRepository.findCursosByUsuarioIdAndAtivo(usuarioId, ativo, pageable);
+        } else if (nome != null && !nome.trim().isEmpty()) {
+            // Filtrar apenas por nome
+            cursos = cursoRepository.findCursosByUsuarioIdAndNomeContaining(usuarioId, nome.trim(), pageable);
+        } else {
+            // Sem filtros, retorna todos os cursos do usuário
+            cursos = cursoRepository.findCursosByUsuarioIdPaginado(usuarioId, pageable);
+        }
+        
+        return cursos.map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getAtivo()));
     }
 
     // Método para buscar todos os usuários e suas permissões associados a um curso

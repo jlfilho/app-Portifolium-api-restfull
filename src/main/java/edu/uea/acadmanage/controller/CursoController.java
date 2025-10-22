@@ -2,6 +2,9 @@ package edu.uea.acadmanage.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import edu.uea.acadmanage.DTO.CursoDTO;
@@ -33,14 +37,17 @@ public class CursoController {
         this.usuarioService = usuarioService;
     }
 
-    // Endpoint para buscar todos os cursos
+    // Endpoint para buscar todos os cursos com paginação e filtros por status e nome
     @GetMapping
-    public ResponseEntity<List<CursoDTO>> buscarTodosCursos() {
-        List<CursoDTO> cursos = cursoService.getAllCursos();
+    public ResponseEntity<Page<CursoDTO>> buscarTodosCursos(
+            @RequestParam(required = false) Boolean ativo,
+            @RequestParam(required = false) String nome,
+            @PageableDefault(size = 10, sort = "nome") Pageable pageable) {
+        Page<CursoDTO> cursos = cursoService.getAllCursosPaginadoComFiltros(ativo, nome, pageable);
         if (cursos.isEmpty()) {
             return ResponseEntity.noContent().build(); // Retorna 204 No Content se não houver cursos
         }
-        return ResponseEntity.ok(cursos); // Retorna 200 OK com a lista de cursos
+        return ResponseEntity.ok(cursos); // Retorna 200 OK com a página de cursos
     }
 
     // Endpoint para buscar um curso por ID
@@ -60,13 +67,21 @@ public class CursoController {
     }
 
     
-    // Endpoint para buscar todos os cursos associados a um usuário
+    // Endpoint para buscar todos os cursos associados a um usuário com paginação e filtros
     @GetMapping("/usuarios")
     @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
-    public List<CursoDTO> getCursosByUsuarioId(@AuthenticationPrincipal Usuario userDetails) {
+    public ResponseEntity<Page<CursoDTO>> getCursosByUsuarioId(
+            @AuthenticationPrincipal Usuario userDetails,
+            @RequestParam(required = false) Boolean ativo,
+            @RequestParam(required = false) String nome,
+            @PageableDefault(size = 10, sort = "nome") Pageable pageable) {
         Usuario usuario = usuarioService.getUsuarioByEmail(userDetails.getUsername());
-
-        return cursoService.getCursosByUsuarioId(usuario.getId());
+        Page<CursoDTO> cursos = cursoService.getCursosByUsuarioIdPaginadoComFiltros(usuario.getId(), ativo, nome, pageable);
+        
+        if (cursos.isEmpty()) {
+            return ResponseEntity.noContent().build(); // Retorna 204 No Content se não houver cursos
+        }
+        return ResponseEntity.ok(cursos); // Retorna 200 OK com a página de cursos
     }
 
     // Endpoint para criar um novo curso

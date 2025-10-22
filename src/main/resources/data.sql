@@ -5,10 +5,10 @@ INSERT INTO categoria (id, nome) VALUES
 (3, 'Extensão');
 
 -- Populando a tabela Curso
-INSERT INTO curso (id, nome) VALUES
-(1, 'Curso de Engenharia de Software'),
-(2, 'Curso de Sistemas de Informação'),
-(3, 'Curso de Ciência da Computação');
+INSERT INTO curso (id, nome, ativo) VALUES
+(1, 'Curso de Engenharia de Software', true),
+(2, 'Curso de Sistemas de Informação', true),
+(3, 'Curso de Ciência da Computação', true);
 
 -- Populando a tabela Fonte Financiadora
 INSERT INTO fonte_financiadora (id, nome) VALUES 
@@ -156,19 +156,19 @@ INSERT INTO atividade_financiadora (atividade_id, financiadora_id) VALUES
 
 -- Populando a tabela Evidencia
 INSERT INTO evidencia (id, url_foto, legenda, criado_por, atividade_id) VALUES
-(1, '/evidencias/1/1/62988d12-6561-412a-9bce-ab8cac4a48ce.jpg', 'Legenda 1', 'admin', 1),
-(2, '/evidencias/1/1/62988d12-6561-412a-9bce-ab8cac4a48ce.jpg', 'Legenda 2','admin', 1),
-(3, '/evidencias/1/1/62988d12-6561-412a-9bce-ab8cac4a48ce.jpg', 'Legenda 3','admin', 1),
-(4, '/evidencias/1/1/62988d12-6561-412a-9bce-ab8cac4a48ce.jpg', 'Legenda 4','admin', 1),
-(5, '/evidencias/1/1/62988d12-6561-412a-9bce-ab8cac4a48ce.jpg', 'Legenda 5','admin', 1),
-(6, '/evidencias/1/2/b9ff5329-922d-4495-abd7-4cd18bf1757e.jpg', 'Legenda 1','admin', 2),
-(7, '/evidencias/1/2/b9ff5329-922d-4495-abd7-4cd18bf1757e.jpg', 'Legenda 2','admin', 2),
-(8, '/evidencias/1/2/b9ff5329-922d-4495-abd7-4cd18bf1757e.jpg', 'Legenda 3','admin', 2),
-(9, '/evidencias/1/2/b9ff5329-922d-4495-abd7-4cd18bf1757e.jpg', 'Legenda 4','admin', 2),
-(10, '/evidencias/1/2/b9ff5329-922d-4495-abd7-4cd18bf1757e.jpg', 'Legenda 5','admin', 2),
+(1, '/evidencias/1/1/62988d12-6561-412a-9bce-ab8cac4a48ce.jpeg', 'Legenda 1', 'admin', 1),
+(2, '/evidencias/1/1/70af9c27-765e-4235-aa77-c62cd9d33528.jpeg', 'Legenda 2','admin', 1),
+(3, '/evidencias/1/1/77f82139-41d6-4079-aba5-6cbad1c7aedc.jpeg', 'Legenda 3','admin', 1),
+(4, '/evidencias/1/1/137377fe-18ac-4245-bfa4-51771bbbdc50.jpeg', 'Legenda 4','admin', 1),
+(5, '/evidencias/1/1/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 5','admin', 1),
+(6, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 1','admin', 2),
+(7, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 2','admin', 2),
+(8, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 3','admin', 2),
+(9, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 4','admin', 2),
+(10, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 5','admin', 2),
 -- Repita para cada atividade
-(11, '/evidencias/1/3/42db7ab7-ac5c-4503-8177-5115b9a291e7.jpg', 'Legenda 1','admin', 3),
-(12, '/evidencias/1/3/42db7ab7-ac5c-4503-8177-5115b9a291e7.jpg', 'Legenda 2','admin', 3),
-(13, '/evidencias/1/3/42db7ab7-ac5c-4503-8177-5115b9a291e7.jpg', 'Legenda 3','admin', 3),
-(14, '/evidencias/1/3/42db7ab7-ac5c-4503-8177-5115b9a291e7.jpg', 'Legenda 4','admin', 3),
-(15, '/evidencias/1/3/42db7ab7-ac5c-4503-8177-5115b9a291e7.jpg', 'Legenda 5','admin', 3);
+(11, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 1','admin', 3),
+(12, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 2','admin', 3),
+(13, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 3','admin', 3),
+(14, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 4','admin', 3),
+(15, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 5','admin', 3);

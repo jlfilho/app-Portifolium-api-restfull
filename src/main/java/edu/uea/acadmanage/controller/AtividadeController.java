@@ -3,6 +3,8 @@ package edu.uea.acadmanage.controller;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -36,6 +38,19 @@ import jakarta.validation.Valid;
 public class AtividadeController {
 
     private final AtividadeService atividadeService;
+
+    // Mapeamento de campos para ordenação (nome amigável → nome real na entidade)
+    private static final Map<String, String> FIELD_MAPPING = Map.of(
+        "id", "id",
+        "nome", "nome",
+        "dataInicio", "dataRealizacao",       // Mapeamento dataInicio → dataRealizacao
+        "dataRealizacao", "dataRealizacao",
+        "statusPublicacao", "statusPublicacao",
+        "curso", "curso.nome",
+        "categoria", "categoria.nome"
+    );
+
+    private static final Set<String> ALLOWED_SORT_FIELDS = FIELD_MAPPING.keySet();
 
     public AtividadeController(AtividadeService atividadeService) {
         this.atividadeService = atividadeService;
@@ -81,12 +96,22 @@ public class AtividadeController {
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "ASC") String sortDirection) {
 
+        // Validar e mapear o campo de ordenação
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            throw new IllegalArgumentException(
+                "Campo de ordenação inválido: '" + sortBy + "'. " +
+                "Campos permitidos: " + String.join(", ", ALLOWED_SORT_FIELDS)
+            );
+        }
+
+        String mappedSortBy = FIELD_MAPPING.get(sortBy);
+
         AtividadeFiltroDTO filtros = new AtividadeFiltroDTO(cursoId, categoriaId, nome, dataInicio, dataFim,
                 statusPublicacao);
 
         // Configurar paginação e ordenação
         Sort.Direction direction = sortDirection.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, mappedSortBy));
 
         Page<AtividadeDTO> atividades = atividadeService.getAtividadesPorFiltrosPaginado(filtros, pageable);
 
