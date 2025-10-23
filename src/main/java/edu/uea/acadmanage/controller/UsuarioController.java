@@ -59,20 +59,25 @@ public class UsuarioController {
         return ResponseEntity.ok(response);
     }
 
-    // Método para listar todos os usuários com paginação
+    // Método para listar todos os usuários com paginação e filtro por nome
     @GetMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
     public ResponseEntity<Page<UsuarioDTO>> listarUsuarios(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "ASC") String direction) {
+            @RequestParam(defaultValue = "ASC") String direction,
+            @RequestParam(required = false) String nome) {
         
         Sort.Direction sortDirection = direction.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
         
-        Page<UsuarioDTO> usuarios = usuarioService.getAllUsuariosPaginados(pageable);
-        return ResponseEntity.ok(usuarios);
+        Page<UsuarioDTO> usuarios = usuarioService.getAllUsuariosPaginadosComFiltro(nome, pageable);
+        
+        if (usuarios.isEmpty()) {
+            return ResponseEntity.noContent().build(); // Retorna 204 No Content se não houver usuários
+        }
+        return ResponseEntity.ok(usuarios); // Retorna 200 OK com a página de usuários
     }
 
     // Método para buscar um único usuário por ID

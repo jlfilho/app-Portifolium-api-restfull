@@ -35,6 +35,11 @@ public class Curso implements Serializable {
     @Column(nullable = false, unique = true)
     private String nome;
 
+    @Column(columnDefinition = "TEXT")
+    private String descricao;
+
+    private String fotoCapa;
+
     private Boolean ativo = true;
 
     @JsonIgnoreProperties("curso")

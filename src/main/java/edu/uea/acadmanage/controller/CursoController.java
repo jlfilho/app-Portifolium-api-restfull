@@ -1,13 +1,19 @@
 package edu.uea.acadmanage.controller;
 
+import java.io.IOException;
 import java.util.List;
 
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import edu.uea.acadmanage.DTO.CursoDTO;
 import edu.uea.acadmanage.DTO.PermissaoCursoDTO;
@@ -137,5 +144,41 @@ public class CursoController {
     @PathVariable Long usuarioId) {
         List<PermissaoCursoDTO> permissaoCurso =  cursoService.removerUsuarioCurso(cursoId, usuarioId);
         return ResponseEntity.ok(permissaoCurso); // Retorna 204 No Content
+    }
+
+    // Endpoint para salvar foto de capa
+    @PutMapping(value = "/foto-capa/{cursoId}", consumes = { "multipart/form-data" })
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    public ResponseEntity<CursoDTO> salvarFotoCapa(
+            @PathVariable Long cursoId,
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal UserDetails userDetails) throws IOException {
+        CursoDTO cursoSalvo = cursoService.atualizarFotoCapa(cursoId, file, userDetails.getUsername());
+        return ResponseEntity.status(HttpStatus.OK).body(cursoSalvo);
+    }
+
+    // Endpoint para baixar foto de capa
+    @GetMapping("/foto-capa/{cursoId}")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    public ResponseEntity<Resource> downloadFotoCapa(
+            @PathVariable Long cursoId,
+            @AuthenticationPrincipal UserDetails userDetails) throws IOException {
+        Resource resource = cursoService.downloadFotoCapa(cursoId, userDetails.getUsername());
+        
+        String contentType = "application/octet-stream";
+        String filename = resource.getFilename();
+        if (filename != null) {
+            String lowerFilename = filename.toLowerCase();
+            if (lowerFilename.endsWith(".jpg") || lowerFilename.endsWith(".jpeg")) {
+                contentType = "image/jpeg";
+            } else if (lowerFilename.endsWith(".png")) {
+                contentType = "image/png";
+            }
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + (filename != null ? filename : "foto-capa") + "\"")
+                .body(resource);
     }
 }

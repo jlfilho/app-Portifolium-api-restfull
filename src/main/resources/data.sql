@@ -5,10 +5,10 @@ INSERT INTO categoria (id, nome) VALUES
 (3, 'Extensão');
 
 -- Populando a tabela Curso
-INSERT INTO curso (id, nome, ativo) VALUES
-(1, 'Curso de Engenharia de Software', true),
-(2, 'Curso de Sistemas de Informação', true),
-(3, 'Curso de Ciência da Computação', true);
+INSERT INTO curso (id, nome, descricao, ativo) VALUES
+(1, 'Curso de Engenharia de Software', 'Curso completo de Engenharia de Software que aborda metodologias ágeis, arquitetura de software, desenvolvimento web e mobile, gestão de projetos e qualidade de software. Forma profissionais capazes de projetar, desenvolver e manter sistemas de software complexos.', true),
+(2, 'Curso de Sistemas de Informação', 'Curso focado em Sistemas de Informação que combina conhecimentos em tecnologia da informação com gestão empresarial. Aborda banco de dados, redes de computadores, análise de sistemas, gestão de TI e empreendedorismo digital.', true),
+(3, 'Curso de Ciência da Computação', 'Curso abrangente de Ciência da Computação que oferece formação sólida em algoritmos, estruturas de dados, programação, inteligência artificial, computação gráfica e teoria da computação. Prepara profissionais para pesquisa e desenvolvimento tecnológico.', true);
 
 -- Populando a tabela Fonte Financiadora
 INSERT INTO fonte_financiadora (id, nome) VALUES 
@@ -84,23 +84,26 @@ INSERT INTO curso_usuario (curso_id, usuario_id) VALUES
 (2, 6), -- Secretário do Curso de Sistemas de Informação
 (3, 7); -- Secretário do Curso de Ciência da Computação
 
--- Populando a tabela Atividade com a data de realização
+-- Populando a tabela Atividade com nomes e objetivos realistas
 INSERT INTO atividade (id, nome, objetivo, foto_capa, publico_alvo, status_publicacao, data_realizacao, categoria_id, curso_id) VALUES
-(1, 'Atividade 1 Engenharia', 'Objetivo 1',  '/fotos-capa/1/1/def25309-ede6-41aa-a1ae-a253c3c5cd04.jpg', 'Estudantes' , TRUE, '2023-01-15', 1, 1),
-(2, 'Atividade 2 Engenharia', 'Objetivo 2',  '/fotos-capa/1/2/3719e99b-a2da-49b9-a32e-c1baedc2abdb.jpg', 'Estudantes' , TRUE, '2023-02-20', 2, 1),
-(3, 'Atividade 3 Engenharia', 'Objetivo 3',  '/fotos-capa/1/3/f046031d-7d4c-4f1f-af52-a09cd3190249.jpg', 'Estudantes' , TRUE, '2023-03-10', 3, 1),
-(4, 'Atividade 4 Engenharia', 'Objetivo 4',  '/fotos-capa/1/4/c8c782ce-779e-46ac-bb30-a6dabc716ea9.jpg', 'Estudantes' , FALSE, '2023-04-05', 1, 1),
-(5, 'Atividade 5 Engenharia', 'Objetivo 5',  '/fotos-capa/1/5/637787c4-1771-40d3-a150-48cf59fbfc3c.jpg', 'Estudantes' , FALSE, '2023-05-18', 2, 1),
-(6, 'Atividade 1 Sistemas', 'Objetivo 1',  '/fotos-capa/2/6/91b93f4b-4324-41c5-b12e-9fe1d561dbd9.jpg', 'Estudantes' , TRUE, '2023-06-12', 3, 2),
-(7, 'Atividade 2 Sistemas', 'Objetivo 2',  '/fotos-capa/2/7/4bc4ec42-a823-4379-8c4e-fd17f566a1ae.jpg', 'Estudantes' , TRUE, '2023-07-08', 2, 2),
-(8, 'Atividade 3 Sistemas', 'Objetivo 3',  '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes' , TRUE, '2023-08-22', 3, 2),
-(9, 'Atividade 4 Sistemas', 'Objetivo 4',  '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes' , FALSE, '2023-09-15', 2, 2),
-(10, 'Atividade 5 Sistemas', 'Objetivo 5',  '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes' , FALSE, '2023-10-30', 1, 2),
-(11, 'Atividade 1 Ciência', 'Objetivo 1',  '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes' , TRUE, '2023-11-05', 1, 3),
-(12, 'Atividade 2 Ciência', 'Objetivo 2',  '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes' , TRUE, '2023-12-15', 2, 3),
-(13, 'Atividade 3 Ciência', 'Objetivo 3',  '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes' , TRUE, '2024-01-10', 3, 3),
-(14, 'Atividade 4 Ciência', 'Objetivo 4',  '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes' , FALSE, '2024-02-20', 3, 3),
-(15, 'Atividade 5 Ciência', 'Objetivo 5',  '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes' , FALSE, '2024-03-25', 1, 3);
+(1, 'Oficina de Prototipagem com Arduino', 'Promover a aprendizagem prática sobre sensores e atuadores aplicados à automação.', '/fotos-capa/1/1/def25309-ede6-41aa-a1ae-a253c3c5cd04.jpg', 'Estudantes', TRUE, '2023-01-15', 1, 1),
+(2, 'Visita Técnica à Usina Hidrelétrica de Balbina', 'Compreender o funcionamento de sistemas de geração e transmissão de energia elétrica.', '/fotos-capa/1/2/3719e99b-a2da-49b9-a32e-c1baedc2abdb.jpg', 'Estudantes', TRUE, '2023-02-20', 2, 1),
+(3, 'Semana de Engenharia e Inovação', 'Estimular o protagonismo estudantil e o intercâmbio de experiências em projetos tecnológicos.', '/fotos-capa/1/3/f046031d-7d4c-4f1f-af52-a09cd3190249.jpg', 'Estudantes', TRUE, '2023-03-10', 3, 1),
+(4, 'Minicurso de AutoCAD e Modelagem 3D', 'Capacitar os alunos para o uso de ferramentas digitais de desenho técnico.', '/fotos-capa/1/4/c8c782ce-779e-46ac-bb30-a6dabc716ea9.jpg', 'Estudantes', FALSE, '2023-04-05', 1, 1),
+(5, 'Projeto Pontes Sustentáveis', 'Desenvolver soluções estruturais com materiais alternativos e enfoque ambiental.', '/fotos-capa/1/5/637787c4-1771-40d3-a150-48cf59fbfc3c.jpg', 'Estudantes', FALSE, '2023-05-18', 2, 1),
+
+(6, 'Hackathon de Desenvolvimento Web', 'Fomentar o trabalho em equipe e o uso de metodologias ágeis em projetos reais.', '/fotos-capa/2/6/91b93f4b-4324-41c5-b12e-9fe1d561dbd9.jpg', 'Estudantes', TRUE, '2023-06-12', 3, 2),
+(7, 'Oficina de Banco de Dados com PostgreSQL', 'Aprender técnicas de modelagem e otimização de consultas SQL.', '/fotos-capa/2/7/4bc4ec42-a823-4379-8c4e-fd17f566a1ae.jpg', 'Estudantes', TRUE, '2023-07-08', 2, 2),
+(8, 'Palestra: Cibersegurança e Ética Digital', 'Discutir desafios e boas práticas de segurança em sistemas de informação.', '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes', TRUE, '2023-08-22', 3, 2),
+(9, 'Oficina de APIs com Python e Flask', 'Introduzir os alunos ao desenvolvimento de serviços web e integração de sistemas.', '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes', FALSE, '2023-09-15', 2, 2),
+(10, 'Workshop de UX/UI Design para Aplicações Web', 'Explorar princípios de usabilidade e design centrado no usuário.', '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes', FALSE, '2023-10-30', 1, 2),
+
+(11, 'Seminário de Inteligência Artificial Aplicada à Educação', 'Apresentar projetos de pesquisa em IA voltados para ambientes de aprendizagem.', '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes', TRUE, '2023-11-05', 1, 3),
+(12, 'Oficina de Análise de Dados com Python', 'Desenvolver competências em coleta, limpeza e visualização de dados.', '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes', TRUE, '2023-12-15', 2, 3),
+(13, 'Mostra de Projetos de Computação', 'Divulgar resultados de projetos integradores e iniciação científica.', '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes', TRUE, '2024-01-10', 3, 3),
+(14, 'Minicurso de Machine Learning com Scikit-Learn', 'Capacitar alunos na implementação de modelos de aprendizado supervisionado.', '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes', FALSE, '2024-02-20', 3, 3),
+(15, 'Roda de Conversa: Ética e Tecnologia', 'Refletir sobre os impactos sociais e éticos do uso de tecnologias emergentes.', '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes', FALSE, '2024-03-25', 1, 3);
+
 
 -- Associar atividades a pessoas com seus respectivos papéis
 -- Cada atividade terá um coordenador e um bolsista ou voluntário
@@ -154,21 +157,25 @@ INSERT INTO atividade_financiadora (atividade_id, financiadora_id) VALUES
 (14, 2), 
 (15, 3);     
 
--- Populando a tabela Evidencia
+-- Populando a tabela Evidencia com legendas realistas
 INSERT INTO evidencia (id, url_foto, legenda, criado_por, atividade_id) VALUES
-(1, '/evidencias/1/1/62988d12-6561-412a-9bce-ab8cac4a48ce.jpeg', 'Legenda 1', 'admin', 1),
-(2, '/evidencias/1/1/70af9c27-765e-4235-aa77-c62cd9d33528.jpeg', 'Legenda 2','admin', 1),
-(3, '/evidencias/1/1/77f82139-41d6-4079-aba5-6cbad1c7aedc.jpeg', 'Legenda 3','admin', 1),
-(4, '/evidencias/1/1/137377fe-18ac-4245-bfa4-51771bbbdc50.jpeg', 'Legenda 4','admin', 1),
-(5, '/evidencias/1/1/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 5','admin', 1),
-(6, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 1','admin', 2),
-(7, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 2','admin', 2),
-(8, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 3','admin', 2),
-(9, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 4','admin', 2),
-(10, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 5','admin', 2),
--- Repita para cada atividade
-(11, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 1','admin', 3),
-(12, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 2','admin', 3),
-(13, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 3','admin', 3),
-(14, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 4','admin', 3),
-(15, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Legenda 5','admin', 3);
+-- Oficina de Prototipagem com Arduino
+(1, '/evidencias/1/1/62988d12-6561-412a-9bce-ab8cac4a48ce.jpeg', 'Alunos durante a montagem dos circuitos com sensores.', 'admin', 1),
+(2, '/evidencias/1/1/70af9c27-765e-4235-aa77-c62cd9d33528.jpeg', 'Equipe testando o protótipo de automação residencial.', 'admin', 1),
+(3, '/evidencias/1/1/77f82139-41d6-4079-aba5-6cbad1c7aedc.jpeg', 'Orientação prática sobre o uso do Arduino Uno.', 'admin', 1),
+(4, '/evidencias/1/1/137377fe-18ac-4245-bfa4-51771bbbdc50.jpeg', 'Apresentação final dos projetos desenvolvidos na oficina.', 'admin', 1),
+(5, '/evidencias/1/1/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Foto de encerramento com os participantes e o professor orientador.', 'admin', 1),
+
+-- Visita Técnica à Usina Hidrelétrica de Balbina
+(6, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Grupo reunido na entrada principal da usina.', 'admin', 2),
+(7, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Explicação técnica sobre o funcionamento das turbinas.', 'admin', 2),
+(8, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Visita ao setor de controle e monitoramento da energia.', 'admin', 2),
+(9, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Registro do grupo no mirante da barragem.', 'admin', 2),
+(10, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Encerramento da visita com agradecimentos à equipe técnica.', 'admin', 2),
+
+-- Semana de Engenharia e Inovação
+(11, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Abertura oficial da Semana de Engenharia e Inovação.', 'admin', 3),
+(12, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Palestra sobre sustentabilidade e novas tecnologias.', 'admin', 3),
+(13, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Apresentação de projeto acadêmico na mostra tecnológica.', 'admin', 3),
+(14, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Roda de conversa com egressos sobre mercado de trabalho.', 'admin', 3),
+(15, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Encerramento com entrega de certificados aos participantes.', 'admin', 3);

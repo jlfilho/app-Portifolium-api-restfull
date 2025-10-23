@@ -1,23 +1,35 @@
 package edu.uea.acadmanage.service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.transaction.Transactional;
 
 import edu.uea.acadmanage.DTO.CursoDTO;
 import edu.uea.acadmanage.DTO.PermissaoCursoDTO;
+import edu.uea.acadmanage.config.FileStorageProperties;
 import edu.uea.acadmanage.model.Curso;
 import edu.uea.acadmanage.model.Usuario;
 import edu.uea.acadmanage.repository.CursoRepository;
 import edu.uea.acadmanage.repository.UsuarioRepository;
+import edu.uea.acadmanage.service.exception.AcessoNegadoException;
 import edu.uea.acadmanage.service.exception.ConflitoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
 
@@ -26,32 +38,39 @@ public class CursoService {
 
     private final CursoRepository cursoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final Path fileStorageLocation;
+    private final String baseStorageLocation;
 
     public CursoService(
         CursoRepository cursoRepository, 
-        UsuarioRepository usuarioRepository) {
+        UsuarioRepository usuarioRepository,
+        FileStorageProperties fileStorageProperties) throws IOException {
         this.cursoRepository = cursoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.baseStorageLocation = "/fotos-capa";
+        this.fileStorageLocation = Paths.get(fileStorageProperties.getStorageLocation() + this.baseStorageLocation)
+                .toAbsolutePath().normalize();
+        Files.createDirectories(this.fileStorageLocation);
     }
 
     // Método para buscar um curso por ID
     public CursoDTO getCursoById(Long cursoId) {
         return cursoRepository.findById(cursoId)
-                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getAtivo()))
+                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo()))
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
     }
 
     // Método para buscar todos os curso
     public List<CursoDTO> getAllCursos() {
         return cursoRepository.findAll().stream()
-                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getAtivo()))
+                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo()))
                 .toList();
     }
 
     // Método para buscar todos os cursos com paginação
     public Page<CursoDTO> getAllCursosPaginado(Pageable pageable) {
         return cursoRepository.findAll(pageable)
-                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getAtivo()));
+                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo()));
     }
 
     // Método para buscar todos os cursos com paginação e filtro por status
@@ -59,11 +78,11 @@ public class CursoService {
         if (ativo == null) {
             // Se o filtro não for informado, retorna todos os cursos
             return cursoRepository.findAll(pageable)
-                    .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getAtivo()));
+                    .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo()));
         } else {
             // Se o filtro for informado, retorna cursos filtrados por status
             return cursoRepository.findByAtivo(ativo, pageable)
-                    .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getAtivo()));
+                    .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo()));
         }
     }
 
@@ -85,7 +104,7 @@ public class CursoService {
             cursos = cursoRepository.findAll(pageable);
         }
         
-        return cursos.map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getAtivo()));
+        return cursos.map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo()));
     }
 
     // Método para buscar cursos associados a um usuário
@@ -97,7 +116,7 @@ public class CursoService {
 
         // Buscar cursos associados ao usuário
         return cursoRepository.findCursosByUsuarioId(usuarioId).stream()
-                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getAtivo()))
+                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo()))
                 .toList();
     }
 
@@ -110,7 +129,7 @@ public class CursoService {
 
         // Buscar cursos associados ao usuário com paginação
         return cursoRepository.findCursosByUsuarioIdPaginado(usuarioId, pageable)
-                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getAtivo()));
+                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo()));
     }
 
     // Método para buscar cursos associados a um usuário com paginação e filtros
@@ -136,7 +155,7 @@ public class CursoService {
             cursos = cursoRepository.findCursosByUsuarioIdPaginado(usuarioId, pageable);
         }
         
-        return cursos.map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getAtivo()));
+        return cursos.map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo()));
     }
 
     // Método para buscar todos os usuários e suas permissões associados a um curso
@@ -186,6 +205,8 @@ public class CursoService {
         // Criar uma entidade Curso a partir do DTO
         Curso novoCurso = new Curso();
         novoCurso.setNome(cursoDTO.nome());
+        novoCurso.setDescricao(cursoDTO.descricao());
+        novoCurso.setFotoCapa(cursoDTO.fotoCapa());
         Set<Usuario> usuarios = this.usuarioRepository.findAllByRoleName("ROLE_ADMINISTRADOR");
         usuarios.add(usuario);
         novoCurso.setUsuarios(usuarios);
@@ -194,7 +215,7 @@ public class CursoService {
         Curso cursoSalvo = cursoRepository.save(novoCurso);
 
         // Retornar um DTO com os dados do curso salvo
-        return new CursoDTO(cursoSalvo.getId(), cursoSalvo.getNome(), cursoSalvo.getAtivo());
+        return new CursoDTO(cursoSalvo.getId(), cursoSalvo.getNome(), cursoSalvo.getDescricao(), cursoSalvo.getFotoCapa(), cursoSalvo.getAtivo());
     }
 
     // Método para atualizar um curso
@@ -208,10 +229,12 @@ public class CursoService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
         // Atualizando os campos permitidos
         cursoExistente.setNome(cursoDTO.nome());
+        cursoExistente.setDescricao(cursoDTO.descricao());
+        cursoExistente.setFotoCapa(cursoDTO.fotoCapa());
         cursoExistente.setAtivo(cursoDTO.ativo());
         // Salvando no banco
         Curso cursoAtualizado = cursoRepository.save(cursoExistente);
-        return new CursoDTO(cursoAtualizado.getId(), cursoAtualizado.getNome(), cursoAtualizado.getAtivo());
+        return new CursoDTO(cursoAtualizado.getId(), cursoAtualizado.getNome(), cursoAtualizado.getDescricao(), cursoAtualizado.getFotoCapa(), cursoAtualizado.getAtivo());
     }
 
     // Método para adicionar usuário a um curso
@@ -304,7 +327,7 @@ public class CursoService {
         cursoExistente.setAtivo(ativo);
         // Salvando no banco
         Curso cursoAtualizado = cursoRepository.save(cursoExistente);
-        return new CursoDTO(cursoAtualizado.getId(), cursoAtualizado.getNome(), cursoAtualizado.getAtivo());
+        return new CursoDTO(cursoAtualizado.getId(), cursoAtualizado.getNome(), cursoAtualizado.getDescricao(), cursoAtualizado.getFotoCapa(), cursoAtualizado.getAtivo());
     }
 
     // Método para excluir um curso
@@ -351,6 +374,97 @@ public class CursoService {
                 .anyMatch(curso -> curso.getId().equals(cursoId));
     }
 
-    
+    // Método para atualizar uma foto de capa
+    public CursoDTO atualizarFotoCapa(Long cursoId, MultipartFile file, String username) throws IOException {
+        // Verificar se o curso existe
+        Curso curso = cursoRepository.findById(cursoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
+
+        // Verificar se o usuário tem permissão para atualizar a foto de capa
+        if (!verificarAcessoAoCurso(username, cursoId)) {
+            throw new AcessoNegadoException("Usuário não tem permissão para atualizar a foto de capa deste curso.");
+        }
+
+        // Excluir foto anterior se existir
+        if (curso.getFotoCapa() != null && !curso.getFotoCapa().isEmpty()) {
+            excluirImagem(curso.getFotoCapa());
+        }
+
+        // Salvar nova foto
+        String fotoCapaPath = salvarImagem(curso, file);
+        curso.setFotoCapa(fotoCapaPath);
+
+        // Salvar curso atualizado
+        Curso cursoAtualizado = cursoRepository.save(curso);
+
+        return new CursoDTO(cursoAtualizado.getId(), cursoAtualizado.getNome(), cursoAtualizado.getDescricao(), cursoAtualizado.getFotoCapa(), cursoAtualizado.getAtivo());
+    }
+
+    // Método para baixar uma foto de capa
+    public Resource downloadFotoCapa(Long cursoId, String username) throws IOException {
+        // Verificar se o curso existe
+        Curso curso = cursoRepository.findById(cursoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
+
+        // Verificar se o usuário tem permissão para baixar a foto de capa
+        if (!verificarAcessoAoCurso(username, cursoId)) {
+            throw new AcessoNegadoException("Usuário não tem permissão para baixar a foto de capa deste curso.");
+        }
+
+        if (curso.getFotoCapa() == null || curso.getFotoCapa().isEmpty()) {
+            throw new RecursoNaoEncontradoException("Foto de capa não encontrada para este curso.");
+        }
+
+        Path filePath = this.fileStorageLocation.resolve(curso.getFotoCapa()).normalize();
+        Resource resource = new UrlResource(filePath.toUri());
+
+        if (resource.exists()) {
+            return resource;
+        } else {
+            throw new RecursoNaoEncontradoException("Arquivo não encontrado: " + curso.getFotoCapa());
+        }
+    }
+
+    // Método para validar se o arquivo é uma imagem válida
+    private Boolean validarImagem(MultipartFile file) {
+        // Verificar se o arquivo enviado é uma imagem JPG ou PNG
+        Set<String> allowedContentTypes = Set.of("image/jpg", "image/jpeg", "image/png");
+        if (!allowedContentTypes.contains(Objects.requireNonNullElse(file.getContentType(), "").toLowerCase())) {
+            throw new IllegalArgumentException("O arquivo enviado deve ser um JPG, JPEG ou PNG válido.");
+        }
+
+        return true;
+    }
+
+    // Método para salvar uma imagem
+    private String salvarImagem(Curso curso, MultipartFile file) throws IOException {
+        // Verificar se o arquivo enviado é uma imagem JPG ou PNG
+        validarImagem(file);
+
+        // Salvar a foto no diretório
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null) {
+            throw new IllegalArgumentException("O arquivo enviado não possui um nome válido.");
+        }
+        String fileExtension = originalFilename.substring(originalFilename.lastIndexOf('.'));
+        String uniqueFileName = curso.getId() + "/" + UUID.randomUUID().toString() + fileExtension;
+        Path targetLocation = this.fileStorageLocation.resolve(uniqueFileName);
+        Files.createDirectories(targetLocation.getParent());
+        Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+
+        return this.baseStorageLocation + "/" + uniqueFileName;
+    }
+
+    // Método para excluir uma imagem
+    private Boolean excluirImagem(String fileName) {
+        try {
+            Path targetLocation = this.fileStorageLocation.resolve(fileName).normalize();
+            Files.deleteIfExists(targetLocation);
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
 }

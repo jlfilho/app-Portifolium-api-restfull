@@ -93,7 +93,7 @@ public class AtividadeController {
             @RequestParam(required = false) Boolean statusPublicacao,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "nome") String sortBy,
             @RequestParam(defaultValue = "ASC") String sortDirection) {
 
         // Validar e mapear o campo de ordenação

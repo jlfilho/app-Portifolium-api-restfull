@@ -57,7 +57,7 @@ public class UsuarioService {
                                 .toList().get(0),
                         usuario.getCursos().stream()
                                 .map(curso -> new CursoDTO(
-                                        curso.getId(), curso.getNome(), curso.getAtivo()))
+                                        curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo()))
                                 .toList()))
                 .collect(Collectors.toList());
     }
@@ -76,8 +76,32 @@ public class UsuarioService {
                                 .toList().get(0),
                         usuario.getCursos().stream()
                                 .map(curso -> new CursoDTO(
-                                        curso.getId(), curso.getNome(), curso.getAtivo()))
+                                        curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo()))
                                 .toList()));
+    }
+
+    // Listar usuários com paginação e filtro por nome
+    public Page<UsuarioDTO> getAllUsuariosPaginadosComFiltro(String nome, Pageable pageable) {
+        if (nome == null || nome.trim().isEmpty()) {
+            // Se o filtro não for informado, retorna todos os usuários
+            return getAllUsuariosPaginados(pageable);
+        } else {
+            // Se o filtro for informado, retorna usuários filtrados por nome
+            return usuarioRepository.findByPessoaNomeContainingIgnoreCase(nome.trim(), pageable)
+                    .map(usuario -> new UsuarioDTO(
+                            usuario.getId(), 
+                            usuario.getPessoa().getNome(), 
+                            usuario.getPessoa().getCpf(), 
+                            usuario.getEmail(),
+                            null,
+                            usuario.getRoles().stream()
+                                    .map(r -> r.getNome())
+                                    .toList().get(0),
+                            usuario.getCursos().stream()
+                                    .map(curso -> new CursoDTO(
+                                            curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo()))
+                                    .toList()));
+        }
     }
 
     // Buscar um único usuário por ID
@@ -266,7 +290,7 @@ public class UsuarioService {
 
         // Recupera os cursos associados ao usuário
         return usuario.getCursos().stream()
-                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getAtivo()))
+                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo()))
                 .collect(Collectors.toList());
     }
 
@@ -278,6 +302,7 @@ public class UsuarioService {
         Curso curso = new Curso();
         curso.setId(cursoDTO.id());
         curso.setNome(cursoDTO.nome());
+        curso.setDescricao(cursoDTO.descricao());
         return curso;
     }
 
@@ -306,7 +331,7 @@ public class UsuarioService {
                         .findFirst()
                         .orElse("Sem Role"),
                 usuario.getCursos().stream()
-                        .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getAtivo()))
+                        .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo()))
                         .toList());
     }
 
