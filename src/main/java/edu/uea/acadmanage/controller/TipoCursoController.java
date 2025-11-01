@@ -49,20 +49,20 @@ public class TipoCursoController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<TipoCurso> salvar(@Valid @RequestBody TipoCurso tipoCurso) {
         TipoCurso novo = tipoCursoService.salvar(tipoCurso);
         return ResponseEntity.status(HttpStatus.CREATED).body(novo);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<TipoCurso> atualizar(@PathVariable Long id, @Valid @RequestBody TipoCurso tipoCurso) {
         return ResponseEntity.ok(tipoCursoService.atualizar(id, tipoCurso));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         tipoCursoService.deletar(id);
         return ResponseEntity.noContent().build();
