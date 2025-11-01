@@ -4,11 +4,21 @@ INSERT INTO categoria (id, nome) VALUES
 (2, 'Pesquisa'),
 (3, 'Extensão');
 
+-- Populando a tabela TipoCurso com enumeração de tipos
+INSERT INTO tipo_curso (id, codigo, nome) VALUES
+(1, 'BACHARELADO', 'Bacharelado'),
+(2, 'LICENCIATURA', 'Licenciatura'),
+(3, 'TECNOLOGO', 'Tecnólogo'),
+(4, 'ESPECIALIZACAO', 'Especialização'),
+(5, 'MBA', 'MBA'),
+(6, 'MESTRADO', 'Mestrado'),
+(7, 'DOUTORADO', 'Doutorado');
+
 -- Populando a tabela Curso
-INSERT INTO curso (id, nome, descricao, ativo) VALUES
-(1, 'Curso de Engenharia de Software', 'Curso completo de Engenharia de Software que aborda metodologias ágeis, arquitetura de software, desenvolvimento web e mobile, gestão de projetos e qualidade de software. Forma profissionais capazes de projetar, desenvolver e manter sistemas de software complexos.', true),
-(2, 'Curso de Sistemas de Informação', 'Curso focado em Sistemas de Informação que combina conhecimentos em tecnologia da informação com gestão empresarial. Aborda banco de dados, redes de computadores, análise de sistemas, gestão de TI e empreendedorismo digital.', true),
-(3, 'Curso de Ciência da Computação', 'Curso abrangente de Ciência da Computação que oferece formação sólida em algoritmos, estruturas de dados, programação, inteligência artificial, computação gráfica e teoria da computação. Prepara profissionais para pesquisa e desenvolvimento tecnológico.', true);
+INSERT INTO curso (id, nome, descricao, ativo, tipo_curso_id) VALUES
+(1, 'Curso de Engenharia de Software', 'Curso completo de Engenharia de Software que aborda metodologias ágeis, arquitetura de software, desenvolvimento web e mobile, gestão de projetos e qualidade de software. Forma profissionais capazes de projetar, desenvolver e manter sistemas de software complexos.', true, 1),
+(2, 'Curso de Sistemas de Informação', 'Curso focado em Sistemas de Informação que combina conhecimentos em tecnologia da informação com gestão empresarial. Aborda banco de dados, redes de computadores, análise de sistemas, gestão de TI e empreendedorismo digital.', true, 1),
+(3, 'Curso de Ciência da Computação', 'Curso abrangente de Ciência da Computação que oferece formação sólida em algoritmos, estruturas de dados, programação, inteligência artificial, computação gráfica e teoria da computação. Prepara profissionais para pesquisa e desenvolvimento tecnológico.', true, 1);
 
 -- Populando a tabela Fonte Financiadora
 INSERT INTO fonte_financiadora (id, nome) VALUES 
@@ -179,12 +189,3 @@ INSERT INTO evidencia (id, url_foto, legenda, criado_por, atividade_id) VALUES
 (13, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Apresentação de projeto acadêmico na mostra tecnológica.', 'admin', 3),
 (14, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Roda de conversa com egressos sobre mercado de trabalho.', 'admin', 3),
 (15, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Encerramento com entrega de certificados aos participantes.', 'admin', 3);
--- Populando a tabela TipoCurso com enumeração de tipos
-INSERT INTO tipo_curso (id, codigo, nome) VALUES
-(1, 'BACHARELADO', 'Bacharelado'),
-(2, 'LICENCIATURA', 'Licenciatura'),
-(3, 'TECNOLOGO', 'Tecnólogo'),
-(4, 'ESPECIALIZACAO', 'Especialização'),
-(5, 'MBA', 'MBA'),
-(6, 'MESTRADO', 'Mestrado'),
-(7, 'DOUTORADO', 'Doutorado');

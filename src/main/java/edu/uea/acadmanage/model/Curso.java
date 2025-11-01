@@ -16,6 +16,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -41,6 +42,10 @@ public class Curso implements Serializable {
     private String fotoCapa;
 
     private Boolean ativo = true;
+
+    @ManyToOne
+    @JoinColumn(name = "tipo_curso_id")
+    private TipoCurso tipoCurso;
 
     @JsonIgnoreProperties("curso")
     @OneToMany(mappedBy = "curso", cascade = CascadeType.ALL, orphanRemoval = true)
