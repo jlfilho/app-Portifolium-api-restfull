@@ -43,4 +43,17 @@ public interface CursoRepository extends JpaRepository<Curso, Long> {
     Page<Curso> findByNomeContainingIgnoreCaseAndTipoCurso_Codigo(String nome, TipoCursoCodigo codigo, Pageable pageable);
     Page<Curso> findByAtivoAndNomeContainingIgnoreCaseAndTipoCurso_Codigo(Boolean ativo, String nome, TipoCursoCodigo codigo, Pageable pageable);
 
+    // Filtros por usuarioId + tipo (combináveis com ativo e nome)
+    @Query("SELECT c FROM Curso c JOIN c.usuarios u WHERE u.id = :usuarioId AND c.tipoCurso.codigo = :codigo")
+    Page<Curso> findCursosByUsuarioIdAndTipoCodigo(@Param("usuarioId") Long usuarioId, @Param("codigo") TipoCursoCodigo codigo, Pageable pageable);
+
+    @Query("SELECT c FROM Curso c JOIN c.usuarios u WHERE u.id = :usuarioId AND c.ativo = :ativo AND c.tipoCurso.codigo = :codigo")
+    Page<Curso> findCursosByUsuarioIdAndAtivoAndTipoCodigo(@Param("usuarioId") Long usuarioId, @Param("ativo") Boolean ativo, @Param("codigo") TipoCursoCodigo codigo, Pageable pageable);
+
+    @Query("SELECT c FROM Curso c JOIN c.usuarios u WHERE u.id = :usuarioId AND LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%')) AND c.tipoCurso.codigo = :codigo")
+    Page<Curso> findCursosByUsuarioIdAndNomeContainingIgnoreCaseAndTipoCodigo(@Param("usuarioId") Long usuarioId, @Param("nome") String nome, @Param("codigo") TipoCursoCodigo codigo, Pageable pageable);
+
+    @Query("SELECT c FROM Curso c JOIN c.usuarios u WHERE u.id = :usuarioId AND c.ativo = :ativo AND LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%')) AND c.tipoCurso.codigo = :codigo")
+    Page<Curso> findCursosByUsuarioIdAndAtivoAndNomeContainingIgnoreCaseAndTipoCodigo(@Param("usuarioId") Long usuarioId, @Param("ativo") Boolean ativo, @Param("nome") String nome, @Param("codigo") TipoCursoCodigo codigo, Pageable pageable);
+
 }

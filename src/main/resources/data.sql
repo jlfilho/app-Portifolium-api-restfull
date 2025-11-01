@@ -16,10 +16,36 @@ INSERT INTO tipo_curso (id, codigo, nome) VALUES
 
 -- Populando a tabela Curso
 INSERT INTO curso (id, nome, descricao, ativo, tipo_curso_id) VALUES
-(1, 'Engenharia de Software', 'Curso completo de Engenharia de Software que aborda metodologias ágeis, arquitetura de software, desenvolvimento web e mobile, gestão de projetos e qualidade de software. Forma profissionais capazes de projetar, desenvolver e manter sistemas de software complexos.', true, 1),
-(2, 'Sistemas de Informação', 'Curso focado em Sistemas de Informação que combina conhecimentos em tecnologia da informação com gestão empresarial. Aborda banco de dados, redes de computadores, análise de sistemas, gestão de TI e empreendedorismo digital.', true, 1),
-(3, 'Ciência da Computação', 'Curso abrangente de Ciência da Computação que oferece formação sólida em algoritmos, estruturas de dados, programação, inteligência artificial, computação gráfica e teoria da computação. Prepara profissionais para pesquisa e desenvolvimento tecnológico.', true, 1);
-
+(1, 'Engenharia de Software', 
+    'Curso completo de Engenharia de Software que aborda metodologias ágeis, arquitetura de software, desenvolvimento web e mobile, gestão de projetos e qualidade de software.', 
+    true, 1),
+(2, 'Sistemas de Informação', 
+    'Curso que combina tecnologia da informação e gestão, abordando análise de sistemas, banco de dados, redes de computadores e empreendedorismo digital.', 
+    true, 1),
+(3, 'Ciência da Computação', 
+    'Formação sólida em algoritmos, estruturas de dados, inteligência artificial, computação gráfica e teoria da computação, voltada para pesquisa e inovação.', 
+    true, 1),
+(4, 'Licenciatura em Computação', 
+    'Curso voltado à formação de professores de Computação, com ênfase em práticas pedagógicas, tecnologias educacionais e ensino de programação.', 
+    true, 2),
+(5, 'Tecnologia em Redes de Computadores', 
+    'Curso tecnólogo que prepara profissionais para projetar, implantar e administrar redes locais e corporativas com foco em segurança e desempenho.', 
+    true, 3),
+(6, 'Especialização em Inteligência Artificial Aplicada', 
+    'Curso de pós-graduação lato sensu que desenvolve competências em machine learning, visão computacional e processamento de linguagem natural.', 
+    true, 4),
+(7, 'MBA em Gestão de Projetos de TI', 
+    'MBA voltado a profissionais que desejam atuar na liderança de equipes e gestão estratégica de projetos tecnológicos e de inovação.', 
+    true, 5),
+(8, 'Mestrado Profissional em Ensino de Computação (PROFCOMP)', 
+    'Curso stricto sensu que forma professores e pesquisadores na área de ensino de Computação, com foco em práticas educativas inovadoras e tecnologias digitais.', 
+    true, 6),
+(9, 'Mestrado Acadêmico em Ciência da Computação', 
+    'Curso stricto sensu dedicado à formação de pesquisadores em áreas como IA, sistemas distribuídos, computação gráfica e engenharia de software.', 
+    true, 6),
+(10, 'Doutorado em Engenharia de Computação', 
+    'Curso stricto sensu que visa o desenvolvimento de pesquisas avançadas em hardware, sistemas embarcados, IoT e automação inteligente.', 
+    true, 7);
 -- Populando a tabela Fonte Financiadora
 INSERT INTO fonte_financiadora (id, nome) VALUES 
 (1, 'UEA'),
@@ -94,6 +120,38 @@ INSERT INTO curso_usuario (curso_id, usuario_id) VALUES
 (2, 6), -- Secretário do Curso de Sistemas de Informação
 (3, 7); -- Secretário do Curso de Ciência da Computação
 
+/* =========================================================
+   VÍNCULOS CURSO_USUARIO — garantir papéis em TODOS os cursos
+   - Admins (1 e 8) em todos os cursos (1..10)
+   - Gerentes: alternando 2,3,4
+   - Secretários: alternando 5,6,7
+   ========================================================= */
+
+-- Administradores em todos os cursos (complemento p/ cursos 4..10)
+INSERT INTO curso_usuario (curso_id, usuario_id) VALUES
+(4, 1), (5, 1), (6, 1), (7, 1), (8, 1), (9, 1), (10, 1),
+(4, 8), (5, 8), (6, 8), (7, 8), (8, 8), (9, 8), (10, 8);
+
+-- Gerentes para cursos 4..10 (ciclo: 2,3,4)
+INSERT INTO curso_usuario (curso_id, usuario_id) VALUES
+(4, 2),  -- Gerente curso 4
+(5, 3),  -- Gerente curso 5
+(6, 4),  -- Gerente curso 6
+(7, 2),  -- Gerente curso 7
+(8, 3),  -- Gerente curso 8
+(9, 4),  -- Gerente curso 9
+(10, 2); -- Gerente curso 10
+
+-- Secretários para cursos 4..10 (ciclo: 5,6,7)
+INSERT INTO curso_usuario (curso_id, usuario_id) VALUES
+(4, 5),  -- Secretário curso 4
+(5, 6),  -- Secretário curso 5
+(6, 7),  -- Secretário curso 6
+(7, 5),  -- Secretário curso 7
+(8, 6),  -- Secretário curso 8
+(9, 7),  -- Secretário curso 9
+(10, 5); -- Secretário curso 10
+
 -- Populando a tabela Atividade com nomes e objetivos realistas
 INSERT INTO atividade (id, nome, objetivo, foto_capa, publico_alvo, status_publicacao, data_realizacao, categoria_id, curso_id) VALUES
 (1, 'Oficina de Prototipagem com Arduino', 'Promover a aprendizagem prática sobre sensores e atuadores aplicados à automação.', '/fotos-capa/1/1/def25309-ede6-41aa-a1ae-a253c3c5cd04.jpg', 'Estudantes', TRUE, '2023-01-15', 1, 1),
@@ -114,6 +172,64 @@ INSERT INTO atividade (id, nome, objetivo, foto_capa, publico_alvo, status_publi
 (14, 'Minicurso de Machine Learning com Scikit-Learn', 'Capacitar alunos na implementação de modelos de aprendizado supervisionado.', '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes', FALSE, '2024-02-20', 3, 3),
 (15, 'Roda de Conversa: Ética e Tecnologia', 'Refletir sobre os impactos sociais e éticos do uso de tecnologias emergentes.', '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes', FALSE, '2024-03-25', 1, 3);
 
+INSERT INTO atividade
+(id, nome, objetivo, foto_capa, publico_alvo, status_publicacao, data_realizacao, categoria_id, curso_id)
+VALUES
+-- Curso 4 (Licenciatura em Computação)
+(16, 'Práticas Pedagógicas com Pensamento Computacional',
+ '/ Promover estratégias de ensino com PC e ABP na Educação Básica.',
+ '/fotos-capa/4/16/pc-abp-edu-basica.jpg', 'Estudantes', TRUE,  '2024-04-12', 1, 4),
+(17, 'Oficina Scratch na Escola',
+ 'Desenvolver sequências didáticas usando Scratch para anos finais do EF.',
+ '/fotos-capa/4/17/oficina-scratch.jpg', 'Estudantes', TRUE,  '2024-05-18', 2, 4),
+
+-- Curso 5 (Tecnologia em Redes de Computadores)
+(18, 'Laboratório de Redes com Mikrotik',
+ 'Configurar roteamento, VLANs e QoS em ambiente laboratorial.',
+ '/fotos-capa/5/18/lab-redes-mikrotik.jpg', 'Estudantes', TRUE,  '2024-06-08', 2, 5),
+(19, 'Segurança de Redes e Firewall com pfSense',
+ 'Implantar regras, VPN e IDS/IPS voltados a segurança perimetral.',
+ '/fotos-capa/5/19/pfsense-firewall.jpg', 'Estudantes', FALSE, '2024-07-20', 3, 5),
+
+-- Curso 6 (Especialização em IA Aplicada)
+(20, 'Bootcamp de Machine Learning Aplicado',
+ 'Aplicar pipelines de ML para classificação e regressão em dados reais.',
+ '/fotos-capa/6/20/bootcamp-ml.jpg', 'Estudantes', TRUE,  '2024-08-10', 1, 6),
+(21, 'Visão Computacional com OpenCV',
+ 'Introduzir detecção de objetos e segmentação em projetos práticos.',
+ '/fotos-capa/6/21/opencv-visao.jpg', 'Estudantes', TRUE,  '2024-09-05', 3, 6),
+
+-- Curso 7 (MBA em Gestão de Projetos de TI)
+(22, 'PMI, OKRs e Canvas na TI',
+ 'Integrar boas práticas de gestão com planejamento estratégico em TI.',
+ '/fotos-capa/7/22/pmi-okr-canvas.jpg', 'Estudantes', TRUE,  '2024-10-03', 1, 7),
+(23, 'Gestão de Riscos em Projetos de Software',
+ 'Mapear, priorizar e mitigar riscos ao longo do ciclo de vida do projeto.',
+ '/fotos-capa/7/23/gestao-riscos.jpg', 'Estudantes', FALSE, '2024-11-14', 2, 7),
+
+-- Curso 8 (Mestrado Profissional em Ensino de Computação - PROFCOMP)
+(24, 'Oficina de Metodologias Ativas no Ensino de Computação',
+ 'Experimentar sala de aula invertida, PBL e aprendizagem baseada em projetos.',
+ '/fotos-capa/8/24/metodologias-ativas.jpg', 'Estudantes', TRUE,  '2025-03-18', 1, 8),
+(25, 'Seminário Tecnocomp-LTI',
+ 'Apresentar módulos interoperáveis e objetos de aprendizagem LTI.',
+ '/fotos-capa/8/25/tecnocomp-lti.jpg', 'Estudantes', TRUE,  '2025-04-22', 3, 8),
+
+-- Curso 9 (Mestrado Acadêmico em Ciência da Computação)
+(26, 'Colóquio de Pesquisa em IA',
+ 'Debater linhas de pesquisa em PLN, RL e IA responsável.',
+ '/fotos-capa/9/26/coloquio-ia.jpg', 'Estudantes', TRUE,  '2025-05-27', 1, 9),
+(27, 'Workshop de Sistemas Distribuídos',
+ 'Explorar tolerância a falhas, consenso e observabilidade em clusters.',
+ '/fotos-capa/9/27/sd-workshop.jpg', 'Estudantes', FALSE, '2025-06-30', 2, 9),
+
+-- Curso 10 (Doutorado em Engenharia de Computação)
+(28, 'Seminário Avançado em IoT e Edge',
+ 'Apresentar arquiteturas de IoT com processamento em borda e 5G.',
+ '/fotos-capa/10/28/iot-edge.jpg', 'Estudantes', TRUE,  '2025-08-09', 3, 10),
+(29, 'Colóquio de Computação Embarcada',
+ 'Discutir RTOS, otimização energética e segurança em sistemas embarcados.',
+ '/fotos-capa/10/29/comp-embarcada.jpg', 'Estudantes', TRUE,  '2025-09-12', 1, 10);
 
 -- Associar atividades a pessoas com seus respectivos papéis
 -- Cada atividade terá um coordenador e um bolsista ou voluntário

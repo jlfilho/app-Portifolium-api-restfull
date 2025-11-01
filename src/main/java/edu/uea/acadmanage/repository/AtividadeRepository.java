@@ -85,4 +85,6 @@ public interface AtividadeRepository extends JpaRepository<Atividade, Long> {
       @Param("statusPublicacao") Boolean statusPublicacao,
       Pageable pageable);
 
+  long countByCategoriaId(Long categoriaId);
+
 }

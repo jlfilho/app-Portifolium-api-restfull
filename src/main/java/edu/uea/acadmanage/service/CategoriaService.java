@@ -16,8 +16,10 @@ import edu.uea.acadmanage.model.Categoria;
 import edu.uea.acadmanage.model.Curso;
 import edu.uea.acadmanage.model.Usuario;
 import edu.uea.acadmanage.repository.CategoriaRepository;
+import edu.uea.acadmanage.repository.AtividadeRepository;
 import edu.uea.acadmanage.repository.UsuarioRepository;
 import edu.uea.acadmanage.service.exception.AcessoNegadoException;
+import edu.uea.acadmanage.service.exception.ConflitoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
 
 @Service
@@ -25,10 +27,12 @@ public class CategoriaService {
 
         private final CategoriaRepository categoriaRepository;
         private final UsuarioRepository usuarioRepository;
+        private final AtividadeRepository atividadeRepository;
 
-        public CategoriaService(CategoriaRepository categoriaRepository, UsuarioRepository usuarioRepository) {
+        public CategoriaService(CategoriaRepository categoriaRepository, UsuarioRepository usuarioRepository, AtividadeRepository atividadeRepository) {
                 this.categoriaRepository = categoriaRepository;
                 this.usuarioRepository = usuarioRepository;
+                this.atividadeRepository = atividadeRepository;
         }
         
         public List<CategoriaResumidaDTO> listarTodasCategorias() {
@@ -121,6 +125,10 @@ public class CategoriaService {
         public void deletar(Long categoriaId) {
                 if (!categoriaRepository.existsById(categoriaId)) {
                     throw new RecursoNaoEncontradoException("Categoria não encontrada com o ID: " + categoriaId);
+                }
+                long numAtividades = atividadeRepository.countByCategoriaId(categoriaId);
+                if (numAtividades > 0) {
+                    throw new ConflitoException("Não é possível excluir a categoria. Existem " + numAtividades + " atividade(s) associada(s).");
                 }
                 categoriaRepository.deleteById(categoriaId);
         }

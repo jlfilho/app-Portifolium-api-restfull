@@ -144,27 +144,35 @@ public class CursoService {
                 .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null));
     }
 
-    // Método para buscar cursos associados a um usuário com paginação e filtros
-    public Page<CursoDTO> getCursosByUsuarioIdPaginadoComFiltros(Long usuarioId, Boolean ativo, String nome, Pageable pageable) {
+    // Método para buscar cursos associados a um usuário com paginação e filtros (status, nome, tipo)
+    public Page<CursoDTO> getCursosByUsuarioIdPaginadoComFiltros(Long usuarioId, Boolean ativo, String nome, edu.uea.acadmanage.model.TipoCursoCodigo tipo, Pageable pageable) {
         // Verificar existência do usuário
         if (!usuarioRepository.existsById(usuarioId)) {
             throw new RecursoNaoEncontradoException("Usuário não encontrado com o ID: " + usuarioId);
         }
 
         Page<Curso> cursos;
-        
-        if (ativo != null && nome != null && !nome.trim().isEmpty()) {
-            // Filtrar por status E nome
-            cursos = cursoRepository.findCursosByUsuarioIdAndAtivoAndNomeContaining(usuarioId, ativo, nome.trim(), pageable);
-        } else if (ativo != null) {
-            // Filtrar apenas por status
-            cursos = cursoRepository.findCursosByUsuarioIdAndAtivo(usuarioId, ativo, pageable);
-        } else if (nome != null && !nome.trim().isEmpty()) {
-            // Filtrar apenas por nome
-            cursos = cursoRepository.findCursosByUsuarioIdAndNomeContaining(usuarioId, nome.trim(), pageable);
+
+        if (tipo != null) {
+            if (ativo != null && nome != null && !nome.trim().isEmpty()) {
+                cursos = cursoRepository.findCursosByUsuarioIdAndAtivoAndNomeContainingIgnoreCaseAndTipoCodigo(usuarioId, ativo, nome.trim(), tipo, pageable);
+            } else if (ativo != null) {
+                cursos = cursoRepository.findCursosByUsuarioIdAndAtivoAndTipoCodigo(usuarioId, ativo, tipo, pageable);
+            } else if (nome != null && !nome.trim().isEmpty()) {
+                cursos = cursoRepository.findCursosByUsuarioIdAndNomeContainingIgnoreCaseAndTipoCodigo(usuarioId, nome.trim(), tipo, pageable);
+            } else {
+                cursos = cursoRepository.findCursosByUsuarioIdAndTipoCodigo(usuarioId, tipo, pageable);
+            }
         } else {
-            // Sem filtros, retorna todos os cursos do usuário
-            cursos = cursoRepository.findCursosByUsuarioIdPaginado(usuarioId, pageable);
+            if (ativo != null && nome != null && !nome.trim().isEmpty()) {
+                cursos = cursoRepository.findCursosByUsuarioIdAndAtivoAndNomeContaining(usuarioId, ativo, nome.trim(), pageable);
+            } else if (ativo != null) {
+                cursos = cursoRepository.findCursosByUsuarioIdAndAtivo(usuarioId, ativo, pageable);
+            } else if (nome != null && !nome.trim().isEmpty()) {
+                cursos = cursoRepository.findCursosByUsuarioIdAndNomeContaining(usuarioId, nome.trim(), pageable);
+            } else {
+                cursos = cursoRepository.findCursosByUsuarioIdPaginado(usuarioId, pageable);
+            }
         }
         
         return cursos.map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null));

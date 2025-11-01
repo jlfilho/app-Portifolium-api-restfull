@@ -83,9 +83,10 @@ public class CursoController {
             @AuthenticationPrincipal Usuario userDetails,
             @RequestParam(required = false) Boolean ativo,
             @RequestParam(required = false) String nome,
+            @RequestParam(required = false) TipoCursoCodigo tipo,
             @PageableDefault(size = 10, sort = "nome") Pageable pageable) {
         Usuario usuario = usuarioService.getUsuarioByEmail(userDetails.getUsername());
-        Page<CursoDTO> cursos = cursoService.getCursosByUsuarioIdPaginadoComFiltros(usuario.getId(), ativo, nome, pageable);
+        Page<CursoDTO> cursos = cursoService.getCursosByUsuarioIdPaginadoComFiltros(usuario.getId(), ativo, nome, tipo, pageable);
         
         if (cursos.isEmpty()) {
             return ResponseEntity.noContent().build(); // Retorna 204 No Content se não houver cursos
