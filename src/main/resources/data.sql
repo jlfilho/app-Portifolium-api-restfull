@@ -16,9 +16,9 @@ INSERT INTO tipo_curso (id, codigo, nome) VALUES
 
 -- Populando a tabela Curso
 INSERT INTO curso (id, nome, descricao, ativo, tipo_curso_id) VALUES
-(1, 'Curso de Engenharia de Software', 'Curso completo de Engenharia de Software que aborda metodologias ágeis, arquitetura de software, desenvolvimento web e mobile, gestão de projetos e qualidade de software. Forma profissionais capazes de projetar, desenvolver e manter sistemas de software complexos.', true, 1),
-(2, 'Curso de Sistemas de Informação', 'Curso focado em Sistemas de Informação que combina conhecimentos em tecnologia da informação com gestão empresarial. Aborda banco de dados, redes de computadores, análise de sistemas, gestão de TI e empreendedorismo digital.', true, 1),
-(3, 'Curso de Ciência da Computação', 'Curso abrangente de Ciência da Computação que oferece formação sólida em algoritmos, estruturas de dados, programação, inteligência artificial, computação gráfica e teoria da computação. Prepara profissionais para pesquisa e desenvolvimento tecnológico.', true, 1);
+(1, 'Engenharia de Software', 'Curso completo de Engenharia de Software que aborda metodologias ágeis, arquitetura de software, desenvolvimento web e mobile, gestão de projetos e qualidade de software. Forma profissionais capazes de projetar, desenvolver e manter sistemas de software complexos.', true, 1),
+(2, 'Sistemas de Informação', 'Curso focado em Sistemas de Informação que combina conhecimentos em tecnologia da informação com gestão empresarial. Aborda banco de dados, redes de computadores, análise de sistemas, gestão de TI e empreendedorismo digital.', true, 1),
+(3, 'Ciência da Computação', 'Curso abrangente de Ciência da Computação que oferece formação sólida em algoritmos, estruturas de dados, programação, inteligência artificial, computação gráfica e teoria da computação. Prepara profissionais para pesquisa e desenvolvimento tecnológico.', true, 1);
 
 -- Populando a tabela Fonte Financiadora
 INSERT INTO fonte_financiadora (id, nome) VALUES 

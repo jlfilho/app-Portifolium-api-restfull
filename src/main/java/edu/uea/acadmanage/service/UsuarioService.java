@@ -57,7 +57,12 @@ public class UsuarioService {
                                 .toList().get(0),
                         usuario.getCursos().stream()
                                 .map(curso -> new CursoDTO(
-                                        curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo()))
+                                        curso.getId(),
+                                        curso.getNome(),
+                                        curso.getDescricao(),
+                                        curso.getFotoCapa(),
+                                        curso.getAtivo(),
+                                        curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null))
                                 .toList()))
                 .collect(Collectors.toList());
     }
@@ -76,7 +81,12 @@ public class UsuarioService {
                                 .toList().get(0),
                         usuario.getCursos().stream()
                                 .map(curso -> new CursoDTO(
-                                        curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo()))
+                                        curso.getId(),
+                                        curso.getNome(),
+                                        curso.getDescricao(),
+                                        curso.getFotoCapa(),
+                                        curso.getAtivo(),
+                                        curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null))
                                 .toList()));
     }
 
@@ -99,7 +109,12 @@ public class UsuarioService {
                                     .toList().get(0),
                             usuario.getCursos().stream()
                                     .map(curso -> new CursoDTO(
-                                            curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo()))
+                                            curso.getId(),
+                                            curso.getNome(),
+                                            curso.getDescricao(),
+                                            curso.getFotoCapa(),
+                                            curso.getAtivo(),
+                                            curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null))
                                     .toList()));
         }
     }
@@ -290,7 +305,13 @@ public class UsuarioService {
 
         // Recupera os cursos associados ao usuário
         return usuario.getCursos().stream()
-                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo()))
+                .map(curso -> new CursoDTO(
+                        curso.getId(),
+                        curso.getNome(),
+                        curso.getDescricao(),
+                        curso.getFotoCapa(),
+                        curso.getAtivo(),
+                        curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null))
                 .collect(Collectors.toList());
     }
 
@@ -331,7 +352,13 @@ public class UsuarioService {
                         .findFirst()
                         .orElse("Sem Role"),
                 usuario.getCursos().stream()
-                        .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo()))
+                        .map(curso -> new CursoDTO(
+                                curso.getId(),
+                                curso.getNome(),
+                                curso.getDescricao(),
+                                curso.getFotoCapa(),
+                                curso.getAtivo(),
+                                curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null))
                         .toList());
     }
 

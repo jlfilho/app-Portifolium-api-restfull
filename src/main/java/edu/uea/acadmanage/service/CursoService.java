@@ -90,22 +90,30 @@ public class CursoService {
         }
     }
 
-    // Método para buscar todos os cursos com paginação e filtros por status e nome
-    public Page<CursoDTO> getAllCursosPaginadoComFiltros(Boolean ativo, String nome, Pageable pageable) {
+    // Método para buscar todos os cursos com paginação e filtros por status, nome e tipo
+    public Page<CursoDTO> getAllCursosPaginadoComFiltros(Boolean ativo, String nome, edu.uea.acadmanage.model.TipoCursoCodigo tipo, Pageable pageable) {
         Page<Curso> cursos;
         
-        if (ativo != null && nome != null && !nome.trim().isEmpty()) {
-            // Filtrar por status E nome
-            cursos = cursoRepository.findByAtivoAndNomeContainingIgnoreCase(ativo, nome.trim(), pageable);
-        } else if (ativo != null) {
-            // Filtrar apenas por status
-            cursos = cursoRepository.findByAtivo(ativo, pageable);
-        } else if (nome != null && !nome.trim().isEmpty()) {
-            // Filtrar apenas por nome
-            cursos = cursoRepository.findByNomeContainingIgnoreCase(nome.trim(), pageable);
+        if (tipo != null) {
+            if (ativo != null && nome != null && !nome.trim().isEmpty()) {
+                cursos = cursoRepository.findByAtivoAndNomeContainingIgnoreCaseAndTipoCurso_Codigo(ativo, nome.trim(), tipo, pageable);
+            } else if (ativo != null) {
+                cursos = cursoRepository.findByAtivoAndTipoCurso_Codigo(ativo, tipo, pageable);
+            } else if (nome != null && !nome.trim().isEmpty()) {
+                cursos = cursoRepository.findByNomeContainingIgnoreCaseAndTipoCurso_Codigo(nome.trim(), tipo, pageable);
+            } else {
+                cursos = cursoRepository.findByTipoCurso_Codigo(tipo, pageable);
+            }
         } else {
-            // Sem filtros, retorna todos
-            cursos = cursoRepository.findAll(pageable);
+            if (ativo != null && nome != null && !nome.trim().isEmpty()) {
+                cursos = cursoRepository.findByAtivoAndNomeContainingIgnoreCase(ativo, nome.trim(), pageable);
+            } else if (ativo != null) {
+                cursos = cursoRepository.findByAtivo(ativo, pageable);
+            } else if (nome != null && !nome.trim().isEmpty()) {
+                cursos = cursoRepository.findByNomeContainingIgnoreCase(nome.trim(), pageable);
+            } else {
+                cursos = cursoRepository.findAll(pageable);
+            }
         }
         
         return cursos.map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null));

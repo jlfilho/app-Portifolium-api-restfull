@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import edu.uea.acadmanage.model.Curso;
+import edu.uea.acadmanage.model.TipoCursoCodigo;
 
 public interface CursoRepository extends JpaRepository<Curso, Long> {
 
@@ -35,5 +36,11 @@ public interface CursoRepository extends JpaRepository<Curso, Long> {
 
     // Buscar cursos por status e nome com paginação
     Page<Curso> findByAtivoAndNomeContainingIgnoreCase(Boolean ativo, String nome, Pageable pageable);
+
+    // Filtros por tipo de curso (navegando por associação tipoCurso.codigo)
+    Page<Curso> findByTipoCurso_Codigo(TipoCursoCodigo codigo, Pageable pageable);
+    Page<Curso> findByAtivoAndTipoCurso_Codigo(Boolean ativo, TipoCursoCodigo codigo, Pageable pageable);
+    Page<Curso> findByNomeContainingIgnoreCaseAndTipoCurso_Codigo(String nome, TipoCursoCodigo codigo, Pageable pageable);
+    Page<Curso> findByAtivoAndNomeContainingIgnoreCaseAndTipoCurso_Codigo(Boolean ativo, String nome, TipoCursoCodigo codigo, Pageable pageable);
 
 }
