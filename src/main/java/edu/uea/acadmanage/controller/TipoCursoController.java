@@ -13,11 +13,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import edu.uea.acadmanage.model.TipoCurso;
-import edu.uea.acadmanage.model.TipoCursoCodigo;
 import edu.uea.acadmanage.service.TipoCursoService;
 import jakarta.validation.Valid;
 
@@ -43,10 +41,7 @@ public class TipoCursoController {
         return ResponseEntity.ok(tipoCursoService.recuperarPorId(id));
     }
 
-    @GetMapping("/por-codigo")
-    public ResponseEntity<TipoCurso> recuperarPorCodigo(@RequestParam("codigo") TipoCursoCodigo codigo) {
-        return ResponseEntity.ok(tipoCursoService.recuperarPorCodigo(codigo));
-    }
+    // Removido endpoint por código; tipos são gerenciados por ID ou nome no serviço
 
     @PostMapping
     @PreAuthorize("hasRole('ADMINISTRADOR')")

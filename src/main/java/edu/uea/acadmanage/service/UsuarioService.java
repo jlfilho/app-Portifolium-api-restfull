@@ -62,7 +62,7 @@ public class UsuarioService {
                                         curso.getDescricao(),
                                         curso.getFotoCapa(),
                                         curso.getAtivo(),
-                                        curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null))
+                                        curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null))
                                 .toList()))
                 .collect(Collectors.toList());
     }
@@ -86,7 +86,7 @@ public class UsuarioService {
                                         curso.getDescricao(),
                                         curso.getFotoCapa(),
                                         curso.getAtivo(),
-                                        curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null))
+                                            curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null))
                                 .toList()));
     }
 
@@ -114,7 +114,7 @@ public class UsuarioService {
                                             curso.getDescricao(),
                                             curso.getFotoCapa(),
                                             curso.getAtivo(),
-                                            curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null))
+                                            curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null))
                                     .toList()));
         }
     }
@@ -311,7 +311,7 @@ public class UsuarioService {
                         curso.getDescricao(),
                         curso.getFotoCapa(),
                         curso.getAtivo(),
-                        curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null))
+                        curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null))
                 .collect(Collectors.toList());
     }
 
@@ -358,7 +358,7 @@ public class UsuarioService {
                                 curso.getDescricao(),
                                 curso.getFotoCapa(),
                                 curso.getAtivo(),
-                                curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null))
+                                curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null))
                         .toList());
     }
 

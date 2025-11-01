@@ -4,15 +4,15 @@ INSERT INTO categoria (id, nome) VALUES
 (2, 'Pesquisa'),
 (3, 'Extensão');
 
--- Populando a tabela TipoCurso com enumeração de tipos
-INSERT INTO tipo_curso (id, codigo, nome) VALUES
-(1, 'BACHARELADO', 'Bacharelado'),
-(2, 'LICENCIATURA', 'Licenciatura'),
-(3, 'TECNOLOGO', 'Tecnólogo'),
-(4, 'ESPECIALIZACAO', 'Especialização'),
-(5, 'MBA', 'MBA'),
-(6, 'MESTRADO', 'Mestrado'),
-(7, 'DOUTORADO', 'Doutorado');
+-- Populando a tabela TipoCurso
+INSERT INTO tipo_curso (id, nome) VALUES
+(1, 'Bacharelado'),
+(2, 'Licenciatura'),
+(3, 'Tecnólogo'),
+(4, 'Especialização'),
+(5, 'MBA'),
+(6, 'Mestrado'),
+(7, 'Doutorado');
 
 -- Populando a tabela Curso
 INSERT INTO curso (id, nome, descricao, ativo, tipo_curso_id) VALUES

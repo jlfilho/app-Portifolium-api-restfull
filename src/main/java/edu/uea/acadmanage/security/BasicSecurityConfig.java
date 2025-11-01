@@ -25,7 +25,7 @@ public class BasicSecurityConfig {
             .requestMatchers("/login", "/logout","/api/atividades/**", "/api/cursos/**", "/api/categorias/**", "/api/evidencias/**", "/api/evidencias/atividade/**").permitAll() // Permite acesso a login e logout sem autenticação
             .requestMatchers("/api/recovery/generate/**", "/api/recovery/reset-password/**").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
-                .requestMatchers("/h2-console/**").hasRole("ADMINISTRADOR")
+                .requestMatchers("/h2-console/**").permitAll()
                 .anyRequest().authenticated() // Todas as outras requisições requerem autenticação
             )
             .httpBasic(Customizer.withDefaults()) // Habilita autenticação básica

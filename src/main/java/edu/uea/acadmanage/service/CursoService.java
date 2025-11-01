@@ -60,21 +60,21 @@ public class CursoService {
     // Método para buscar um curso por ID
     public CursoDTO getCursoById(Long cursoId) {
         return cursoRepository.findById(cursoId)
-                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null))
+                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null))
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
     }
 
     // Método para buscar todos os curso
     public List<CursoDTO> getAllCursos() {
         return cursoRepository.findAll().stream()
-                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null))
+                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null))
                 .toList();
     }
 
     // Método para buscar todos os cursos com paginação
     public Page<CursoDTO> getAllCursosPaginado(Pageable pageable) {
         return cursoRepository.findAll(pageable)
-                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null));
+                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null));
     }
 
     // Método para buscar todos os cursos com paginação e filtro por status
@@ -82,27 +82,27 @@ public class CursoService {
         if (ativo == null) {
             // Se o filtro não for informado, retorna todos os cursos
             return cursoRepository.findAll(pageable)
-                    .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null));
+                    .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null));
         } else {
             // Se o filtro for informado, retorna cursos filtrados por status
             return cursoRepository.findByAtivo(ativo, pageable)
-                    .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null));
+                    .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null));
         }
     }
 
     // Método para buscar todos os cursos com paginação e filtros por status, nome e tipo
-    public Page<CursoDTO> getAllCursosPaginadoComFiltros(Boolean ativo, String nome, edu.uea.acadmanage.model.TipoCursoCodigo tipo, Pageable pageable) {
+    public Page<CursoDTO> getAllCursosPaginadoComFiltros(Boolean ativo, String nome, Long tipoId, Pageable pageable) {
         Page<Curso> cursos;
         
-        if (tipo != null) {
+        if (tipoId != null) {
             if (ativo != null && nome != null && !nome.trim().isEmpty()) {
-                cursos = cursoRepository.findByAtivoAndNomeContainingIgnoreCaseAndTipoCurso_Codigo(ativo, nome.trim(), tipo, pageable);
+                cursos = cursoRepository.findByAtivoAndNomeContainingIgnoreCaseAndTipoCurso_Id(ativo, nome.trim(), tipoId, pageable);
             } else if (ativo != null) {
-                cursos = cursoRepository.findByAtivoAndTipoCurso_Codigo(ativo, tipo, pageable);
+                cursos = cursoRepository.findByAtivoAndTipoCurso_Id(ativo, tipoId, pageable);
             } else if (nome != null && !nome.trim().isEmpty()) {
-                cursos = cursoRepository.findByNomeContainingIgnoreCaseAndTipoCurso_Codigo(nome.trim(), tipo, pageable);
+                cursos = cursoRepository.findByNomeContainingIgnoreCaseAndTipoCurso_Id(nome.trim(), tipoId, pageable);
             } else {
-                cursos = cursoRepository.findByTipoCurso_Codigo(tipo, pageable);
+                cursos = cursoRepository.findByTipoCurso_Id(tipoId, pageable);
             }
         } else {
             if (ativo != null && nome != null && !nome.trim().isEmpty()) {
@@ -116,7 +116,7 @@ public class CursoService {
             }
         }
         
-        return cursos.map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null));
+        return cursos.map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null));
     }
 
     // Método para buscar cursos associados a um usuário
@@ -128,7 +128,7 @@ public class CursoService {
 
         // Buscar cursos associados ao usuário
         return cursoRepository.findCursosByUsuarioId(usuarioId).stream()
-                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null))
+                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null))
                 .toList();
     }
 
@@ -141,11 +141,11 @@ public class CursoService {
 
         // Buscar cursos associados ao usuário com paginação
         return cursoRepository.findCursosByUsuarioIdPaginado(usuarioId, pageable)
-                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null));
+                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null));
     }
 
     // Método para buscar cursos associados a um usuário com paginação e filtros (status, nome, tipo)
-    public Page<CursoDTO> getCursosByUsuarioIdPaginadoComFiltros(Long usuarioId, Boolean ativo, String nome, edu.uea.acadmanage.model.TipoCursoCodigo tipo, Pageable pageable) {
+    public Page<CursoDTO> getCursosByUsuarioIdPaginadoComFiltros(Long usuarioId, Boolean ativo, String nome, Long tipoId, Pageable pageable) {
         // Verificar existência do usuário
         if (!usuarioRepository.existsById(usuarioId)) {
             throw new RecursoNaoEncontradoException("Usuário não encontrado com o ID: " + usuarioId);
@@ -153,15 +153,15 @@ public class CursoService {
 
         Page<Curso> cursos;
 
-        if (tipo != null) {
+        if (tipoId != null) {
             if (ativo != null && nome != null && !nome.trim().isEmpty()) {
-                cursos = cursoRepository.findCursosByUsuarioIdAndAtivoAndNomeContainingIgnoreCaseAndTipoCodigo(usuarioId, ativo, nome.trim(), tipo, pageable);
+                cursos = cursoRepository.findCursosByUsuarioIdAndAtivoAndNomeContainingIgnoreCaseAndTipoId(usuarioId, ativo, nome.trim(), tipoId, pageable);
             } else if (ativo != null) {
-                cursos = cursoRepository.findCursosByUsuarioIdAndAtivoAndTipoCodigo(usuarioId, ativo, tipo, pageable);
+                cursos = cursoRepository.findCursosByUsuarioIdAndAtivoAndTipoId(usuarioId, ativo, tipoId, pageable);
             } else if (nome != null && !nome.trim().isEmpty()) {
-                cursos = cursoRepository.findCursosByUsuarioIdAndNomeContainingIgnoreCaseAndTipoCodigo(usuarioId, nome.trim(), tipo, pageable);
+                cursos = cursoRepository.findCursosByUsuarioIdAndNomeContainingIgnoreCaseAndTipoId(usuarioId, nome.trim(), tipoId, pageable);
             } else {
-                cursos = cursoRepository.findCursosByUsuarioIdAndTipoCodigo(usuarioId, tipo, pageable);
+                cursos = cursoRepository.findCursosByUsuarioIdAndTipoId(usuarioId, tipoId, pageable);
             }
         } else {
             if (ativo != null && nome != null && !nome.trim().isEmpty()) {
@@ -175,7 +175,7 @@ public class CursoService {
             }
         }
         
-        return cursos.map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getCodigo() : null));
+        return cursos.map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null));
     }
 
     // Método para buscar todos os usuários e suas permissões associados a um curso
@@ -227,10 +227,10 @@ public class CursoService {
         novoCurso.setNome(cursoDTO.nome());
         novoCurso.setDescricao(cursoDTO.descricao());
         novoCurso.setFotoCapa(cursoDTO.fotoCapa());
-        if (cursoDTO.tipo() == null) {
+        if (cursoDTO.tipoId() == null) {
             throw new IllegalArgumentException("O tipo do curso é obrigatório");
         }
-        TipoCurso tipoCurso = tipoCursoService.recuperarPorCodigo(cursoDTO.tipo());
+        TipoCurso tipoCurso = tipoCursoService.recuperarPorId(cursoDTO.tipoId());
         novoCurso.setTipoCurso(tipoCurso);
         Set<Usuario> usuarios = this.usuarioRepository.findAllByRoleName("ROLE_ADMINISTRADOR");
         usuarios.add(usuario);
@@ -240,7 +240,7 @@ public class CursoService {
         Curso cursoSalvo = cursoRepository.save(novoCurso);
 
         // Retornar um DTO com os dados do curso salvo
-        return new CursoDTO(cursoSalvo.getId(), cursoSalvo.getNome(), cursoSalvo.getDescricao(), cursoSalvo.getFotoCapa(), cursoSalvo.getAtivo(), cursoSalvo.getTipoCurso() != null ? cursoSalvo.getTipoCurso().getCodigo() : null);
+        return new CursoDTO(cursoSalvo.getId(), cursoSalvo.getNome(), cursoSalvo.getDescricao(), cursoSalvo.getFotoCapa(), cursoSalvo.getAtivo(), cursoSalvo.getTipoCurso() != null ? cursoSalvo.getTipoCurso().getId() : null);
     }
 
     // Método para atualizar um curso
@@ -256,14 +256,14 @@ public class CursoService {
         cursoExistente.setNome(cursoDTO.nome());
         cursoExistente.setDescricao(cursoDTO.descricao());
         cursoExistente.setFotoCapa(cursoDTO.fotoCapa());
-        if (cursoDTO.tipo() != null) {
-            TipoCurso tipoCurso = tipoCursoService.recuperarPorCodigo(cursoDTO.tipo());
+        if (cursoDTO.tipoId() != null) {
+            TipoCurso tipoCurso = tipoCursoService.recuperarPorId(cursoDTO.tipoId());
             cursoExistente.setTipoCurso(tipoCurso);
         }
         cursoExistente.setAtivo(cursoDTO.ativo());
         // Salvando no banco
         Curso cursoAtualizado = cursoRepository.save(cursoExistente);
-        return new CursoDTO(cursoAtualizado.getId(), cursoAtualizado.getNome(), cursoAtualizado.getDescricao(), cursoAtualizado.getFotoCapa(), cursoAtualizado.getAtivo(), cursoAtualizado.getTipoCurso() != null ? cursoAtualizado.getTipoCurso().getCodigo() : null);
+        return new CursoDTO(cursoAtualizado.getId(), cursoAtualizado.getNome(), cursoAtualizado.getDescricao(), cursoAtualizado.getFotoCapa(), cursoAtualizado.getAtivo(), cursoAtualizado.getTipoCurso() != null ? cursoAtualizado.getTipoCurso().getId() : null);
     }
 
     // Método para adicionar usuário a um curso
@@ -356,7 +356,7 @@ public class CursoService {
         cursoExistente.setAtivo(ativo);
         // Salvando no banco
         Curso cursoAtualizado = cursoRepository.save(cursoExistente);
-        return new CursoDTO(cursoAtualizado.getId(), cursoAtualizado.getNome(), cursoAtualizado.getDescricao(), cursoAtualizado.getFotoCapa(), cursoAtualizado.getAtivo(), cursoAtualizado.getTipoCurso() != null ? cursoAtualizado.getTipoCurso().getCodigo() : null);
+        return new CursoDTO(cursoAtualizado.getId(), cursoAtualizado.getNome(), cursoAtualizado.getDescricao(), cursoAtualizado.getFotoCapa(), cursoAtualizado.getAtivo(), cursoAtualizado.getTipoCurso() != null ? cursoAtualizado.getTipoCurso().getId() : null);
     }
 
     // Método para excluir um curso
@@ -426,7 +426,7 @@ public class CursoService {
         // Salvar curso atualizado
         Curso cursoAtualizado = cursoRepository.save(curso);
 
-        return new CursoDTO(cursoAtualizado.getId(), cursoAtualizado.getNome(), cursoAtualizado.getDescricao(), cursoAtualizado.getFotoCapa(), cursoAtualizado.getAtivo(), cursoAtualizado.getTipoCurso() != null ? cursoAtualizado.getTipoCurso().getCodigo() : null);
+        return new CursoDTO(cursoAtualizado.getId(), cursoAtualizado.getNome(), cursoAtualizado.getDescricao(), cursoAtualizado.getFotoCapa(), cursoAtualizado.getAtivo(), cursoAtualizado.getTipoCurso() != null ? cursoAtualizado.getTipoCurso().getId() : null);
     }
 
     // Método para baixar uma foto de capa

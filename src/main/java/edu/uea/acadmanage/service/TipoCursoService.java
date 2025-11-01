@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import edu.uea.acadmanage.model.TipoCurso;
-import edu.uea.acadmanage.model.TipoCursoCodigo;
 import edu.uea.acadmanage.repository.TipoCursoRepository;
 import edu.uea.acadmanage.service.exception.ConflitoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
@@ -28,15 +27,12 @@ public class TipoCursoService {
                         .orElseThrow(() -> new RecursoNaoEncontradoException("Tipo de curso não encontrado com o ID: " + id));
         }
 
-        public TipoCurso recuperarPorCodigo(TipoCursoCodigo codigo) {
-                return tipoCursoRepository.findByCodigo(codigo)
-                        .orElseThrow(() -> new RecursoNaoEncontradoException("Tipo de curso não encontrado com o código: " + codigo));
+        public TipoCurso recuperarPorNome(String nome) {
+                return tipoCursoRepository.findByNomeIgnoreCase(nome)
+                        .orElseThrow(() -> new RecursoNaoEncontradoException("Tipo de curso não encontrado com o nome: " + nome));
         }
 
         public TipoCurso salvar(TipoCurso tipoCurso) {
-                if (tipoCursoRepository.existsByCodigo(tipoCurso.getCodigo())) {
-                        throw new ConflitoException("Já existe um tipo de curso com o código: " + tipoCurso.getCodigo());
-                }
                 if (tipoCursoRepository.existsByNomeIgnoreCase(tipoCurso.getNome())) {
                         throw new ConflitoException("Já existe um tipo de curso com o nome: " + tipoCurso.getNome());
                 }
@@ -46,14 +42,10 @@ public class TipoCursoService {
         public TipoCurso atualizar(Long id, TipoCurso novo) {
                 TipoCurso existente = this.recuperarPorId(id);
 
-                if (!existente.getCodigo().equals(novo.getCodigo()) && tipoCursoRepository.existsByCodigo(novo.getCodigo())) {
-                        throw new ConflitoException("Já existe um tipo de curso com o código: " + novo.getCodigo());
-                }
                 if (!existente.getNome().equalsIgnoreCase(novo.getNome()) && tipoCursoRepository.existsByNomeIgnoreCase(novo.getNome())) {
                         throw new ConflitoException("Já existe um tipo de curso com o nome: " + novo.getNome());
                 }
 
-                existente.setCodigo(novo.getCodigo());
                 existente.setNome(novo.getNome());
                 return tipoCursoRepository.save(existente);
         }

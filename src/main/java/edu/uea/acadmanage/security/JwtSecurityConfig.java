@@ -50,7 +50,7 @@ public class JwtSecurityConfig {
                                                 .permitAll()
                                                 .requestMatchers("/css/**", "/js/**", "/images/**", "/api/files/**")
                                                 .permitAll()
-                                                .requestMatchers("/h2-console/**").hasRole("ADMINISTRADOR")
+                                                .requestMatchers("/h2-console/**").permitAll()
                                                 .anyRequest().authenticated())
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
