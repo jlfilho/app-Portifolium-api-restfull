@@ -1,0 +1,69 @@
+package edu.uea.acadmanage.service;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import edu.uea.acadmanage.model.TipoCurso;
+import edu.uea.acadmanage.model.TipoCursoCodigo;
+import edu.uea.acadmanage.repository.TipoCursoRepository;
+import edu.uea.acadmanage.service.exception.ConflitoException;
+import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
+
+@Service
+public class TipoCursoService {
+
+        private final TipoCursoRepository tipoCursoRepository;
+
+        public TipoCursoService(TipoCursoRepository tipoCursoRepository) {
+                this.tipoCursoRepository = tipoCursoRepository;
+        }
+        
+        public List<TipoCurso> listarTodos() {
+                return tipoCursoRepository.findAll();
+        }
+
+        public TipoCurso recuperarPorId(Long id) {
+                return tipoCursoRepository.findById(id)
+                        .orElseThrow(() -> new RecursoNaoEncontradoException("Tipo de curso não encontrado com o ID: " + id));
+        }
+
+        public TipoCurso recuperarPorCodigo(TipoCursoCodigo codigo) {
+                return tipoCursoRepository.findByCodigo(codigo)
+                        .orElseThrow(() -> new RecursoNaoEncontradoException("Tipo de curso não encontrado com o código: " + codigo));
+        }
+
+        public TipoCurso salvar(TipoCurso tipoCurso) {
+                if (tipoCursoRepository.existsByCodigo(tipoCurso.getCodigo())) {
+                        throw new ConflitoException("Já existe um tipo de curso com o código: " + tipoCurso.getCodigo());
+                }
+                if (tipoCursoRepository.existsByNomeIgnoreCase(tipoCurso.getNome())) {
+                        throw new ConflitoException("Já existe um tipo de curso com o nome: " + tipoCurso.getNome());
+                }
+                return tipoCursoRepository.save(tipoCurso);
+        }
+
+        public TipoCurso atualizar(Long id, TipoCurso novo) {
+                TipoCurso existente = this.recuperarPorId(id);
+
+                if (!existente.getCodigo().equals(novo.getCodigo()) && tipoCursoRepository.existsByCodigo(novo.getCodigo())) {
+                        throw new ConflitoException("Já existe um tipo de curso com o código: " + novo.getCodigo());
+                }
+                if (!existente.getNome().equalsIgnoreCase(novo.getNome()) && tipoCursoRepository.existsByNomeIgnoreCase(novo.getNome())) {
+                        throw new ConflitoException("Já existe um tipo de curso com o nome: " + novo.getNome());
+                }
+
+                existente.setCodigo(novo.getCodigo());
+                existente.setNome(novo.getNome());
+                return tipoCursoRepository.save(existente);
+        }
+
+        public void deletar(Long id) {
+                if (!tipoCursoRepository.existsById(id)) {
+                        throw new RecursoNaoEncontradoException("Tipo de curso não encontrado com o ID: " + id);
+                }
+                tipoCursoRepository.deleteById(id);
+        }
+}
+
+

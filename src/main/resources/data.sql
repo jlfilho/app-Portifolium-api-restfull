@@ -179,3 +179,12 @@ INSERT INTO evidencia (id, url_foto, legenda, criado_por, atividade_id) VALUES
 (13, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Apresentação de projeto acadêmico na mostra tecnológica.', 'admin', 3),
 (14, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Roda de conversa com egressos sobre mercado de trabalho.', 'admin', 3),
 (15, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Encerramento com entrega de certificados aos participantes.', 'admin', 3);
+-- Populando a tabela TipoCurso com enumeração de tipos
+INSERT INTO tipo_curso (id, codigo, nome) VALUES
+(1, 'BACHARELADO', 'Bacharelado'),
+(2, 'LICENCIATURA', 'Licenciatura'),
+(3, 'TECNOLOGO', 'Tecnólogo'),
+(4, 'ESPECIALIZACAO', 'Especialização'),
+(5, 'MBA', 'MBA'),
+(6, 'MESTRADO', 'Mestrado'),
+(7, 'DOUTORADO', 'Doutorado');
