@@ -55,4 +55,7 @@ public interface CursoRepository extends JpaRepository<Curso, Long> {
     @Query("SELECT c FROM Curso c JOIN c.usuarios u WHERE u.id = :usuarioId AND c.ativo = :ativo AND LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%')) AND c.tipoCurso.id = :tipoId")
     Page<Curso> findCursosByUsuarioIdAndAtivoAndNomeContainingIgnoreCaseAndTipoId(@Param("usuarioId") Long usuarioId, @Param("ativo") Boolean ativo, @Param("nome") String nome, @Param("tipoId") Long tipoId, Pageable pageable);
 
+    // Existência de cursos por tipo (para validação de exclusão de tipo)
+    boolean existsByTipoCurso_Id(Long tipoId);
+
 }

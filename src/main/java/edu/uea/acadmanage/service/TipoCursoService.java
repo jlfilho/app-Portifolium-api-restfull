@@ -6,16 +6,20 @@ import org.springframework.stereotype.Service;
 
 import edu.uea.acadmanage.model.TipoCurso;
 import edu.uea.acadmanage.repository.TipoCursoRepository;
+import edu.uea.acadmanage.repository.CursoRepository;
 import edu.uea.acadmanage.service.exception.ConflitoException;
+import edu.uea.acadmanage.service.exception.TipoCursoEmUsoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
 
 @Service
 public class TipoCursoService {
 
         private final TipoCursoRepository tipoCursoRepository;
+        private final CursoRepository cursoRepository;
 
-        public TipoCursoService(TipoCursoRepository tipoCursoRepository) {
+        public TipoCursoService(TipoCursoRepository tipoCursoRepository, CursoRepository cursoRepository) {
                 this.tipoCursoRepository = tipoCursoRepository;
+                this.cursoRepository = cursoRepository;
         }
         
         public List<TipoCurso> listarTodos() {
@@ -53,6 +57,9 @@ public class TipoCursoService {
         public void deletar(Long id) {
                 if (!tipoCursoRepository.existsById(id)) {
                         throw new RecursoNaoEncontradoException("Tipo de curso não encontrado com o ID: " + id);
+                }
+                if (cursoRepository.existsByTipoCurso_Id(id)) {
+                        throw new TipoCursoEmUsoException(id);
                 }
                 tipoCursoRepository.deleteById(id);
         }

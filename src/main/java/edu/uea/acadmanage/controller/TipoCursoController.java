@@ -58,7 +58,7 @@ public class TipoCursoController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+    public ResponseEntity<?> deletar(@PathVariable Long id) {
         tipoCursoService.deletar(id);
         return ResponseEntity.noContent().build();
     }

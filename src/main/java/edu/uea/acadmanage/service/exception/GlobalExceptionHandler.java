@@ -43,6 +43,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
+    @ExceptionHandler(TipoCursoEmUsoException.class)
+    public ResponseEntity<Map<String, String>> handleTipoCursoEmUsoException(TipoCursoEmUsoException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("mensagem", "Não é possível excluir o tipo de curso pois existem cursos associados.");
+        error.put("detalhes", ex.getMessage());
+        error.put("tipoCursoId", String.valueOf(ex.getTipoCursoId()));
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
