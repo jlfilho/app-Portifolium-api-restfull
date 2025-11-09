@@ -47,6 +47,11 @@ public class Curso implements Serializable {
     @JoinColumn(name = "tipo_curso_id")
     private TipoCurso tipoCurso;
 
+    @JsonIgnoreProperties("cursos")
+    @ManyToOne
+    @JoinColumn(name = "unidade_academica_id")
+    private UnidadeAcademica unidadeAcademica;
+
     @JsonIgnoreProperties("curso")
     @OneToMany(mappedBy = "curso", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Atividade> atividades;

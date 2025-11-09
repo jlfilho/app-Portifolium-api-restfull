@@ -222,17 +222,39 @@ public class EvidenciaService {
         String fileExtension = originalFilename.substring(originalFilename.lastIndexOf('.'));
         String uniqueFileName = atividade.getCurso().getId() + "/" + atividade.getId() + "/"
                 + UUID.randomUUID().toString() + fileExtension;
-        Path targetLocation = this.fileStorageLocation.resolve(uniqueFileName);
-        Files.createDirectories(targetLocation);
+        Path targetLocation = this.fileStorageLocation.resolve(uniqueFileName).normalize();
+        Files.createDirectories(targetLocation.getParent());
         Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
-        return this.baseStorageLocation+"/"+uniqueFileName;
+        return this.baseStorageLocation + "/" + uniqueFileName;
     }
 
     // Método para excluir uma imagem
     private Boolean excluirImagem(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            return false;
+        }
+
         try {
-            Path targetLocation = this.fileStorageLocation.resolve(fileName).normalize();
+            String normalized = fileName.replace("\\", "/");
+
+            if (normalized.startsWith("/")) {
+                normalized = normalized.substring(1);
+            }
+
+            String basePath = this.baseStorageLocation.replace("\\", "/");
+            if (basePath.startsWith("/")) {
+                basePath = basePath.substring(1);
+            }
+
+            if (normalized.startsWith(basePath)) {
+                normalized = normalized.substring(basePath.length());
+                if (normalized.startsWith("/")) {
+                    normalized = normalized.substring(1);
+                }
+            }
+
+            Path targetLocation = this.fileStorageLocation.resolve(normalized).normalize();
             Files.deleteIfExists(targetLocation);
             return true;
         } catch (IOException e) {

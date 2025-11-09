@@ -32,6 +32,7 @@ import edu.uea.acadmanage.repository.CursoRepository;
 import edu.uea.acadmanage.repository.UsuarioRepository;
 import edu.uea.acadmanage.service.exception.AcessoNegadoException;
 import edu.uea.acadmanage.service.exception.ConflitoException;
+import edu.uea.acadmanage.service.exception.CursoComAtividadesException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
 
 @Service
@@ -40,6 +41,7 @@ public class CursoService {
     private final CursoRepository cursoRepository;
     private final UsuarioRepository usuarioRepository;
     private final TipoCursoService tipoCursoService;
+    private final UnidadeAcademicaService unidadeAcademicaService;
     private final Path fileStorageLocation;
     private final String baseStorageLocation;
 
@@ -47,76 +49,51 @@ public class CursoService {
         CursoRepository cursoRepository, 
         UsuarioRepository usuarioRepository,
         TipoCursoService tipoCursoService,
+        UnidadeAcademicaService unidadeAcademicaService,
         FileStorageProperties fileStorageProperties) throws IOException {
         this.cursoRepository = cursoRepository;
         this.usuarioRepository = usuarioRepository;
         this.tipoCursoService = tipoCursoService;
-        this.baseStorageLocation = "/fotos-capa";
-        this.fileStorageLocation = Paths.get(fileStorageProperties.getStorageLocation() + this.baseStorageLocation)
-                .toAbsolutePath().normalize();
+        this.unidadeAcademicaService = unidadeAcademicaService;
+        this.baseStorageLocation = "fotos-capa";
+        this.fileStorageLocation = Paths.get(fileStorageProperties.getStorageLocation())
+                .resolve(this.baseStorageLocation)
+                .toAbsolutePath()
+                .normalize();
         Files.createDirectories(this.fileStorageLocation);
     }
 
     // Método para buscar um curso por ID
     public CursoDTO getCursoById(Long cursoId) {
         return cursoRepository.findById(cursoId)
-                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null))
+                .map(this::toCursoDTO)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
     }
 
     // Método para buscar todos os curso
     public List<CursoDTO> getAllCursos() {
         return cursoRepository.findAll().stream()
-                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null))
+                .map(this::toCursoDTO)
                 .toList();
     }
 
     // Método para buscar todos os cursos com paginação
     public Page<CursoDTO> getAllCursosPaginado(Pageable pageable) {
         return cursoRepository.findAll(pageable)
-                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null));
+                .map(this::toCursoDTO);
     }
 
     // Método para buscar todos os cursos com paginação e filtro por status
     public Page<CursoDTO> getAllCursosPaginadoComFiltro(Boolean ativo, Pageable pageable) {
-        if (ativo == null) {
-            // Se o filtro não for informado, retorna todos os cursos
-            return cursoRepository.findAll(pageable)
-                    .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null));
-        } else {
-            // Se o filtro for informado, retorna cursos filtrados por status
-            return cursoRepository.findByAtivo(ativo, pageable)
-                    .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null));
-        }
+        Page<Curso> cursos = cursoRepository.findAllByFiltros(ativo, null, null, null, pageable);
+        return cursos.map(this::toCursoDTO);
     }
 
     // Método para buscar todos os cursos com paginação e filtros por status, nome e tipo
-    public Page<CursoDTO> getAllCursosPaginadoComFiltros(Boolean ativo, String nome, Long tipoId, Pageable pageable) {
-        Page<Curso> cursos;
-        
-        if (tipoId != null) {
-            if (ativo != null && nome != null && !nome.trim().isEmpty()) {
-                cursos = cursoRepository.findByAtivoAndNomeContainingIgnoreCaseAndTipoCurso_Id(ativo, nome.trim(), tipoId, pageable);
-            } else if (ativo != null) {
-                cursos = cursoRepository.findByAtivoAndTipoCurso_Id(ativo, tipoId, pageable);
-            } else if (nome != null && !nome.trim().isEmpty()) {
-                cursos = cursoRepository.findByNomeContainingIgnoreCaseAndTipoCurso_Id(nome.trim(), tipoId, pageable);
-            } else {
-                cursos = cursoRepository.findByTipoCurso_Id(tipoId, pageable);
-            }
-        } else {
-            if (ativo != null && nome != null && !nome.trim().isEmpty()) {
-                cursos = cursoRepository.findByAtivoAndNomeContainingIgnoreCase(ativo, nome.trim(), pageable);
-            } else if (ativo != null) {
-                cursos = cursoRepository.findByAtivo(ativo, pageable);
-            } else if (nome != null && !nome.trim().isEmpty()) {
-                cursos = cursoRepository.findByNomeContainingIgnoreCase(nome.trim(), pageable);
-            } else {
-                cursos = cursoRepository.findAll(pageable);
-            }
-        }
-        
-        return cursos.map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null));
+    public Page<CursoDTO> getAllCursosPaginadoComFiltros(Boolean ativo, String nome, Long tipoId, Long unidadeAcademicaId, Pageable pageable) {
+        String nomeTratado = nome != null && !nome.trim().isEmpty() ? nome.trim() : null;
+        Page<Curso> cursos = cursoRepository.findAllByFiltros(ativo, nomeTratado, tipoId, unidadeAcademicaId, pageable);
+        return cursos.map(this::toCursoDTO);
     }
 
     // Método para buscar cursos associados a um usuário
@@ -128,7 +105,7 @@ public class CursoService {
 
         // Buscar cursos associados ao usuário
         return cursoRepository.findCursosByUsuarioId(usuarioId).stream()
-                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null))
+                .map(this::toCursoDTO)
                 .toList();
     }
 
@@ -141,41 +118,19 @@ public class CursoService {
 
         // Buscar cursos associados ao usuário com paginação
         return cursoRepository.findCursosByUsuarioIdPaginado(usuarioId, pageable)
-                .map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null));
+                .map(this::toCursoDTO);
     }
 
     // Método para buscar cursos associados a um usuário com paginação e filtros (status, nome, tipo)
-    public Page<CursoDTO> getCursosByUsuarioIdPaginadoComFiltros(Long usuarioId, Boolean ativo, String nome, Long tipoId, Pageable pageable) {
+    public Page<CursoDTO> getCursosByUsuarioIdPaginadoComFiltros(Long usuarioId, Boolean ativo, String nome, Long tipoId, Long unidadeAcademicaId, Pageable pageable) {
         // Verificar existência do usuário
         if (!usuarioRepository.existsById(usuarioId)) {
             throw new RecursoNaoEncontradoException("Usuário não encontrado com o ID: " + usuarioId);
         }
 
-        Page<Curso> cursos;
-
-        if (tipoId != null) {
-            if (ativo != null && nome != null && !nome.trim().isEmpty()) {
-                cursos = cursoRepository.findCursosByUsuarioIdAndAtivoAndNomeContainingIgnoreCaseAndTipoId(usuarioId, ativo, nome.trim(), tipoId, pageable);
-            } else if (ativo != null) {
-                cursos = cursoRepository.findCursosByUsuarioIdAndAtivoAndTipoId(usuarioId, ativo, tipoId, pageable);
-            } else if (nome != null && !nome.trim().isEmpty()) {
-                cursos = cursoRepository.findCursosByUsuarioIdAndNomeContainingIgnoreCaseAndTipoId(usuarioId, nome.trim(), tipoId, pageable);
-            } else {
-                cursos = cursoRepository.findCursosByUsuarioIdAndTipoId(usuarioId, tipoId, pageable);
-            }
-        } else {
-            if (ativo != null && nome != null && !nome.trim().isEmpty()) {
-                cursos = cursoRepository.findCursosByUsuarioIdAndAtivoAndNomeContaining(usuarioId, ativo, nome.trim(), pageable);
-            } else if (ativo != null) {
-                cursos = cursoRepository.findCursosByUsuarioIdAndAtivo(usuarioId, ativo, pageable);
-            } else if (nome != null && !nome.trim().isEmpty()) {
-                cursos = cursoRepository.findCursosByUsuarioIdAndNomeContaining(usuarioId, nome.trim(), pageable);
-            } else {
-                cursos = cursoRepository.findCursosByUsuarioIdPaginado(usuarioId, pageable);
-            }
-        }
-        
-        return cursos.map(curso -> new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null));
+        String nomeTratado = nome != null && !nome.trim().isEmpty() ? nome.trim() : null;
+        Page<Curso> cursos = cursoRepository.findByUsuarioAndFiltros(usuarioId, ativo, nomeTratado, tipoId, unidadeAcademicaId, pageable);
+        return cursos.map(this::toCursoDTO);
     }
 
     // Método para buscar todos os usuários e suas permissões associados a um curso
@@ -232,6 +187,11 @@ public class CursoService {
         }
         TipoCurso tipoCurso = tipoCursoService.recuperarPorId(cursoDTO.tipoId());
         novoCurso.setTipoCurso(tipoCurso);
+
+        if (cursoDTO.unidadeAcademicaId() == null) {
+            throw new IllegalArgumentException("A unidade acadêmica é obrigatória");
+        }
+        novoCurso.setUnidadeAcademica(unidadeAcademicaService.buscarEntidade(cursoDTO.unidadeAcademicaId()));
         Set<Usuario> usuarios = this.usuarioRepository.findAllByRoleName("ROLE_ADMINISTRADOR");
         usuarios.add(usuario);
         novoCurso.setUsuarios(usuarios);
@@ -240,7 +200,7 @@ public class CursoService {
         Curso cursoSalvo = cursoRepository.save(novoCurso);
 
         // Retornar um DTO com os dados do curso salvo
-        return new CursoDTO(cursoSalvo.getId(), cursoSalvo.getNome(), cursoSalvo.getDescricao(), cursoSalvo.getFotoCapa(), cursoSalvo.getAtivo(), cursoSalvo.getTipoCurso() != null ? cursoSalvo.getTipoCurso().getId() : null);
+        return toCursoDTO(cursoSalvo);
     }
 
     // Método para atualizar um curso
@@ -260,10 +220,13 @@ public class CursoService {
             TipoCurso tipoCurso = tipoCursoService.recuperarPorId(cursoDTO.tipoId());
             cursoExistente.setTipoCurso(tipoCurso);
         }
+        if (cursoDTO.unidadeAcademicaId() != null) {
+            cursoExistente.setUnidadeAcademica(unidadeAcademicaService.buscarEntidade(cursoDTO.unidadeAcademicaId()));
+        }
         cursoExistente.setAtivo(cursoDTO.ativo());
         // Salvando no banco
         Curso cursoAtualizado = cursoRepository.save(cursoExistente);
-        return new CursoDTO(cursoAtualizado.getId(), cursoAtualizado.getNome(), cursoAtualizado.getDescricao(), cursoAtualizado.getFotoCapa(), cursoAtualizado.getAtivo(), cursoAtualizado.getTipoCurso() != null ? cursoAtualizado.getTipoCurso().getId() : null);
+        return toCursoDTO(cursoAtualizado);
     }
 
     // Método para adicionar usuário a um curso
@@ -306,7 +269,7 @@ public class CursoService {
 
     // Método para remover usuário de um curso
     @Transactional
-    public List<PermissaoCursoDTO> removerUsuarioCurso(Long cursoId, Long usuarioId) {
+    public List<PermissaoCursoDTO> removerUsuarioCurso(Long cursoId, Long usuarioId, Long solicitanteId) {
         // Buscar curso
         Curso cursoExistente = cursoRepository.findById(cursoId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
@@ -314,6 +277,11 @@ public class CursoService {
         // Buscar usuário
         Usuario usuarioExistente = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado com o ID: " + usuarioId));
+
+        // Impedir que o próprio usuário remova sua permissão
+        if (usuarioId.equals(solicitanteId)) {
+            throw new ConflitoException("Você não pode remover sua própria permissão deste curso. Solicite a outro gerente ou administrador.");
+        }
         
         // Verificar se o usuário é ADMINISTRADOR (não pode ser removido)
         boolean isAdmin = usuarioExistente.getRoles().stream()
@@ -356,7 +324,7 @@ public class CursoService {
         cursoExistente.setAtivo(ativo);
         // Salvando no banco
         Curso cursoAtualizado = cursoRepository.save(cursoExistente);
-        return new CursoDTO(cursoAtualizado.getId(), cursoAtualizado.getNome(), cursoAtualizado.getDescricao(), cursoAtualizado.getFotoCapa(), cursoAtualizado.getAtivo(), cursoAtualizado.getTipoCurso() != null ? cursoAtualizado.getTipoCurso().getId() : null);
+        return toCursoDTO(cursoAtualizado);
     }
 
     // Método para excluir um curso
@@ -368,8 +336,7 @@ public class CursoService {
         
         // Verificar se o curso tem atividades associadas
         if (curso.getAtividades() != null && !curso.getAtividades().isEmpty()) {
-            throw new ConflitoException("Não é possível excluir o curso. Existem " + 
-                curso.getAtividades().size() + " atividade(s) associada(s) a este curso.");
+            throw new CursoComAtividadesException();
         }
         
         // Remover associações com usuários antes de deletar
@@ -426,7 +393,25 @@ public class CursoService {
         // Salvar curso atualizado
         Curso cursoAtualizado = cursoRepository.save(curso);
 
-        return new CursoDTO(cursoAtualizado.getId(), cursoAtualizado.getNome(), cursoAtualizado.getDescricao(), cursoAtualizado.getFotoCapa(), cursoAtualizado.getAtivo(), cursoAtualizado.getTipoCurso() != null ? cursoAtualizado.getTipoCurso().getId() : null);
+        return toCursoDTO(cursoAtualizado);
+    }
+
+    // Método para excluir uma foto de capa
+    public void excluirFotoCapa(Long cursoId, String username) {
+        Curso curso = cursoRepository.findById(cursoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
+
+        if (!verificarAcessoAoCurso(username, cursoId)) {
+            throw new AcessoNegadoException("Usuário não tem permissão para excluir a foto de capa deste curso.");
+        }
+
+        if (curso.getFotoCapa() == null || curso.getFotoCapa().isBlank()) {
+            throw new RecursoNaoEncontradoException("Foto de capa não encontrada para este curso.");
+        }
+
+        excluirImagem(curso.getFotoCapa());
+        curso.setFotoCapa(null);
+        cursoRepository.save(curso);
     }
 
     // Método para baixar uma foto de capa
@@ -444,7 +429,7 @@ public class CursoService {
             throw new RecursoNaoEncontradoException("Foto de capa não encontrada para este curso.");
         }
 
-        Path filePath = this.fileStorageLocation.resolve(curso.getFotoCapa()).normalize();
+        Path filePath = resolveFotoPath(curso.getFotoCapa());
         Resource resource = new UrlResource(filePath.toUri());
 
         if (resource.exists()) {
@@ -477,23 +462,55 @@ public class CursoService {
         }
         String fileExtension = originalFilename.substring(originalFilename.lastIndexOf('.'));
         String uniqueFileName = curso.getId() + "/" + UUID.randomUUID().toString() + fileExtension;
-        Path targetLocation = this.fileStorageLocation.resolve(uniqueFileName);
+        Path targetLocation = this.fileStorageLocation.resolve(uniqueFileName).normalize();
         Files.createDirectories(targetLocation.getParent());
         Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
-        return this.baseStorageLocation + "/" + uniqueFileName;
+        return "/" + this.baseStorageLocation + "/" + uniqueFileName;
     }
 
     // Método para excluir uma imagem
     private Boolean excluirImagem(String fileName) {
         try {
-            Path targetLocation = this.fileStorageLocation.resolve(fileName).normalize();
+            Path targetLocation = resolveFotoPath(fileName);
             Files.deleteIfExists(targetLocation);
             return true;
         } catch (IOException e) {
             e.printStackTrace();
             return false;
         }
+    }
+
+    private Path resolveFotoPath(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            throw new IllegalArgumentException("Caminho da foto de capa inválido.");
+        }
+
+        Path candidate = Paths.get(fileName).normalize();
+        if (candidate.isAbsolute()) {
+            return candidate;
+        }
+
+        String normalized = fileName.replace("\\", "/");
+
+        if (normalized.startsWith("/")) {
+            normalized = normalized.substring(1);
+        }
+
+        String basePrefix = this.baseStorageLocation.replace("\\", "/");
+        if (normalized.startsWith(basePrefix + "/")) {
+            normalized = normalized.substring(basePrefix.length() + 1);
+        } else if (normalized.equals(basePrefix)) {
+            normalized = "";
+        }
+
+        return this.fileStorageLocation.resolve(normalized).normalize();
+    }
+
+    private CursoDTO toCursoDTO(Curso curso) {
+        Long tipoId = curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null;
+        Long unidadeId = curso.getUnidadeAcademica() != null ? curso.getUnidadeAcademica().getId() : null;
+        return new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), tipoId, unidadeId);
     }
 
 }

@@ -154,7 +154,7 @@ public class AtividadeController {
         return ResponseEntity.ok(atividadeAtualizada); // Retorna 200 OK com a atividade atualizada
     }
 
-    // Endpoint para excluir uma atividade
+    // Endpoint para excluir foto de capa de uma atividade
     @DeleteMapping(value = "/{atividadeId}/foto-capa")
     @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
     public ResponseEntity<Void> excluirFotoCapa(@PathVariable Long atividadeId,

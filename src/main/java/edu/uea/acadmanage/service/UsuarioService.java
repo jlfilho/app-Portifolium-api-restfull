@@ -56,13 +56,7 @@ public class UsuarioService {
                                 .map(r -> r.getNome())
                                 .toList().get(0),
                         usuario.getCursos().stream()
-                                .map(curso -> new CursoDTO(
-                                        curso.getId(),
-                                        curso.getNome(),
-                                        curso.getDescricao(),
-                                        curso.getFotoCapa(),
-                                        curso.getAtivo(),
-                                        curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null))
+                                .map(this::toCursoDTO)
                                 .toList()))
                 .collect(Collectors.toList());
     }
@@ -80,13 +74,7 @@ public class UsuarioService {
                                 .map(r -> r.getNome())
                                 .toList().get(0),
                         usuario.getCursos().stream()
-                                .map(curso -> new CursoDTO(
-                                        curso.getId(),
-                                        curso.getNome(),
-                                        curso.getDescricao(),
-                                        curso.getFotoCapa(),
-                                        curso.getAtivo(),
-                                            curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null))
+                                .map(this::toCursoDTO)
                                 .toList()));
     }
 
@@ -108,13 +96,7 @@ public class UsuarioService {
                                     .map(r -> r.getNome())
                                     .toList().get(0),
                             usuario.getCursos().stream()
-                                    .map(curso -> new CursoDTO(
-                                            curso.getId(),
-                                            curso.getNome(),
-                                            curso.getDescricao(),
-                                            curso.getFotoCapa(),
-                                            curso.getAtivo(),
-                                            curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null))
+                                    .map(this::toCursoDTO)
                                     .toList()));
         }
     }
@@ -305,13 +287,7 @@ public class UsuarioService {
 
         // Recupera os cursos associados ao usuário
         return usuario.getCursos().stream()
-                .map(curso -> new CursoDTO(
-                        curso.getId(),
-                        curso.getNome(),
-                        curso.getDescricao(),
-                        curso.getFotoCapa(),
-                        curso.getAtivo(),
-                        curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null))
+                .map(this::toCursoDTO)
                 .collect(Collectors.toList());
     }
 
@@ -333,6 +309,11 @@ public class UsuarioService {
             return cursoRepository.findAll();
         }
 
+        // Tratar caso quando cursos é null
+        if (usuario.cursos() == null) {
+            return new java.util.ArrayList<>();
+        }
+
         return usuario.cursos().stream()
                 .map(cursoDTO -> cursoRepository.findById(cursoDTO.id())
                         .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado: " + cursoDTO.id())))
@@ -352,14 +333,14 @@ public class UsuarioService {
                         .findFirst()
                         .orElse("Sem Role"),
                 usuario.getCursos().stream()
-                        .map(curso -> new CursoDTO(
-                                curso.getId(),
-                                curso.getNome(),
-                                curso.getDescricao(),
-                                curso.getFotoCapa(),
-                                curso.getAtivo(),
-                                curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null))
+                        .map(this::toCursoDTO)
                         .toList());
+    }
+
+    private CursoDTO toCursoDTO(Curso curso) {
+        Long tipoId = curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null;
+        Long unidadeId = curso.getUnidadeAcademica() != null ? curso.getUnidadeAcademica().getId() : null;
+        return new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), tipoId, unidadeId);
     }
 
 

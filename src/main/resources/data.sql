@@ -4,7 +4,6 @@ INSERT INTO categoria (id, nome) VALUES
 (2, 'Pesquisa'),
 (3, 'Extensão');
 
--- Populando a tabela TipoCurso
 INSERT INTO tipo_curso (id, nome) VALUES
 (1, 'Bacharelado'),
 (2, 'Licenciatura'),
@@ -14,38 +13,44 @@ INSERT INTO tipo_curso (id, nome) VALUES
 (6, 'Mestrado'),
 (7, 'Doutorado');
 
+-- Populando a tabela Unidade Acadêmica
+INSERT INTO unidade_academica (id, nome, descricao) VALUES
+(1, 'Escola Superior de Tecnologia', 'Unidade acadêmica focada em cursos da área de tecnologia e engenharias.'),
+(2, 'Centro de Ciências da Natureza', 'Unidade dedicada às ciências biológicas, ambientais e naturais.'),
+(3, 'Centro de Ciências Humanas e Sociais', 'Unidade voltada aos cursos de ciências humanas, sociais e gestão.');
+
 -- Populando a tabela Curso
-INSERT INTO curso (id, nome, descricao, ativo, tipo_curso_id) VALUES
+INSERT INTO curso (id, nome, descricao, ativo, tipo_curso_id, unidade_academica_id) VALUES
 (1, 'Engenharia de Software', 
     'Curso completo de Engenharia de Software que aborda metodologias ágeis, arquitetura de software, desenvolvimento web e mobile, gestão de projetos e qualidade de software.', 
-    true, 1),
+    true, 1, 1),
 (2, 'Sistemas de Informação', 
     'Curso que combina tecnologia da informação e gestão, abordando análise de sistemas, banco de dados, redes de computadores e empreendedorismo digital.', 
-    true, 1),
+    true, 1, 1),
 (3, 'Ciência da Computação', 
     'Formação sólida em algoritmos, estruturas de dados, inteligência artificial, computação gráfica e teoria da computação, voltada para pesquisa e inovação.', 
-    true, 1),
+    true, 1, 1),
 (4, 'Licenciatura em Computação', 
     'Curso voltado à formação de professores de Computação, com ênfase em práticas pedagógicas, tecnologias educacionais e ensino de programação.', 
-    true, 2),
+    true, 2, 3),
 (5, 'Tecnologia em Redes de Computadores', 
     'Curso tecnólogo que prepara profissionais para projetar, implantar e administrar redes locais e corporativas com foco em segurança e desempenho.', 
-    true, 3),
+    true, 3, 1),
 (6, 'Especialização em Inteligência Artificial Aplicada', 
     'Curso de pós-graduação lato sensu que desenvolve competências em machine learning, visão computacional e processamento de linguagem natural.', 
-    true, 4),
+    true, 4, 1),
 (7, 'MBA em Gestão de Projetos de TI', 
     'MBA voltado a profissionais que desejam atuar na liderança de equipes e gestão estratégica de projetos tecnológicos e de inovação.', 
-    true, 5),
+    true, 5, 3),
 (8, 'Mestrado Profissional em Ensino de Computação (PROFCOMP)', 
     'Curso stricto sensu que forma professores e pesquisadores na área de ensino de Computação, com foco em práticas educativas inovadoras e tecnologias digitais.', 
-    true, 6),
+    true, 6, 3),
 (9, 'Mestrado Acadêmico em Ciência da Computação', 
     'Curso stricto sensu dedicado à formação de pesquisadores em áreas como IA, sistemas distribuídos, computação gráfica e engenharia de software.', 
-    true, 6),
+    true, 6, 1),
 (10, 'Doutorado em Engenharia de Computação', 
     'Curso stricto sensu que visa o desenvolvimento de pesquisas avançadas em hardware, sistemas embarcados, IoT e automação inteligente.', 
-    true, 7);
+    true, 7, 1);
 -- Populando a tabela Fonte Financiadora
 INSERT INTO fonte_financiadora (id, nome) VALUES 
 (1, 'UEA'),

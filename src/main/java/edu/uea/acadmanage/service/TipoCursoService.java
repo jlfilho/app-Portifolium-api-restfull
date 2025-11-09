@@ -2,6 +2,8 @@ package edu.uea.acadmanage.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import edu.uea.acadmanage.model.TipoCurso;
@@ -24,6 +26,13 @@ public class TipoCursoService {
         
         public List<TipoCurso> listarTodos() {
                 return tipoCursoRepository.findAll();
+        }
+
+        public Page<TipoCurso> listarPaginadoComFiltro(String nome, Pageable pageable) {
+                if (nome != null && !nome.trim().isEmpty()) {
+                        return tipoCursoRepository.findByNomeContainingIgnoreCase(nome.trim(), pageable);
+                }
+                return tipoCursoRepository.findAll(pageable);
         }
 
         public TipoCurso recuperarPorId(Long id) {

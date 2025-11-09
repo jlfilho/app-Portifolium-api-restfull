@@ -6,6 +6,7 @@ public record CursoDTO(
         String descricao,
         String fotoCapa,
         Boolean ativo,
-        Long tipoId
+        Long tipoId,
+        Long unidadeAcademicaId
 ) {}
 

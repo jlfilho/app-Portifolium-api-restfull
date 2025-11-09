@@ -33,6 +33,7 @@ import edu.uea.acadmanage.repository.AtividadeRepository;
 import edu.uea.acadmanage.repository.PessoaRepository;
 import edu.uea.acadmanage.repository.UsuarioRepository;
 import edu.uea.acadmanage.service.exception.AcessoNegadoException;
+import edu.uea.acadmanage.service.exception.AtividadeComEvidenciasException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
 
 @Service
@@ -61,9 +62,11 @@ public class AtividadeService {
         this.categoriaService = categoriaService;
         this.fonteFinanciadoraService = fonteFinanciadoraService;
         this.pessoaRepository = pessoaRepository;
-        this.baseStorageLocation = "/fotos-capa";
-        this.fileStorageLocation = Paths.get(fileStorageProperties.getStorageLocation() + this.baseStorageLocation)
-                .toAbsolutePath().normalize();
+        this.baseStorageLocation = "fotos-capa";
+        this.fileStorageLocation = Paths.get(fileStorageProperties.getStorageLocation())
+                .resolve(this.baseStorageLocation)
+                .toAbsolutePath()
+                .normalize();
         Files.createDirectories(this.fileStorageLocation);
     }
 
@@ -165,9 +168,10 @@ public class AtividadeService {
 
 
         // Verificar se o usuário tem permissão para salvar a atividade
-        if (!cursoService.verificarAcessoAoCurso(username, atividadeDTO.categoria().getId())) {
+        Long cursoId = atividadeDTO.curso().getId();
+        if (!cursoService.verificarAcessoAoCurso(username, cursoId)) {
             throw new AcessoNegadoException(
-                    "Usuário não tem permissão para salvar atividade no curso: " + atividadeDTO.categoria().getId());
+                    "Usuário não tem permissão para salvar atividade no curso: " + cursoId);
         }
 
         // Criar a entidade Atividade
@@ -305,6 +309,11 @@ public class AtividadeService {
                     "Usuário não tem permissão para excluir atividade no curso: " + atividade.getCurso().getId());
         }
 
+        // Impedir exclusão quando existirem evidências cadastradas
+        if (atividade.getEvidencias() != null && !atividade.getEvidencias().isEmpty()) {
+            throw new AtividadeComEvidenciasException();
+        }
+
         // Excluir a foto de capa
         if (atividade.getFotoCapa() != null) {
             excluirImagem(atividade.getFotoCapa());
@@ -434,17 +443,41 @@ public class AtividadeService {
         String fileExtension = originalFilename.substring(originalFilename.lastIndexOf('.'));
         String uniqueFileName = atividade.getCurso().getId() + "/" + atividade.getId() + "/"
                 + UUID.randomUUID().toString() + fileExtension;
-        Path targetLocation = this.fileStorageLocation.resolve(uniqueFileName);
-        Files.createDirectories(targetLocation);
+        Path targetLocation = this.fileStorageLocation.resolve(uniqueFileName).normalize();
+        Files.createDirectories(targetLocation.getParent());
         Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
-        return this.baseStorageLocation+"/"+uniqueFileName;
+        return "/" + this.baseStorageLocation + "/" + uniqueFileName;
     }
 
     // Método para excluir uma imagem
     private Boolean excluirImagem(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            return false;
+        }
+
         try {
-            Path targetLocation = this.fileStorageLocation.resolve(fileName).normalize();
+            Path candidatePath = Paths.get(fileName).normalize();
+
+            if (candidatePath.isAbsolute() && candidatePath.startsWith(this.fileStorageLocation)) {
+                Files.deleteIfExists(candidatePath);
+                return true;
+            }
+
+            String normalized = fileName.replace("\\", "/");
+
+            if (normalized.startsWith("/")) {
+                normalized = normalized.substring(1);
+            }
+
+            String basePrefix = this.baseStorageLocation.replace("\\", "/");
+            if (normalized.startsWith(basePrefix + "/")) {
+                normalized = normalized.substring(basePrefix.length() + 1);
+            } else if (normalized.equals(basePrefix)) {
+                normalized = "";
+            }
+
+            Path targetLocation = this.fileStorageLocation.resolve(normalized).normalize();
             Files.deleteIfExists(targetLocation);
             return true;
         } catch (IOException e) {

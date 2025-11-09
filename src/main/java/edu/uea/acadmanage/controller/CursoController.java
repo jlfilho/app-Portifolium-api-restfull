@@ -50,8 +50,9 @@ public class CursoController {
             @RequestParam(required = false) Boolean ativo,
             @RequestParam(required = false) String nome,
             @RequestParam(required = false) Long tipoId,
+            @RequestParam(required = false) Long unidadeAcademicaId,
             @PageableDefault(size = 10, sort = "nome") Pageable pageable) {
-        Page<CursoDTO> cursos = cursoService.getAllCursosPaginadoComFiltros(ativo, nome, tipoId, pageable);
+        Page<CursoDTO> cursos = cursoService.getAllCursosPaginadoComFiltros(ativo, nome, tipoId, unidadeAcademicaId, pageable);
         if (cursos.isEmpty()) {
             return ResponseEntity.noContent().build(); // Retorna 204 No Content se não houver cursos
         }
@@ -83,9 +84,10 @@ public class CursoController {
             @RequestParam(required = false) Boolean ativo,
             @RequestParam(required = false) String nome,
             @RequestParam(required = false) Long tipoId,
+            @RequestParam(required = false) Long unidadeAcademicaId,
             @PageableDefault(size = 10, sort = "nome") Pageable pageable) {
         Usuario usuario = usuarioService.getUsuarioByEmail(userDetails.getUsername());
-        Page<CursoDTO> cursos = cursoService.getCursosByUsuarioIdPaginadoComFiltros(usuario.getId(), ativo, nome, tipoId, pageable);
+        Page<CursoDTO> cursos = cursoService.getCursosByUsuarioIdPaginadoComFiltros(usuario.getId(), ativo, nome, tipoId, unidadeAcademicaId, pageable);
         
         if (cursos.isEmpty()) {
             return ResponseEntity.noContent().build(); // Retorna 204 No Content se não houver cursos
@@ -104,7 +106,7 @@ public class CursoController {
 
     // Endpoint para atualizar os dados de um curso
     @PutMapping("/{cursoId}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE')")
     public ResponseEntity<CursoDTO> atualizarCurso(
             @PathVariable Long cursoId,
             @Validated @RequestBody CursoDTO cursoDTO) {
@@ -114,7 +116,7 @@ public class CursoController {
 
     // Endpoint para atualizar o status de um curso
     @PutMapping("/{cursoId}/status")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE')")
     public ResponseEntity<CursoDTO> atualizarStatusCurso(
             @PathVariable Long cursoId,
             @Validated @RequestBody CursoDTO cursoDTO) {
@@ -143,8 +145,9 @@ public class CursoController {
     @DeleteMapping("/{cursoId}/usuarios/{usuarioId}")
     @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE')")
     public ResponseEntity<List<PermissaoCursoDTO>> excluirUsuarioCurso(@PathVariable Long cursoId, 
-    @PathVariable Long usuarioId) {
-        List<PermissaoCursoDTO> permissaoCurso =  cursoService.removerUsuarioCurso(cursoId, usuarioId);
+    @PathVariable Long usuarioId,
+    @AuthenticationPrincipal Usuario userDetails) {
+        List<PermissaoCursoDTO> permissaoCurso =  cursoService.removerUsuarioCurso(cursoId, usuarioId, userDetails.getId());
         return ResponseEntity.ok(permissaoCurso); // Retorna 204 No Content
     }
 
@@ -157,6 +160,16 @@ public class CursoController {
             @AuthenticationPrincipal UserDetails userDetails) throws IOException {
         CursoDTO cursoSalvo = cursoService.atualizarFotoCapa(cursoId, file, userDetails.getUsername());
         return ResponseEntity.status(HttpStatus.OK).body(cursoSalvo);
+    }
+
+    // Endpoint para excluir a foto de capa
+    @DeleteMapping(value = "/foto-capa/{cursoId}")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    public ResponseEntity<Void> excluirFotoCapa(
+            @PathVariable Long cursoId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        cursoService.excluirFotoCapa(cursoId, userDetails.getUsername());
+        return ResponseEntity.noContent().build();
     }
 
     // Endpoint para baixar foto de capa
