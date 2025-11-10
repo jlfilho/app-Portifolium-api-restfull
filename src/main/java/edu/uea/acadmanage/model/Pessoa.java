@@ -6,6 +6,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import org.hibernate.validator.constraints.br.CPF;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -35,6 +37,7 @@ public class Pessoa implements Serializable {
     private Long id;
     @Column(nullable = false)
     private String nome;
+    @CPF(message = "CPF inválido")
     @Column(unique = true, nullable = false)
     private String cpf;
 
@@ -50,6 +53,25 @@ public class Pessoa implements Serializable {
         this.id = id;
         this.nome = nome;
         this.cpf = cpf;
+    }
+
+    public String getCpf() {
+        if (this.cpf == null) {
+            return null;
+        }
+        String digits = this.cpf.replaceAll("\\D", "");
+        if (digits.length() == 11) {
+            return digits.replaceFirst("(\\d{3})(\\d{3})(\\d{3})(\\d{2})", "$1.$2.$3-$4");
+        }
+        return this.cpf;
+    }
+
+    public void setCpf(String cpf) {
+        if (cpf == null) {
+            this.cpf = null;
+        } else {
+            this.cpf = cpf.replaceAll("\\D", "");
+        }
     }
 
     @PrePersist
