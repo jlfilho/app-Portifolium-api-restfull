@@ -52,14 +52,14 @@ public class PessoaController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
     public ResponseEntity<PessoaDTO> criar(@Valid @RequestBody PessoaDTO dto) {
         PessoaDTO criada = pessoaService.criar(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(criada);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
     public ResponseEntity<PessoaDTO> atualizar(@PathVariable Long id, @Valid @RequestBody PessoaDTO dto) {
         PessoaDTO atualizada = pessoaService.atualizar(id, dto);
         return ResponseEntity.ok(atualizada);

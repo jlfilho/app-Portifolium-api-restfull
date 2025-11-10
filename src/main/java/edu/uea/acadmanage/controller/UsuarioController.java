@@ -88,6 +88,13 @@ public class UsuarioController {
         return ResponseEntity.ok(usuario);
     }
 
+    @GetMapping("/email")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    public ResponseEntity<UsuarioDTO> getUsuarioByEmail(@RequestParam String email) {
+        UsuarioDTO usuario = usuarioService.getUsuarioByEmailAsDTO(email);
+        return ResponseEntity.ok(usuario);
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<UsuarioDTO> criarUsuario(@Validated @RequestBody UsuarioDTO usuario) {

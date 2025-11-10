@@ -268,6 +268,11 @@ public class UsuarioService {
 
     }
 
+    public UsuarioDTO getUsuarioByEmailAsDTO(String email) {
+        Usuario usuario = getUsuarioByEmail(email);
+        return toUsuarioDTO(usuario);
+    }
+
     // Verificar as permissoes do usuario autenticado
     public void checkAuthorities() {
         // Obtém o contexto de segurança atual
