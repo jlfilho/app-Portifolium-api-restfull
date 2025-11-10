@@ -89,14 +89,14 @@ public class UsuarioController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<UsuarioDTO> criarUsuario(@Validated @RequestBody UsuarioDTO usuario) {
         UsuarioDTO novoUsuario = usuarioService.save(usuario);
         return ResponseEntity.status(201).body(novoUsuario); // 201 Created
     }
 
     @PutMapping("/{usuarioId}")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<UsuarioDTO> atualizarUsuario(@PathVariable Long usuarioId, 
     @Validated @RequestBody UsuarioDTO usuario) {
         UsuarioDTO novoUsuario = usuarioService.update(usuarioId, usuario);
@@ -105,7 +105,7 @@ public class UsuarioController {
 
     
     @PutMapping("/{usuarioId}/change-password")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Map<String, String>> changePassword(
             @PathVariable Long usuarioId,
             @RequestBody @Validated PasswordChangeRequest passwordChangeRequest,
