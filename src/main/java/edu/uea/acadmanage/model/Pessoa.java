@@ -14,6 +14,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -33,6 +35,7 @@ public class Pessoa implements Serializable {
     private Long id;
     @Column(nullable = false)
     private String nome;
+    @Column(unique = true, nullable = false)
     private String cpf;
 
     @OneToOne(mappedBy = "pessoa")
@@ -47,5 +50,13 @@ public class Pessoa implements Serializable {
         this.id = id;
         this.nome = nome;
         this.cpf = cpf;
+    }
+
+    @PrePersist
+    @PreUpdate
+    private void normalizarCpf() {
+        if (this.cpf != null) {
+            this.cpf = this.cpf.replaceAll("\\D", "");
+        }
     }
 }

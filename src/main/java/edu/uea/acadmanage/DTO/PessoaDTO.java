@@ -1,7 +1,11 @@
 package edu.uea.acadmanage.DTO;
 
-public record PessoaDTO(
-    Long id, 
-    String nome,
-    String cpf) {}
+import jakarta.validation.constraints.NotBlank;
 
+public record PessoaDTO(
+        Long id,
+        @NotBlank(message = "O nome da pessoa é obrigatório.")
+        String nome,
+        @NotBlank(message = "O CPF é obrigatório.")
+        String cpf
+) {}

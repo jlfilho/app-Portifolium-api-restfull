@@ -121,7 +121,8 @@ public class UsuarioService {
         }
 
         // Verificar se CPF já existe
-        if (usuario.cpf() != null && !usuario.cpf().isEmpty() && pessoaRepository.existsByCpf(usuario.cpf())) {
+        String cpfNormalizado = normalizarCpf(usuario.cpf());
+        if (cpfNormalizado != null && !cpfNormalizado.isEmpty() && pessoaRepository.existsByCpf(cpfNormalizado)) {
             throw new AcessoNegadoException("CPF já cadastrado: " + usuario.cpf());
         }
 
@@ -130,7 +131,7 @@ public class UsuarioService {
 
         // Criar novo usuário
         Usuario novoUsuario = new Usuario();
-        novoUsuario.setPessoa(new Pessoa(null, usuario.nome(), usuario.cpf()));
+        novoUsuario.setPessoa(new Pessoa(null, usuario.nome(), cpfNormalizado));
         novoUsuario.setEmail(usuario.email());
         novoUsuario.setSenha(passwordEncoder.encode(usuario.senha()));
         novoUsuario.getRoles().add(role);
@@ -157,13 +158,14 @@ public class UsuarioService {
         usuarioExistente.getPessoa().setNome(usuario.nome());
         
         // Atualizar CPF se fornecido e diferente do atual
-        if (usuario.cpf() != null && !usuario.cpf().isEmpty()) {
-            if (!usuario.cpf().equals(usuarioExistente.getPessoa().getCpf())) {
+        String cpfAtualizado = normalizarCpf(usuario.cpf());
+        if (cpfAtualizado != null && !cpfAtualizado.isEmpty()) {
+            if (!cpfAtualizado.equals(usuarioExistente.getPessoa().getCpf())) {
                 // Verificar se o novo CPF já existe em outra pessoa
-                if (pessoaRepository.existsByCpf(usuario.cpf())) {
+                if (pessoaRepository.existsByCpf(cpfAtualizado)) {
                     throw new AcessoNegadoException("CPF já cadastrado: " + usuario.cpf());
                 }
-                usuarioExistente.getPessoa().setCpf(usuario.cpf());
+                usuarioExistente.getPessoa().setCpf(cpfAtualizado);
             }
         }
 
@@ -343,5 +345,12 @@ public class UsuarioService {
         return new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), tipoId, unidadeId);
     }
 
+    private String normalizarCpf(String cpf) {
+        if (cpf == null) {
+            return null;
+        }
+        String somenteDigitos = cpf.replaceAll("\\D", "");
+        return somenteDigitos.isEmpty() ? null : somenteDigitos;
+    }
 
 }
