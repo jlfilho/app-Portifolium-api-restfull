@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import edu.uea.acadmanage.model.AtividadePessoaId;
 import edu.uea.acadmanage.model.AtividadePessoaPapel;
@@ -72,6 +73,17 @@ public class AtividadePessoaPapelController {
             @AuthenticationPrincipal UserDetails userDetails) {
         atividadePessoaPapelService.removerPessoaDaAtividade(atividadeId, pessoaId, userDetails.getUsername());
         return ResponseEntity.noContent().build(); // 204 No Content
+    }
+
+    // Método para importar pessoas de um arquivo CSV
+    @PostMapping("/{atividadeId}/pessoas/import")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    public ResponseEntity<List<AtividadePessoaPapel>> importarPessoas(
+            @PathVariable Long atividadeId,
+            @RequestParam("file") MultipartFile arquivo,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        List<AtividadePessoaPapel> associacoes = atividadePessoaPapelService.importarAssociacoesCsv(atividadeId, arquivo, userDetails.getUsername());
+        return ResponseEntity.status(201).body(associacoes);
     }
 }
 

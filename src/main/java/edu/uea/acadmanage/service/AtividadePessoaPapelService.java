@@ -1,8 +1,16 @@
 package edu.uea.acadmanage.service;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import edu.uea.acadmanage.model.Atividade;
 import edu.uea.acadmanage.model.AtividadePessoaId;
@@ -101,5 +109,103 @@ public class AtividadePessoaPapelService {
         }
 
         papelRepository.deleteById(new AtividadePessoaId(atividadeId, pessoaId));
+    }
+
+    public List<AtividadePessoaPapel> importarAssociacoesCsv(Long atividadeId, MultipartFile arquivo, String username) {
+        if (arquivo == null || arquivo.isEmpty()) {
+            throw new IllegalArgumentException("Arquivo CSV não informado.");
+        }
+
+        Atividade atividade = atividadeRepository.findById(atividadeId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Atividade não encontrada"));
+
+        if (!cursoService.verificarAcessoAoCurso(username, atividade.getCurso().getId())) {
+            throw new AcessoNegadoException(
+                    "Usuário não tem permissão incluir integrante em atividades do curso: " + atividade.getCurso().getId());
+        }
+
+        List<AtividadePessoaPapel> associacoesCriadas = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(arquivo.getInputStream(), StandardCharsets.UTF_8))) {
+            String linha;
+            boolean cabecalhoVerificado = false;
+
+            while ((linha = reader.readLine()) != null) {
+                String texto = linha.trim();
+                if (texto.isEmpty()) {
+                    continue;
+                }
+
+                if (!cabecalhoVerificado) {
+                    String lower = texto.toLowerCase(Locale.ROOT);
+                    if (lower.contains("nome") && lower.contains("cpf") && lower.contains("papel")) {
+                        cabecalhoVerificado = true;
+                        continue;
+                    }
+                    cabecalhoVerificado = true;
+                }
+
+                String[] partes = dividirLinhaCsv(texto);
+                if (partes.length < 3) {
+                    throw new IllegalArgumentException("Linha inválida no CSV: " + texto);
+                }
+
+                String nome = partes[0].trim();
+                String cpf = normalizarCpf(partes[1]);
+                String papelTexto = partes[2].trim();
+
+                if (nome.isEmpty() || cpf.isEmpty() || papelTexto.isEmpty()) {
+                    throw new IllegalArgumentException("Dados incompletos no CSV: " + texto);
+                }
+
+                Papel papel = parsePapel(papelTexto);
+
+                Pessoa pessoa = pessoaRepository.findByCpf(cpf)
+                        .orElseGet(() -> pessoaRepository.save(new Pessoa(null, nome, cpf)));
+
+                if (papelRepository.existsByAtividadeAndPessoa(atividade, pessoa)) {
+                    throw new ConflitoException("Pessoa " + nome + " já está associada a esta atividade.");
+                }
+
+                AtividadePessoaPapel associacao = new AtividadePessoaPapel();
+                associacao.setId(new AtividadePessoaId(atividadeId, pessoa.getId()));
+                associacao.setAtividade(atividade);
+                associacao.setPessoa(pessoa);
+                associacao.setPapel(papel);
+
+                associacoesCriadas.add(papelRepository.save(associacao));
+            }
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Não foi possível ler o arquivo CSV.", e);
+        }
+
+        return associacoesCriadas;
+    }
+
+    private String[] dividirLinhaCsv(String texto) {
+        String[] partes = texto.split(";");
+        if (partes.length <= 1) {
+            partes = texto.split(",");
+        }
+        return partes;
+    }
+
+    private Papel parsePapel(String texto) {
+        try {
+            return Papel.valueOf(texto.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            String valores = List.of(Papel.values()).stream()
+                    .map(Enum::name)
+                    .collect(Collectors.joining(", "));
+            throw new IllegalArgumentException("Papel inválido: " + texto + ". Valores permitidos: " + valores);
+        }
+    }
+
+    private String normalizarCpf(String cpf) {
+        if (cpf == null) {
+            return "";
+        }
+        return cpf.replaceAll("\\D", "");
     }
 }
