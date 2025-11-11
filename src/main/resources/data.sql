@@ -159,23 +159,23 @@ INSERT INTO curso_usuario (curso_id, usuario_id) VALUES
 
 -- Populando a tabela Atividade com nomes e objetivos realistas
 INSERT INTO atividade (id, nome, objetivo, foto_capa, publico_alvo, status_publicacao, data_realizacao, categoria_id, curso_id) VALUES
-(1, 'Oficina de Prototipagem com Arduino', 'Promover a aprendizagem prática sobre sensores e atuadores aplicados à automação.', '/fotos-capa/1/1/def25309-ede6-41aa-a1ae-a253c3c5cd04.jpg', 'Estudantes', TRUE, '2023-01-15', 1, 1),
-(2, 'Visita Técnica à Usina Hidrelétrica de Balbina', 'Compreender o funcionamento de sistemas de geração e transmissão de energia elétrica.', '/fotos-capa/1/2/3719e99b-a2da-49b9-a32e-c1baedc2abdb.jpg', 'Estudantes', TRUE, '2023-02-20', 2, 1),
-(3, 'Semana de Engenharia e Inovação', 'Estimular o protagonismo estudantil e o intercâmbio de experiências em projetos tecnológicos.', '/fotos-capa/1/3/f046031d-7d4c-4f1f-af52-a09cd3190249.jpg', 'Estudantes', TRUE, '2023-03-10', 3, 1),
-(4, 'Minicurso de AutoCAD e Modelagem 3D', 'Capacitar os alunos para o uso de ferramentas digitais de desenho técnico.', '/fotos-capa/1/4/c8c782ce-779e-46ac-bb30-a6dabc716ea9.jpg', 'Estudantes', FALSE, '2023-04-05', 1, 1),
-(5, 'Projeto Pontes Sustentáveis', 'Desenvolver soluções estruturais com materiais alternativos e enfoque ambiental.', '/fotos-capa/1/5/637787c4-1771-40d3-a150-48cf59fbfc3c.jpg', 'Estudantes', FALSE, '2023-05-18', 2, 1),
+(1, 'Oficina de Prototipagem com Arduino', 'Promover a aprendizagem prática sobre sensores e atuadores aplicados à automação.', null, 'Estudantes', TRUE, '2023-01-15', 1, 1),
+(2, 'Visita Técnica à Usina Hidrelétrica de Balbina', 'Compreender o funcionamento de sistemas de geração e transmissão de energia elétrica.', null, 'Estudantes', TRUE, '2023-02-20', 2, 1),
+(3, 'Semana de Engenharia e Inovação', 'Estimular o protagonismo estudantil e o intercâmbio de experiências em projetos tecnológicos.', null, 'Estudantes', TRUE, '2023-03-10', 3, 1),
+(4, 'Minicurso de AutoCAD e Modelagem 3D', 'Capacitar os alunos para o uso de ferramentas digitais de desenho técnico.', null, 'Estudantes', FALSE, '2023-04-05', 1, 1),
+(5, 'Projeto Pontes Sustentáveis', 'Desenvolver soluções estruturais com materiais alternativos e enfoque ambiental.', null, 'Estudantes', FALSE, '2023-05-18', 2, 1),
 
-(6, 'Hackathon de Desenvolvimento Web', 'Fomentar o trabalho em equipe e o uso de metodologias ágeis em projetos reais.', '/fotos-capa/2/6/91b93f4b-4324-41c5-b12e-9fe1d561dbd9.jpg', 'Estudantes', TRUE, '2023-06-12', 3, 2),
-(7, 'Oficina de Banco de Dados com PostgreSQL', 'Aprender técnicas de modelagem e otimização de consultas SQL.', '/fotos-capa/2/7/4bc4ec42-a823-4379-8c4e-fd17f566a1ae.jpg', 'Estudantes', TRUE, '2023-07-08', 2, 2),
-(8, 'Palestra: Cibersegurança e Ética Digital', 'Discutir desafios e boas práticas de segurança em sistemas de informação.', '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes', TRUE, '2023-08-22', 3, 2),
-(9, 'Oficina de APIs com Python e Flask', 'Introduzir os alunos ao desenvolvimento de serviços web e integração de sistemas.', '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes', FALSE, '2023-09-15', 2, 2),
-(10, 'Workshop de UX/UI Design para Aplicações Web', 'Explorar princípios de usabilidade e design centrado no usuário.', '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes', FALSE, '2023-10-30', 1, 2),
+(6, 'Hackathon de Desenvolvimento Web', 'Fomentar o trabalho em equipe e o uso de metodologias ágeis em projetos reais.', null, 'Estudantes', TRUE, '2023-06-12', 3, 2),
+(7, 'Oficina de Banco de Dados com PostgreSQL', 'Aprender técnicas de modelagem e otimização de consultas SQL.', null, 'Estudantes', TRUE, '2023-07-08', 2, 2),
+(8, 'Palestra: Cibersegurança e Ética Digital', 'Discutir desafios e boas práticas de segurança em sistemas de informação.', null, 'Estudantes', TRUE, '2023-08-22', 3, 2),
+(9, 'Oficina de APIs com Python e Flask', 'Introduzir os alunos ao desenvolvimento de serviços web e integração de sistemas.', null, 'Estudantes', FALSE, '2023-09-15', 2, 2),
+(10, 'Workshop de UX/UI Design para Aplicações Web', 'Explorar princípios de usabilidade e design centrado no usuário.', null, 'Estudantes', FALSE, '2023-10-30', 1, 2),
 
-(11, 'Seminário de Inteligência Artificial Aplicada à Educação', 'Apresentar projetos de pesquisa em IA voltados para ambientes de aprendizagem.', '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes', TRUE, '2023-11-05', 1, 3),
-(12, 'Oficina de Análise de Dados com Python', 'Desenvolver competências em coleta, limpeza e visualização de dados.', '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes', TRUE, '2023-12-15', 2, 3),
-(13, 'Mostra de Projetos de Computação', 'Divulgar resultados de projetos integradores e iniciação científica.', '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes', TRUE, '2024-01-10', 3, 3),
-(14, 'Minicurso de Machine Learning com Scikit-Learn', 'Capacitar alunos na implementação de modelos de aprendizado supervisionado.', '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes', FALSE, '2024-02-20', 3, 3),
-(15, 'Roda de Conversa: Ética e Tecnologia', 'Refletir sobre os impactos sociais e éticos do uso de tecnologias emergentes.', '/fotos-capa/1/1/2acf5151-1c41-4ddb-99c1-e8ad639c30c8.jpg', 'Estudantes', FALSE, '2024-03-25', 1, 3);
+(11, 'Seminário de Inteligência Artificial Aplicada à Educação', 'Apresentar projetos de pesquisa em IA voltados para ambientes de aprendizagem.', null, 'Estudantes', TRUE, '2023-11-05', 1, 3),
+(12, 'Oficina de Análise de Dados com Python', 'Desenvolver competências em coleta, limpeza e visualização de dados.', null, 'Estudantes', TRUE, '2023-12-15', 2, 3),
+(13, 'Mostra de Projetos de Computação', 'Divulgar resultados de projetos integradores e iniciação científica.', null, 'Estudantes', TRUE, '2024-01-10', 3, 3),
+(14, 'Minicurso de Machine Learning com Scikit-Learn', 'Capacitar alunos na implementação de modelos de aprendizado supervisionado.', null, 'Estudantes', FALSE, '2024-02-20', 3, 3),
+(15, 'Roda de Conversa: Ética e Tecnologia', 'Refletir sobre os impactos sociais e éticos do uso de tecnologias emergentes.', null, 'Estudantes', FALSE, '2024-03-25', 1, 3);
 
 INSERT INTO atividade
 (id, nome, objetivo, foto_capa, publico_alvo, status_publicacao, data_realizacao, categoria_id, curso_id)
@@ -183,58 +183,58 @@ VALUES
 -- Curso 4 (Licenciatura em Computação)
 (16, 'Práticas Pedagógicas com Pensamento Computacional',
  '/ Promover estratégias de ensino com PC e ABP na Educação Básica.',
- '/fotos-capa/4/16/pc-abp-edu-basica.jpg', 'Estudantes', TRUE,  '2024-04-12', 1, 4),
+ null, 'Estudantes', TRUE,  '2024-04-12', 1, 4),
 (17, 'Oficina Scratch na Escola',
  'Desenvolver sequências didáticas usando Scratch para anos finais do EF.',
- '/fotos-capa/4/17/oficina-scratch.jpg', 'Estudantes', TRUE,  '2024-05-18', 2, 4),
+ null, 'Estudantes', TRUE,  '2024-05-18', 2, 4),
 
 -- Curso 5 (Tecnologia em Redes de Computadores)
 (18, 'Laboratório de Redes com Mikrotik',
  'Configurar roteamento, VLANs e QoS em ambiente laboratorial.',
- '/fotos-capa/5/18/lab-redes-mikrotik.jpg', 'Estudantes', TRUE,  '2024-06-08', 2, 5),
+ null, 'Estudantes', TRUE,  '2024-06-08', 2, 5),
 (19, 'Segurança de Redes e Firewall com pfSense',
  'Implantar regras, VPN e IDS/IPS voltados a segurança perimetral.',
- '/fotos-capa/5/19/pfsense-firewall.jpg', 'Estudantes', FALSE, '2024-07-20', 3, 5),
+ null, 'Estudantes', FALSE, '2024-07-20', 3, 5),
 
 -- Curso 6 (Especialização em IA Aplicada)
 (20, 'Bootcamp de Machine Learning Aplicado',
  'Aplicar pipelines de ML para classificação e regressão em dados reais.',
- '/fotos-capa/6/20/bootcamp-ml.jpg', 'Estudantes', TRUE,  '2024-08-10', 1, 6),
+ null, 'Estudantes', TRUE,  '2024-08-10', 1, 6),
 (21, 'Visão Computacional com OpenCV',
  'Introduzir detecção de objetos e segmentação em projetos práticos.',
- '/fotos-capa/6/21/opencv-visao.jpg', 'Estudantes', TRUE,  '2024-09-05', 3, 6),
+ null, 'Estudantes', TRUE,  '2024-09-05', 3, 6),
 
 -- Curso 7 (MBA em Gestão de Projetos de TI)
 (22, 'PMI, OKRs e Canvas na TI',
  'Integrar boas práticas de gestão com planejamento estratégico em TI.',
- '/fotos-capa/7/22/pmi-okr-canvas.jpg', 'Estudantes', TRUE,  '2024-10-03', 1, 7),
+ null, 'Estudantes', TRUE,  '2024-10-03', 1, 7),
 (23, 'Gestão de Riscos em Projetos de Software',
  'Mapear, priorizar e mitigar riscos ao longo do ciclo de vida do projeto.',
- '/fotos-capa/7/23/gestao-riscos.jpg', 'Estudantes', FALSE, '2024-11-14', 2, 7),
+ null, 'Estudantes', FALSE, '2024-11-14', 2, 7),
 
 -- Curso 8 (Mestrado Profissional em Ensino de Computação - PROFCOMP)
 (24, 'Oficina de Metodologias Ativas no Ensino de Computação',
  'Experimentar sala de aula invertida, PBL e aprendizagem baseada em projetos.',
- '/fotos-capa/8/24/metodologias-ativas.jpg', 'Estudantes', TRUE,  '2025-03-18', 1, 8),
+ null, 'Estudantes', TRUE,  '2025-03-18', 1, 8),
 (25, 'Seminário Tecnocomp-LTI',
  'Apresentar módulos interoperáveis e objetos de aprendizagem LTI.',
- '/fotos-capa/8/25/tecnocomp-lti.jpg', 'Estudantes', TRUE,  '2025-04-22', 3, 8),
+ null, 'Estudantes', TRUE,  '2025-04-22', 3, 8),
 
 -- Curso 9 (Mestrado Acadêmico em Ciência da Computação)
 (26, 'Colóquio de Pesquisa em IA',
  'Debater linhas de pesquisa em PLN, RL e IA responsável.',
- '/fotos-capa/9/26/coloquio-ia.jpg', 'Estudantes', TRUE,  '2025-05-27', 1, 9),
+ null, 'Estudantes', TRUE,  '2025-05-27', 1, 9),
 (27, 'Workshop de Sistemas Distribuídos',
  'Explorar tolerância a falhas, consenso e observabilidade em clusters.',
- '/fotos-capa/9/27/sd-workshop.jpg', 'Estudantes', FALSE, '2025-06-30', 2, 9),
+ null, 'Estudantes', FALSE, '2025-06-30', 2, 9),
 
 -- Curso 10 (Doutorado em Engenharia de Computação)
 (28, 'Seminário Avançado em IoT e Edge',
  'Apresentar arquiteturas de IoT com processamento em borda e 5G.',
- '/fotos-capa/10/28/iot-edge.jpg', 'Estudantes', TRUE,  '2025-08-09', 3, 10),
+ null, 'Estudantes', TRUE,  '2025-08-09', 3, 10),
 (29, 'Colóquio de Computação Embarcada',
  'Discutir RTOS, otimização energética e segurança em sistemas embarcados.',
- '/fotos-capa/10/29/comp-embarcada.jpg', 'Estudantes', TRUE,  '2025-09-12', 1, 10);
+ null, 'Estudantes', TRUE,  '2025-09-12', 1, 10);
 
 -- Associar atividades a pessoas com seus respectivos papéis
 -- Cada atividade terá um coordenador e um bolsista ou voluntário
@@ -289,24 +289,24 @@ INSERT INTO atividade_financiadora (atividade_id, financiadora_id) VALUES
 (15, 3);     
 
 -- Populando a tabela Evidencia com legendas realistas
-INSERT INTO evidencia (id, url_foto, legenda, criado_por, atividade_id) VALUES
+-- INSERT INTO evidencia (id, url_foto, legenda, criado_por, atividade_id, ordem) VALUES
 -- Oficina de Prototipagem com Arduino
-(1, '/evidencias/1/1/62988d12-6561-412a-9bce-ab8cac4a48ce.jpeg', 'Alunos durante a montagem dos circuitos com sensores.', 'admin', 1),
-(2, '/evidencias/1/1/70af9c27-765e-4235-aa77-c62cd9d33528.jpeg', 'Equipe testando o protótipo de automação residencial.', 'admin', 1),
-(3, '/evidencias/1/1/77f82139-41d6-4079-aba5-6cbad1c7aedc.jpeg', 'Orientação prática sobre o uso do Arduino Uno.', 'admin', 1),
-(4, '/evidencias/1/1/137377fe-18ac-4245-bfa4-51771bbbdc50.jpeg', 'Apresentação final dos projetos desenvolvidos na oficina.', 'admin', 1),
-(5, '/evidencias/1/1/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Foto de encerramento com os participantes e o professor orientador.', 'admin', 1),
+-- (1, '/evidencias/1/1/62988d12-6561-412a-9bce-ab8cac4a48ce.jpeg', 'Alunos durante a montagem dos circuitos com sensores.', 'admin', 1, 0),
+-- (2, '/evidencias/1/1/70af9c27-765e-4235-aa77-c62cd9d33528.jpeg', 'Equipe testando o protótipo de automação residencial.', 'admin', 1, 1),
+-- (3, '/evidencias/1/1/77f82139-41d6-4079-aba5-6cbad1c7aedc.jpeg', 'Orientação prática sobre o uso do Arduino Uno.', 'admin', 1, 2),
+-- (4, '/evidencias/1/1/137377fe-18ac-4245-bfa4-51771bbbdc50.jpeg', 'Apresentação final dos projetos desenvolvidos na oficina.', 'admin', 1, 3),
+-- (5, '/evidencias/1/1/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Foto de encerramento com os participantes e o professor orientador.', 'admin', 1, 4),
 
 -- Visita Técnica à Usina Hidrelétrica de Balbina
-(6, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Grupo reunido na entrada principal da usina.', 'admin', 2),
-(7, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Explicação técnica sobre o funcionamento das turbinas.', 'admin', 2),
-(8, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Visita ao setor de controle e monitoramento da energia.', 'admin', 2),
-(9, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Registro do grupo no mirante da barragem.', 'admin', 2),
-(10, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Encerramento da visita com agradecimentos à equipe técnica.', 'admin', 2),
+-- (6, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Grupo reunido na entrada principal da usina.', 'admin', 2, 0),
+-- (7, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Explicação técnica sobre o funcionamento das turbinas.', 'admin', 2, 1),
+-- (8, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Visita ao setor de controle e monitoramento da energia.', 'admin', 2, 2),
+-- (9, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Registro do grupo no mirante da barragem.', 'admin', 2, 3),
+-- (10, '/evidencias/1/2/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Encerramento da visita com agradecimentos à equipe técnica.', 'admin', 2, 4),
 
 -- Semana de Engenharia e Inovação
-(11, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Abertura oficial da Semana de Engenharia e Inovação.', 'admin', 3),
-(12, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Palestra sobre sustentabilidade e novas tecnologias.', 'admin', 3),
-(13, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Apresentação de projeto acadêmico na mostra tecnológica.', 'admin', 3),
-(14, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Roda de conversa com egressos sobre mercado de trabalho.', 'admin', 3),
-(15, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Encerramento com entrega de certificados aos participantes.', 'admin', 3);
+-- (11, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Abertura oficial da Semana de Engenharia e Inovação.', 'admin', 3, 0),
+-- (12, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Palestra sobre sustentabilidade e novas tecnologias.', 'admin', 3, 1),
+-- (13, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Apresentação de projeto acadêmico na mostra tecnológica.', 'admin', 3, 2),
+-- (14, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Roda de conversa com egressos sobre mercado de trabalho.', 'admin', 3, 3),
+-- (15, '/evidencias/1/3/91082684-938b-423c-82e1-6cfa5a36f801.jpeg', 'Encerramento com entrega de certificados aos participantes.', 'admin', 3, 4);

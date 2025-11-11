@@ -7,5 +7,6 @@ public record PessoaDTO(
         @NotBlank(message = "O nome da pessoa é obrigatório.")
         String nome,
         @NotBlank(message = "O CPF é obrigatório.")
-        String cpf
+        String cpf,
+        boolean possuiUsuario
 ) {}

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import edu.uea.acadmanage.DTO.CursoDTO;
 import edu.uea.acadmanage.DTO.PasswordChangeRequest;
 import edu.uea.acadmanage.DTO.UsuarioDTO;
+import edu.uea.acadmanage.DTO.UsuarioPessoaRequestDTO;
 import edu.uea.acadmanage.model.Curso;
 import edu.uea.acadmanage.model.Pessoa;
 import edu.uea.acadmanage.model.Role;
@@ -23,6 +24,7 @@ import edu.uea.acadmanage.model.Usuario;
 import edu.uea.acadmanage.repository.CursoRepository;
 import edu.uea.acadmanage.repository.UsuarioRepository;
 import edu.uea.acadmanage.service.exception.AcessoNegadoException;
+import edu.uea.acadmanage.service.exception.ConflitoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
 import edu.uea.acadmanage.service.exception.SenhaIncorretaException;
 import jakarta.transaction.Transactional;
@@ -147,6 +149,44 @@ public class UsuarioService {
         return toUsuarioDTO(usuarioSalvo);
     }
 
+    @Transactional
+    public UsuarioDTO criarUsuarioParaPessoa(UsuarioPessoaRequestDTO request) {
+        String roleNome = request.role().toUpperCase();
+        Role role = roleService.getRoleByNome(roleNome);
+
+        Pessoa pessoa = pessoaRepository.findById(request.pessoaId())
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Pessoa não encontrada com ID: " + request.pessoaId()));
+
+        if (pessoa.getUsuario() != null || usuarioRepository.existsByPessoaId(request.pessoaId())) {
+            throw new ConflitoException("Já existe um usuário vinculado a esta pessoa.");
+        }
+
+        if (usuarioRepository.existsByEmail(request.email())) {
+            throw new ConflitoException("Usuário já existe com email: " + request.email());
+        }
+
+        List<Curso> cursosAssociados = determinarCursosParaRole(roleNome, request.cursosIds());
+
+        Usuario usuario = new Usuario();
+        usuario.setPessoa(pessoa);
+        usuario.setEmail(request.email());
+        usuario.setSenha(passwordEncoder.encode(request.senha()));
+        usuario.getRoles().add(role);
+
+        cursosAssociados.forEach(curso -> {
+            if (!curso.getUsuarios().contains(usuario)) {
+                curso.getUsuarios().add(usuario);
+            }
+        });
+        usuario.setCursos(new ArrayList<>(cursosAssociados));
+
+        pessoa.setUsuario(usuario);
+
+        Usuario salvo = usuarioRepository.save(usuario);
+        return toUsuarioDTO(salvo);
+    }
+
     // Método para atualizar um usuário
     @Transactional
     public UsuarioDTO update(Long userId, UsuarioDTO usuario) {
@@ -213,6 +253,13 @@ public class UsuarioService {
         // Buscar o usuário
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado com ID: " + usuarioId));
+
+        // Desassociar a pessoa para não removê-la em cascata
+        Pessoa pessoaAssociada = usuario.getPessoa();
+        if (pessoaAssociada != null) {
+            pessoaAssociada.setUsuario(null);
+            usuario.setPessoa(null);
+        }
         
         // Remover associações com cursos (lado inverso do relacionamento)
         // Criar uma cópia da lista para evitar ConcurrentModificationException
@@ -226,13 +273,8 @@ public class UsuarioService {
         
         // Limpar a lista de roles
         usuario.getRoles().clear();
-        
-        // Se a pessoa existir, limpar as atividades
-        if (usuario.getPessoa() != null) {
-            usuario.getPessoa().getAtividades().clear();
-        }
-        
-        // Agora podemos deletar o usuário (Pessoa será deletada em cascade)
+
+        // Agora podemos deletar o usuário mantendo a pessoa
         usuarioRepository.delete(usuario);
     }
     
@@ -325,6 +367,26 @@ public class UsuarioService {
                 .map(cursoDTO -> cursoRepository.findById(cursoDTO.id())
                         .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado: " + cursoDTO.id())))
                 .toList();
+    }
+
+    private List<Curso> determinarCursosParaRole(String roleNome, List<Long> cursosIds) {
+        if ("ROLE_ADMINISTRADOR".equals(roleNome)) {
+            return new ArrayList<>(cursoRepository.findAll());
+        }
+        return buscarCursosPorIds(cursosIds);
+    }
+
+    private List<Curso> buscarCursosPorIds(List<Long> cursosIds) {
+        if (cursosIds == null || cursosIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<Curso> cursos = new ArrayList<>();
+        for (Long cursoId : cursosIds) {
+            Curso curso = cursoRepository.findById(cursoId)
+                    .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado: " + cursoId));
+            cursos.add(curso);
+        }
+        return cursos;
     }
 
     // Método para converter um usuário para um DTO

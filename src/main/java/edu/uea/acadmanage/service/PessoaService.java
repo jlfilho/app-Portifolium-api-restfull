@@ -182,7 +182,8 @@ public class PessoaService {
     }
 
     private PessoaDTO toDTO(Pessoa pessoa) {
-        return new PessoaDTO(pessoa.getId(), pessoa.getNome(), pessoa.getCpf());
+        boolean possuiUsuario = pessoa.getUsuario() != null;
+        return new PessoaDTO(pessoa.getId(), pessoa.getNome(), pessoa.getCpf(), possuiUsuario);
     }
 }
 

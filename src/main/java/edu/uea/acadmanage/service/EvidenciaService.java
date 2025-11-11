@@ -5,7 +5,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -16,8 +18,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.transaction.annotation.Transactional;
 
 import edu.uea.acadmanage.DTO.EvidenciaDTO;
+import edu.uea.acadmanage.DTO.EvidenciaOrdemDTO;
 import edu.uea.acadmanage.config.FileStorageProperties;
 import edu.uea.acadmanage.model.Atividade;
 import edu.uea.acadmanage.model.Evidencia;
@@ -91,7 +95,7 @@ public class EvidenciaService {
         System.out.println("Authenticated Request");
 
         // Buscar evidências relacionadas à atividade
-        return evidenciaRepository.findByAtividadeId(atividadeId).stream()
+        return evidenciaRepository.findByAtividadeIdOrderByOrdemAsc(atividadeId).stream()
                 .map(this::toEvidenciaDTO)
                 .collect(Collectors.toList());
     }
@@ -117,6 +121,7 @@ public class EvidenciaService {
         // Excluir a evidência
         evidenciaRepository.deleteById(evidenciaId);
         excluirImagem(evidenciaExistente.getUrlFoto());
+        compactarOrdem(atividade.getId());
     }
 
     // Método para salvar uma evidência
@@ -141,7 +146,12 @@ public class EvidenciaService {
         String uniqueFileName = salvarImagem(atividade, file);
 
         // Criar a entidade Evidência
-        Evidencia evidencia = new Evidencia(null, uniqueFileName, legenda, username, atividade);
+        Evidencia evidencia = new Evidencia();
+        evidencia.setUrlFoto(uniqueFileName);
+        evidencia.setLegenda(legenda);
+        evidencia.setCriadoPor(username);
+        evidencia.setAtividade(atividade);
+        evidencia.setOrdem(proximaOrdem(atividadeId));
         // Salvar no banco
         Evidencia evidenciaSalva = evidenciaRepository.save(evidencia);
 
@@ -183,6 +193,57 @@ public class EvidenciaService {
         return toEvidenciaDTO(evidenciaAtualizada);
     }
 
+    @Transactional
+    public List<EvidenciaDTO> atualizarOrdemEvidencias(Long atividadeId, List<EvidenciaOrdemDTO> ordens, String username) {
+        if (ordens == null || ordens.isEmpty()) {
+            throw new IllegalArgumentException("A lista de ordens não pode ser vazia.");
+        }
+
+        Atividade atividade = atividadeRepository.findById(atividadeId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Atividade não encontrada com o ID: " + atividadeId));
+
+        if (!cursoService.verificarAcessoAoCurso(username, atividade.getCurso().getId())) {
+            throw new AcessoNegadoException(
+                    "Usuário não tem permissão para reordenar evidências no curso: " + atividade.getCurso().getId());
+        }
+
+        List<Evidencia> evidencias = evidenciaRepository.findByAtividadeIdOrderByOrdemAsc(atividadeId);
+        if (evidencias.isEmpty()) {
+            throw new RecursoNaoEncontradoException("Não há evidências cadastradas para esta atividade.");
+        }
+
+        Map<Long, Evidencia> evidenciasPorId = evidencias.stream()
+                .collect(Collectors.toMap(Evidencia::getId, evidencia -> evidencia));
+
+        if (ordens.size() != evidenciasPorId.size()) {
+            throw new IllegalArgumentException("A lista de ordens deve conter todas as evidências da atividade.");
+        }
+
+        Set<Long> idsProcessados = new HashSet<>();
+        Set<Integer> ordensProcessadas = new HashSet<>();
+
+        ordens.forEach(ordemDTO -> {
+            if (!idsProcessados.add(ordemDTO.evidenciaId())) {
+                throw new IllegalArgumentException("ID de evidência duplicado na requisição: " + ordemDTO.evidenciaId());
+            }
+            if (!ordensProcessadas.add(ordemDTO.ordem())) {
+                throw new IllegalArgumentException("Valor de ordem duplicado na requisição: " + ordemDTO.ordem());
+            }
+
+            Evidencia evidencia = evidenciasPorId.get(ordemDTO.evidenciaId());
+            if (evidencia == null) {
+                throw new RecursoNaoEncontradoException("Evidência não encontrada na atividade: " + ordemDTO.evidenciaId());
+            }
+            evidencia.setOrdem(ordemDTO.ordem());
+        });
+
+        evidenciaRepository.saveAll(evidencias);
+
+        return evidenciaRepository.findByAtividadeIdOrderByOrdemAsc(atividadeId).stream()
+                .map(this::toEvidenciaDTO)
+                .collect(Collectors.toList());
+    }
+
     // Método para buscar a atividade associada a uma evidência
     public Atividade buscarAtividadePorEvidencia(Long evidenciaId) {
         return evidenciaRepository.findById(evidenciaId)
@@ -197,7 +258,28 @@ public class EvidenciaService {
                 evidencia.getAtividade().getId(),
                 evidencia.getUrlFoto(),
                 evidencia.getLegenda(),
+                evidencia.getOrdem(),
                 evidencia.getCriadoPor());
+    }
+
+    private int proximaOrdem(Long atividadeId) {
+        Integer maxOrdem = evidenciaRepository.findMaxOrdemByAtividadeId(atividadeId);
+        if (maxOrdem == null) {
+            maxOrdem = -1;
+        }
+        return maxOrdem + 1;
+    }
+
+    private void compactarOrdem(Long atividadeId) {
+        List<Evidencia> evidenciasOrdenadas = evidenciaRepository.findByAtividadeIdOrderByOrdemAsc(atividadeId);
+        int ordem = 0;
+        for (Evidencia evidencia : evidenciasOrdenadas) {
+            if (evidencia.getOrdem() == null || evidencia.getOrdem() != ordem) {
+                evidencia.setOrdem(ordem);
+            }
+            ordem++;
+        }
+        evidenciaRepository.saveAll(evidenciasOrdenadas);
     }
 
     private Boolean validarImagem(MultipartFile file) {

@@ -204,6 +204,84 @@ class UsuarioControllerIT {
     }
 
     @Test
+    void deveCriarUsuarioParaPessoaExistente() {
+        String cpfValido = "39053344705";
+        String pessoaBody = """
+            {
+              "nome": "Pessoa Vinculo Teste",
+              "cpf": "%s"
+            }
+        """.formatted(cpfValido);
+
+        Integer pessoaId = given()
+            .port(port)
+            .header("Authorization", "Bearer " + adminToken)
+            .contentType(ContentType.JSON)
+            .body(pessoaBody)
+            .log().all()
+        .when()
+            .post("/api/pessoas")
+        .then()
+            .log().all()
+            .statusCode(201)
+            .extract()
+            .path("id");
+
+        String emailNovo = "pessoa.vinculo@uea.edu.br";
+        String usuarioBody = """
+            {
+              "pessoaId": %d,
+              "email": "%s",
+              "senha": "senha123",
+              "role": "ROLE_SECRETARIO",
+              "cursosIds": [1]
+            }
+        """.formatted(pessoaId, emailNovo);
+
+        Integer usuarioId = null;
+        try {
+            usuarioId = given()
+                .port(port)
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(ContentType.JSON)
+                .body(usuarioBody)
+                .log().all()
+            .when()
+                .post("/api/usuarios/pessoa")
+            .then()
+                .log().all()
+                .statusCode(201)
+                .body("id", notNullValue())
+                .body("email", equalTo(emailNovo))
+                .body("nome", equalTo("Pessoa Vinculo Teste"))
+                .extract()
+                .path("id");
+        } finally {
+            if (usuarioId != null) {
+                given()
+                    .port(port)
+                    .header("Authorization", "Bearer " + adminToken)
+                    .log().all()
+                .when()
+                    .delete("/api/usuarios/{usuarioId}", usuarioId)
+                .then()
+                    .log().all()
+                    .statusCode(200);
+            } else if (pessoaId != null) {
+                given()
+                    .port(port)
+                    .header("Authorization", "Bearer " + adminToken)
+                    .log().all()
+                .when()
+                    .delete("/api/pessoas/{pessoaId}", pessoaId)
+                .then()
+                    .log().all()
+                    .statusCode(anyOf(is(204), is(404)));
+            }
+        }
+    }
+
+    @Test
     void deveAtualizarUsuario() {
         Long usuarioId = 2L; // ID de um gerente
         String jsonBody = """
