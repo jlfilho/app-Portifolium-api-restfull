@@ -1,0 +1,115 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="author" content="AcadManage"/>
+  <meta name="title" th:attr="content=${tituloPagina}"/>
+  <title th:text="${tituloPagina}">Relatório de Atividades</title>
+  <link rel="stylesheet" href="print.css"/>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 16mm;
+      @top-center { content: element(report-header); }
+      @bottom-center { content: element(report-footer); }
+    }
+    header {
+      position: running(report-header);
+      height: 0;
+      visibility: hidden;
+      margin: 0;
+      padding: 0;
+    }
+    footer {
+      position: running(report-footer);
+      font-size: 10px;
+      color: #666;
+      text-align: center;
+      height: 0;
+      visibility: hidden;
+      margin: 0;
+      padding: 0;
+    }
+    .pagenum::before { content: counter(page); }
+    .pagetotal::before { content: counter(pages); }
+  </style>
+</head>
+<body>
+  <th:block th:fragment="report-header-content">
+    <div class="header-title">
+      <h1 th:text="${tituloCurso}">Relatório de Atividades</h1>
+      <h2 th:text="${tituloPagina}">Relatório de Atividades</h2>
+      <p th:text="${periodo}">Período</p>
+    </div>
+    <div class="course-highlight">
+      <div class="course-details">
+        <p th:if="${unidadeAcademica}"><strong>Unidade acadêmica:</strong> <span th:text="${unidadeAcademica}"></span></p>
+        
+      </div>
+      <p class="course-description" th:if="${descricaoCurso}" style="text-align: justify;" th:text="${descricaoCurso}">Descrição do curso</p>
+    </div>
+  </th:block>
+
+  <header th:insert="~{::report-header-content}"></header>
+
+  <main>
+    <div th:if="${!#lists.isEmpty(introducaoParagrafos)}" class="intro">
+      <p th:each="paragrafo : ${introducaoParagrafos}" th:text="${paragrafo}">Parágrafo</p>
+    </div>
+
+    <section class="summary">
+      <strong>Resumo geral</strong>
+      <ul>
+        <li>Total de atividades: <span th:text="${totais.totalAtividades}">0</span></li>
+        <li>Total de evidências: <span th:text="${totais.totalEvidencias}">0</span></li>
+        <li>Total de participantes: <span th:text="${totais.totalParticipantes}">0</span></li>
+        <li th:each="cat : ${categorias}">
+          <span th:text="${cat.nome}">Categoria</span>:
+          <span th:text="${cat.qtdAtividades}">0</span> atividade(s) •
+          <span th:text="${cat.qtdEvidencias}">0</span> evidência(s) •
+          <span th:text="${cat.qtdParticipantes}">0</span> participante(s)
+        </li>
+      </ul>
+    </section>
+
+    <div th:if="${#lists.isEmpty(categorias)}" class="empty-state">
+      Nenhuma atividade encontrada para os filtros informados.
+    </div>
+
+    <section th:each="cat : ${categorias}">
+      <div class="section-title" th:text="${cat.nome}">Categoria</div>
+
+      <article th:each="atv : ${cat.atividades}" class="activity-card">
+        <div class="activity-header">
+          <div class="activity-title" th:text="${atv.nome}">Atividade</div>
+          <div class="activity-date" th:text="${atv.data}">dd/MM/yyyy</div>
+        </div>
+        <div class="activity-body">
+          <p th:if="${atv.objetivo}"><strong>Objetivo:</strong> <span th:text="${atv.objetivo}"></span></p>
+          <p th:if="${atv.publicoAlvo}"><strong>Público-alvo:</strong> <span th:text="${atv.publicoAlvo}"></span></p>
+          <p th:if="${atv.coordenador}"><strong>Coordenador:</strong> <span th:text="${atv.coordenador}"></span></p>
+          <p th:if="${!#lists.isEmpty(atv.fontes)}"><strong>Fontes financiadoras:</strong>
+            <span th:text="${#strings.listJoin(atv.fontes, ', ')}"></span></p>
+          <p><strong>Participantes:</strong> <span th:text="${atv.qtdParticipantes}">0</span></p>
+        </div>
+
+        <div th:if="${!#lists.isEmpty(atv.evidencias)}" class="evidence-grid">
+          <div class="evidence-item" th:each="ev : ${atv.evidencias}"
+               th:classappend="' ' + (${ev.orientacao} == 'vertical' ? 'vertical' : (${ev.orientacao} == 'horizontal' ? 'horizontal' : 'quadrada'))">
+            <div class="evidence-image-wrapper">
+              <span th:if="${ev.imgDataUri}">
+                <img th:src="${ev.imgDataUri}" alt="Evidência"/>
+              </span>
+            </div>
+            <div class="evidence-caption" th:text="${ev.legenda}">Legenda</div>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <footer>
+    Página <span class="pagenum"></span> de <span class="pagetotal"></span>
+  </footer>
+</body>
+</html>
+

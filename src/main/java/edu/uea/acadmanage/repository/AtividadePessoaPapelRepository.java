@@ -11,6 +11,7 @@ import edu.uea.acadmanage.model.Atividade;
 import edu.uea.acadmanage.model.AtividadePessoaId;
 import edu.uea.acadmanage.model.AtividadePessoaPapel;
 import edu.uea.acadmanage.model.Pessoa;
+import edu.uea.acadmanage.model.Papel;
 
 @Repository
 public interface AtividadePessoaPapelRepository extends JpaRepository<AtividadePessoaPapel, AtividadePessoaId> {
@@ -32,5 +33,15 @@ public interface AtividadePessoaPapelRepository extends JpaRepository<AtividadeP
      */
     @Query("SELECT ap FROM AtividadePessoaPapel ap WHERE ap.atividade.id = :atividadeId")
     List<AtividadePessoaPapel> findByAtividadeId(@Param("atividadeId") Long atividadeId);
+
+    @Query("""
+        SELECT ap.atividade.id, COUNT(ap)
+        FROM AtividadePessoaPapel ap
+        WHERE ap.atividade.id IN :atividadeIds
+          AND ap.papel IN :papeis
+        GROUP BY ap.atividade.id
+        """)
+    List<Object[]> countParticipantesByAtividadeIds(@Param("atividadeIds") List<Long> atividadeIds,
+                                                   @Param("papeis") List<Papel> papeis);
 }
 

@@ -13,4 +13,11 @@ public interface EvidenciaRepository extends JpaRepository<Evidencia, Long> {
 
     @Query("SELECT COALESCE(MAX(e.ordem), -1) FROM Evidencia e WHERE e.atividade.id = :atividadeId")
     Integer findMaxOrdemByAtividadeId(@Param("atividadeId") Long atividadeId);
+
+    @Query("""
+        SELECT e FROM Evidencia e
+        WHERE e.atividade.id IN :atividadeIds
+        ORDER BY e.atividade.id ASC, e.ordem ASC, e.id ASC
+        """)
+    List<Evidencia> findByAtividadeIdsOrderByAtividadeAndOrdem(@Param("atividadeIds") List<Long> atividadeIds);
 }
