@@ -29,6 +29,8 @@ public class Evidencia implements Serializable {
     @Column(length = 500)
     private String legenda;
     private String criadoPor;
+    @Column(nullable = false)
+    private Integer ordem;
 
     @JsonIgnoreProperties("evidencias")
     @ManyToOne

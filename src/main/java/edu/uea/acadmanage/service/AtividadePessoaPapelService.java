@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import edu.uea.acadmanage.DTO.PessoaPapelDTO;
 import edu.uea.acadmanage.model.Atividade;
 import edu.uea.acadmanage.model.AtividadePessoaId;
 import edu.uea.acadmanage.model.AtividadePessoaPapel;
@@ -86,8 +87,14 @@ public class AtividadePessoaPapelService {
         return papelRepository.save(associacao);
     }
 
-    public List<AtividadePessoaPapel> listarPorAtividade(Long atividadeId) {
-        return papelRepository.findByAtividadeId(atividadeId);
+    public List<PessoaPapelDTO> listarPorAtividade(Long atividadeId) {
+        return papelRepository.findByAtividadeId(atividadeId).stream()
+                .map(associacao -> new PessoaPapelDTO(
+                        associacao.getPessoa().getId(),
+                        associacao.getPessoa().getNome(),
+                        associacao.getPessoa().getCpf(),
+                        associacao.getPapel().name()))
+                .toList();
     }
 
 

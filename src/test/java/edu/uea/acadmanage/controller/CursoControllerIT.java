@@ -22,6 +22,7 @@ class CursoControllerIT {
 
     private String adminToken;
     private String gerenteToken;
+    private String gerenteSemAcessoToken;
 
     @BeforeEach
     void setUp() {
@@ -40,6 +41,12 @@ class CursoControllerIT {
         } catch (AssertionError e) {
             gerenteToken = null;
         }
+
+        try {
+            gerenteSemAcessoToken = obterToken("gerente2@uea.edu.br", "gerente123");
+        } catch (AssertionError e) {
+            gerenteSemAcessoToken = null;
+        }
     }
 
     private String getAdminToken() {
@@ -54,6 +61,13 @@ class CursoControllerIT {
             gerenteToken = obterToken("gerente1@uea.edu.br", "gerente123");
         }
         return gerenteToken;
+    }
+
+    private String getGerenteSemAcessoToken() {
+        if (gerenteSemAcessoToken == null) {
+            gerenteSemAcessoToken = obterToken("gerente2@uea.edu.br", "gerente123");
+        }
+        return gerenteSemAcessoToken;
     }
 
     private String obterToken(String email, String senha) {
@@ -778,6 +792,84 @@ class CursoControllerIT {
         .then()
             .log().all()
             .statusCode(409); // Conflito: não pode remover própria permissão
+    }
+
+    // ========== GET /api/cursos/{cursoId}/relatorios ==========
+
+    @Test
+    void deveGerarRelatorioPdfDoCurso() {
+        String requestBody = """
+            {
+              "dataInicio": "2023-01-01",
+              "dataFim": "2023-12-31",
+              "introducao": "%s"
+            }
+        """.formatted("Texto introdutório bastante longo ".repeat(50).trim());
+
+        given()
+            .port(port)
+            .header("Authorization", "Bearer " + getAdminToken())
+            .contentType(ContentType.JSON)
+            .body(requestBody)
+            .log().all()
+        .when()
+            .post("/api/cursos/{cursoId}/relatorios", 1L)
+        .then()
+            .log().all()
+            .statusCode(200)
+            .contentType("application/pdf")
+            .header("Content-Disposition", containsString("relatorio-curso-1.pdf"))
+            .body(notNullValue());
+    }
+
+    @Test
+    void deveGerarRelatorioPdfFiltradoPorCategorias() {
+        String requestBody = """
+            {
+              "dataInicio": "2023-01-01",
+              "dataFim": "2023-12-31",
+              "categorias": [1, 2],
+              "introducao": "Relatório filtrado por categorias."
+            }
+        """;
+
+        given()
+            .port(port)
+            .header("Authorization", "Bearer " + getAdminToken())
+            .contentType(ContentType.JSON)
+            .body(requestBody)
+            .log().all()
+        .when()
+            .post("/api/cursos/{cursoId}/relatorios", 1L)
+        .then()
+            .log().all()
+            .statusCode(200)
+            .contentType("application/pdf")
+            .header("Content-Disposition", containsString("relatorio-curso-1.pdf"))
+            .body(notNullValue());
+    }
+
+    @Test
+    void deveRetornar403QuandoUsuarioSemAcessoSolicitaRelatorio() {
+        String requestBody = """
+            {
+              "dataInicio": "2023-01-01",
+              "dataFim": "2023-12-31",
+              "introducao": "Tentativa não autorizada."
+            }
+        """;
+
+        given()
+            .port(port)
+            .header("Authorization", "Bearer " + getGerenteSemAcessoToken())
+            .contentType(ContentType.JSON)
+            .body(requestBody)
+            .log().all()
+        .when()
+            .post("/api/cursos/{cursoId}/relatorios", 1L)
+        .then()
+            .log().all()
+            .statusCode(403);
     }
 
     // ========== PUT /api/cursos/foto-capa/{cursoId} e GET /api/cursos/foto-capa/{cursoId} ==========

@@ -15,6 +15,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
         
     Optional<Usuario> findByEmail(String email);
     boolean existsByEmail(String email);
+    boolean existsByPessoaId(Long pessoaId);
 
     @Query("SELECT u FROM Usuario u JOIN u.roles r WHERE r.nome = :roleName")
     Set<Usuario> findAllByRoleName(@Param("roleName") String roleName);

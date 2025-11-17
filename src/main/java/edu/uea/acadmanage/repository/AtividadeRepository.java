@@ -87,4 +87,20 @@ public interface AtividadeRepository extends JpaRepository<Atividade, Long> {
 
   long countByCategoriaId(Long categoriaId);
 
+  @Query("""
+      SELECT a
+      FROM Atividade a
+      WHERE a.curso.id = :cursoId
+        AND (:dataInicio IS NULL OR a.dataRealizacao >= :dataInicio)
+        AND (:dataFim IS NULL OR a.dataRealizacao <= :dataFim)
+        AND (:categorias IS NULL OR a.categoria.id IN :categorias)
+        AND a.statusPublicacao = TRUE
+      ORDER BY a.categoria.nome ASC, a.dataRealizacao ASC, a.nome ASC
+      """)
+  List<Atividade> findForRelatorio(
+      @Param("cursoId") Long cursoId,
+      @Param("dataInicio") LocalDate dataInicio,
+      @Param("dataFim") LocalDate dataFim,
+      @Param("categorias") List<Long> categorias);
+
 }

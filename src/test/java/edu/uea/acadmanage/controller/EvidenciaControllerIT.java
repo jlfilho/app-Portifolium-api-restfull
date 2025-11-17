@@ -166,6 +166,7 @@ class EvidenciaControllerIT {
             .body("id", equalTo(evidenciaId.intValue()))
             .body("foto", notNullValue())
             .body("legenda", notNullValue())
+            .body("ordem", greaterThanOrEqualTo(0))
             .body("atividadeId", notNullValue());
     }
 
@@ -208,6 +209,7 @@ class EvidenciaControllerIT {
                 .statusCode(201)
                 .body("id", notNullValue())
                 .body("legenda", equalTo(legenda))
+                .body("ordem", notNullValue())
                 .body("atividadeId", equalTo(atividadeId.intValue()))
                 .extract()
                 .path("id");
@@ -369,7 +371,8 @@ class EvidenciaControllerIT {
                 .log().all()
                 .statusCode(200)
                 .body("id", equalTo(evidenciaId.intValue()))
-                .body("legenda", equalTo(legendaAtualizada));
+                .body("legenda", equalTo(legendaAtualizada))
+                .body("ordem", notNullValue());
         } finally {
             arquivoNovo.delete();
             
@@ -430,6 +433,61 @@ class EvidenciaControllerIT {
         } finally {
             arquivoImagem.delete();
         }
+    }
+
+    // ========== PUT /api/evidencias/atividade/{atividadeId}/ordem} ==========
+
+    @Test
+    void deveAtualizarOrdemDasEvidencias() {
+        Long atividadeId = 1L;
+
+        String payload = """
+            [
+              {"evidenciaId": 1, "ordem": 4},
+              {"evidenciaId": 2, "ordem": 3},
+              {"evidenciaId": 3, "ordem": 2},
+              {"evidenciaId": 4, "ordem": 1},
+              {"evidenciaId": 5, "ordem": 0}
+            ]
+        """;
+
+        given()
+            .port(port)
+            .header("Authorization", "Bearer " + getAdminToken())
+            .contentType(ContentType.JSON)
+            .body(payload)
+            .log().all()
+        .when()
+            .put("/api/evidencias/atividade/{atividadeId}/ordem", atividadeId)
+        .then()
+            .log().all()
+            .statusCode(200)
+            .body("[0].id", equalTo(5))
+            .body("[0].ordem", equalTo(0));
+
+        String revertPayload = """
+            [
+              {"evidenciaId": 1, "ordem": 0},
+              {"evidenciaId": 2, "ordem": 1},
+              {"evidenciaId": 3, "ordem": 2},
+              {"evidenciaId": 4, "ordem": 3},
+              {"evidenciaId": 5, "ordem": 4}
+            ]
+        """;
+
+        given()
+            .port(port)
+            .header("Authorization", "Bearer " + getAdminToken())
+            .contentType(ContentType.JSON)
+            .body(revertPayload)
+            .log().all()
+        .when()
+            .put("/api/evidencias/atividade/{atividadeId}/ordem", atividadeId)
+        .then()
+            .log().all()
+            .statusCode(200)
+            .body("[0].id", equalTo(1))
+            .body("[0].ordem", equalTo(0));
     }
 
     // ========== DELETE /api/evidencias/{evidenciaId} ==========

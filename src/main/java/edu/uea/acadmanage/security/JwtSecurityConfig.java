@@ -3,6 +3,7 @@ package edu.uea.acadmanage.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -44,6 +45,8 @@ public class JwtSecurityConfig {
                                                                 "/api/categorias/**", "/api/evidencias/**",
                                                                 "/api/evidencias/atividade/**",
                                                                 "/api/categorias/curso/**")
+                                                .permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/api/unidades-academicas/**")
                                                 .permitAll()
                                                 .requestMatchers("/api/recovery/generate/**",
                                                                 "/api/recovery/reset-password/**")

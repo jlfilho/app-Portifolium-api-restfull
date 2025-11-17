@@ -1,12 +1,14 @@
 package edu.uea.acadmanage.controller;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -28,8 +30,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import edu.uea.acadmanage.DTO.CursoDTO;
 import edu.uea.acadmanage.DTO.PermissaoCursoDTO;
+import edu.uea.acadmanage.DTO.RelatorioCursoRequestDTO;
 import edu.uea.acadmanage.model.Usuario;
 import edu.uea.acadmanage.service.CursoService;
+import edu.uea.acadmanage.service.RelatorioCursoService;
 import edu.uea.acadmanage.service.UsuarioService;
 
 @RestController
@@ -38,10 +42,12 @@ public class CursoController {
 
     private final CursoService cursoService;
     private final UsuarioService usuarioService;
+    private final RelatorioCursoService relatorioCursoService;
 
-    public CursoController(CursoService cursoService, UsuarioService usuarioService) {
+    public CursoController(CursoService cursoService, UsuarioService usuarioService, RelatorioCursoService relatorioCursoService) {
         this.cursoService = cursoService;
         this.usuarioService = usuarioService;
+        this.relatorioCursoService = relatorioCursoService;
     }
 
     // Endpoint para buscar todos os cursos com paginação e filtros por status e nome
@@ -196,4 +202,31 @@ public class CursoController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + (filename != null ? filename : "foto-capa") + "\"")
                 .body(resource);
     }
+
+    @PostMapping(value = "/{cursoId}/relatorios", produces = MediaType.APPLICATION_PDF_VALUE)
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    public ResponseEntity<byte[]> gerarRelatorioCurso(
+            @PathVariable Long cursoId,
+            @RequestBody(required = false) RelatorioCursoRequestDTO relatorioRequest,
+            @AuthenticationPrincipal Usuario usuarioAutenticado) {
+
+        String solicitante = usuarioAutenticado != null ? usuarioAutenticado.getUsername() : null;
+
+        LocalDate dataInicio = relatorioRequest != null ? relatorioRequest.dataInicio() : null;
+        LocalDate dataFim = relatorioRequest != null ? relatorioRequest.dataFim() : null;
+        List<Long> categorias = relatorioRequest != null ? relatorioRequest.categorias() : null;
+        String introducao = relatorioRequest != null ? relatorioRequest.introducao() : null;
+
+        byte[] relatorio = relatorioCursoService.gerarRelatorioCurso(cursoId, dataInicio, dataFim, categorias, introducao, solicitante);
+
+        String filename = "relatorio-curso-" + cursoId + ".pdf";
+        ContentDisposition contentDisposition = ContentDisposition.inline().filename(filename).build();
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
+                .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(relatorio.length))
+                .body(relatorio);
+    }
+
 }
