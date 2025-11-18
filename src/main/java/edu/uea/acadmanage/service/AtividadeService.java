@@ -33,7 +33,9 @@ import edu.uea.acadmanage.repository.AtividadeRepository;
 import edu.uea.acadmanage.repository.PessoaRepository;
 import edu.uea.acadmanage.repository.UsuarioRepository;
 import edu.uea.acadmanage.service.exception.AcessoNegadoException;
+import edu.uea.acadmanage.service.exception.ArquivoInvalidoException;
 import edu.uea.acadmanage.service.exception.AtividadeComEvidenciasException;
+import edu.uea.acadmanage.service.exception.ErroProcessamentoArquivoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
 
 @Service
@@ -45,6 +47,7 @@ public class AtividadeService {
     private final CategoriaService categoriaService;
     private final FonteFinanciadoraService fonteFinanciadoraService;
     private final PessoaRepository pessoaRepository;
+    private final AtividadeAutorizacaoService atividadeAutorizacaoService;
     private final Path fileStorageLocation;
     private final String baseStorageLocation;
 
@@ -55,6 +58,7 @@ public class AtividadeService {
             CategoriaService categoriaService,
             FonteFinanciadoraService fonteFinanciadoraService,
             PessoaRepository pessoaRepository,
+            AtividadeAutorizacaoService atividadeAutorizacaoService,
             FileStorageProperties fileStorageProperties) throws IOException {
         this.atividadeRepository = atividadeRepository;
         this.usuarioRepository = usuarioRepository;
@@ -62,6 +66,7 @@ public class AtividadeService {
         this.categoriaService = categoriaService;
         this.fonteFinanciadoraService = fonteFinanciadoraService;
         this.pessoaRepository = pessoaRepository;
+        this.atividadeAutorizacaoService = atividadeAutorizacaoService;
         this.baseStorageLocation = "fotos-capa";
         this.fileStorageLocation = Paths.get(fileStorageProperties.getStorageLocation())
                 .resolve(this.baseStorageLocation)
@@ -167,11 +172,11 @@ public class AtividadeService {
         }
 
 
-        // Verificar se o usuário tem permissão para salvar a atividade
+        // Verificar se o usuário tem permissão para criar a atividade
         Long cursoId = atividadeDTO.curso().getId();
-        if (!cursoService.verificarAcessoAoCurso(username, cursoId)) {
+        if (!atividadeAutorizacaoService.podeCriarAtividadeNoCurso(username, cursoId)) {
             throw new AcessoNegadoException(
-                    "Usuário não tem permissão para salvar atividade no curso: " + cursoId);
+                    "Usuário não tem permissão para criar atividade no curso: " + cursoId);
         }
 
         // Criar a entidade Atividade
@@ -202,16 +207,16 @@ public class AtividadeService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Atividade não encontrada com o ID: " + atividadeId));
 
-        // Verificar se o usuário tem permissão para salvar a evidência
-        if (!cursoService.verificarAcessoAoCurso(username, atividade.getCurso().getId())) {
+        // Verificar se o usuário tem permissão para editar a atividade
+        if (!atividadeAutorizacaoService.podeEditarAtividade(username, atividadeId)) {
             throw new AcessoNegadoException(
-                    "Usuário não tem permissão para salvar a evidência no curso: " + atividade.getCurso().getId());
+                    "Usuário não tem permissão para editar esta atividade: " + atividadeId);
         }
 
         if (file != null) {
             if (atividade.getFotoCapa() != null) {
                 if (!excluirImagem(atividade.getFotoCapa())) {
-                    throw new IllegalArgumentException("O arquivo anterior não pode ser removido.");
+                    throw new ErroProcessamentoArquivoException("O arquivo anterior não pode ser removido.");
                 }
             }           
             atividade.setFotoCapa(salvarImagem(atividade, file));
@@ -230,10 +235,10 @@ public class AtividadeService {
         Atividade atividade = atividadeRepository.findById(atividadeId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Atividade não encontrada com o ID: " + atividadeId));
-        // Verificar se o usuário tem permissão para excluir a imagem
-        if (!cursoService.verificarAcessoAoCurso(username, atividade.getCurso().getId())) {
+        // Verificar se o usuário tem permissão para editar a atividade
+        if (!atividadeAutorizacaoService.podeEditarAtividade(username, atividadeId)) {
             throw new AcessoNegadoException(
-                    "Usuário não tem permissão para excluir a foto de capa da atividade com id: " + atividade.getCurso().getId());
+                    "Usuário não tem permissão para editar esta atividade: " + atividadeId);
         }
         // Excluir a foto de capa
         if (atividade.getFotoCapa() != null) {
@@ -262,10 +267,10 @@ public class AtividadeService {
                     "Categoria não encontrada com o ID: " + atividadeDTO.categoria().getId());
         }
 
-        // Verificar se o usuário tem permissão para salvar a atividade
-        if (!cursoService.verificarAcessoAoCurso(username, atividadeDTO.curso().getId())) {
+        // Verificar se o usuário tem permissão para editar a atividade
+        if (!atividadeAutorizacaoService.podeEditarAtividade(username, atividadeId)) {
             throw new AcessoNegadoException(
-                    "Usuário não tem permissão para atualizar atividade no curso: " + atividadeDTO.curso().getId());
+                    "Usuário não tem permissão para editar esta atividade: " + atividadeId);
         }
 
         atividadeExistente.setNome(atividadeDTO.nome());
@@ -273,6 +278,7 @@ public class AtividadeService {
         atividadeExistente.setPublicoAlvo(atividadeDTO.publicoAlvo());
         atividadeExistente.setStatusPublicacao(atividadeDTO.statusPublicacao());
         atividadeExistente.setDataRealizacao(atividadeDTO.dataRealizacao());
+        atividadeExistente.setDataFim(atividadeDTO.dataFim());
         atividadeExistente.setCurso(atividadeDTO.curso());
         atividadeExistente.setCategoria(atividadeDTO.categoria());
         
@@ -304,9 +310,9 @@ public class AtividadeService {
                         () -> new RecursoNaoEncontradoException("Atividade não encontrada com o ID: " + atividadeId));
 
         // Verificar se o usuário tem permissão para excluir a atividade
-        if (!cursoService.verificarAcessoAoCurso(username, atividade.getCurso().getId())) {
+        if (!atividadeAutorizacaoService.podeEditarAtividade(username, atividadeId)) {
             throw new AcessoNegadoException(
-                    "Usuário não tem permissão para excluir atividade no curso: " + atividade.getCurso().getId());
+                    "Usuário não tem permissão para excluir esta atividade: " + atividadeId);
         }
 
         // Impedir exclusão quando existirem evidências cadastradas
@@ -352,6 +358,7 @@ public class AtividadeService {
                 atividade.getFotoCapa(),
                 atividade.getCoordenador(),
                 atividade.getDataRealizacao(),
+                atividade.getDataFim(),
                 atividade.getCurso(),
                 atividade.getCategoria(),
                 atividade.getFontesFinanciadora(),
@@ -372,6 +379,7 @@ public class AtividadeService {
         atividade.setPublicoAlvo(atividadeDTO.publicoAlvo());
         atividade.setStatusPublicacao(atividadeDTO.statusPublicacao());
         atividade.setDataRealizacao(atividadeDTO.dataRealizacao());
+        atividade.setDataFim(atividadeDTO.dataFim());
         atividade.setCurso(atividadeDTO.curso());
         atividade.setCategoria(atividadeDTO.categoria());
         
@@ -425,7 +433,7 @@ public class AtividadeService {
         // Verificar se o arquivo enviado é uma imagem JPG ou PNG
         Set<String> allowedContentTypes = Set.of("image/jpg", "image/jpeg", "image/png");
         if (!allowedContentTypes.contains(Objects.requireNonNullElse(file.getContentType(), "").toLowerCase())) {
-            throw new IllegalArgumentException("O arquivo enviado deve ser um JPG, JPEG ou PNG válido.");
+            throw new ArquivoInvalidoException("O arquivo enviado deve ser um JPG, JPEG ou PNG válido.");
         }
 
         return true;
@@ -438,7 +446,7 @@ public class AtividadeService {
         // Salvar a foto no diretório
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null) {
-            throw new IllegalArgumentException("O arquivo enviado não possui um nome válido.");
+            throw new ArquivoInvalidoException("O arquivo enviado não possui um nome válido.");
         }
         String fileExtension = originalFilename.substring(originalFilename.lastIndexOf('.'));
         String uniqueFileName = atividade.getCurso().getId() + "/" + atividade.getId() + "/"

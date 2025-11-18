@@ -63,7 +63,7 @@ public class UsuarioController {
 
     // Método para listar todos os usuários com paginação e filtro por nome
     @GetMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<Page<UsuarioDTO>> listarUsuarios(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -84,14 +84,14 @@ public class UsuarioController {
 
     // Método para buscar um único usuário por ID
     @GetMapping("/{usuarioId}")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<UsuarioDTO> getUsuarioById(@PathVariable Long usuarioId) {
         UsuarioDTO usuario = usuarioService.getUsuarioById(usuarioId);
         return ResponseEntity.ok(usuario);
     }
 
     @GetMapping("/email")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<UsuarioDTO> getUsuarioByEmail(@RequestParam String email) {
         UsuarioDTO usuario = usuarioService.getUsuarioByEmailAsDTO(email);
         return ResponseEntity.ok(usuario);

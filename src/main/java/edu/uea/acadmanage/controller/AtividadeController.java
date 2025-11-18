@@ -31,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 import edu.uea.acadmanage.DTO.AtividadeDTO;
 import edu.uea.acadmanage.DTO.AtividadeFiltroDTO;
 import edu.uea.acadmanage.service.AtividadeService;
+import edu.uea.acadmanage.service.exception.ValidacaoException;
 import jakarta.validation.Valid;
 
 @RestController
@@ -98,7 +99,7 @@ public class AtividadeController {
 
         // Validar e mapear o campo de ordenação
         if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
-            throw new IllegalArgumentException(
+            throw new ValidacaoException(
                 "Campo de ordenação inválido: '" + sortBy + "'. " +
                 "Campos permitidos: " + String.join(", ", ALLOWED_SORT_FIELDS)
             );
@@ -122,7 +123,7 @@ public class AtividadeController {
 
     // Endpoint para salvar uma atividade
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<AtividadeDTO> salvarAtividade(@Validated @RequestBody AtividadeDTO atividadeDTO,
             @AuthenticationPrincipal UserDetails userDetails) {
 
@@ -132,7 +133,7 @@ public class AtividadeController {
 
     // Endpoint para salvar foto de capa
     @PutMapping(value = "/foto-capa/{atividadeId}", consumes = { "multipart/form-data" })
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<AtividadeDTO> salvarFotoCapa(
             @PathVariable Long atividadeId,
             @RequestParam("file") MultipartFile file,
@@ -144,7 +145,7 @@ public class AtividadeController {
 
     // Endpoint para atualizar uma atividade
     @PutMapping("/{atividadeId}")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<AtividadeDTO> atualizarAtividade(
             @PathVariable Long atividadeId,
             @Valid @RequestBody AtividadeDTO atividadeDTO,
@@ -156,7 +157,7 @@ public class AtividadeController {
 
     // Endpoint para excluir foto de capa de uma atividade
     @DeleteMapping(value = "/{atividadeId}/foto-capa")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<Void> excluirFotoCapa(@PathVariable Long atividadeId,
             @AuthenticationPrincipal UserDetails userDetails) {
         atividadeService.excluirFotoCapa(atividadeId, userDetails.getUsername());
@@ -165,7 +166,7 @@ public class AtividadeController {
 
     // Endpoint para excluir uma atividade
     @DeleteMapping("/{atividadeId}")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<Void> excluirAtividade(@PathVariable Long atividadeId,
             @AuthenticationPrincipal UserDetails userDetails) {
         atividadeService.excluirAtividade(atividadeId, userDetails.getUsername());

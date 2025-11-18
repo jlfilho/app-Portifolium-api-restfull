@@ -31,9 +31,11 @@ import edu.uea.acadmanage.model.Usuario;
 import edu.uea.acadmanage.repository.CursoRepository;
 import edu.uea.acadmanage.repository.UsuarioRepository;
 import edu.uea.acadmanage.service.exception.AcessoNegadoException;
+import edu.uea.acadmanage.service.exception.ArquivoInvalidoException;
 import edu.uea.acadmanage.service.exception.ConflitoException;
 import edu.uea.acadmanage.service.exception.CursoComAtividadesException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
+import edu.uea.acadmanage.service.exception.ValidacaoException;
 
 @Service
 public class CursoService {
@@ -174,7 +176,7 @@ public class CursoService {
     public CursoDTO saveCurso(CursoDTO cursoDTO, Usuario usuario) {
         // Validar que o nome não seja nulo ou vazio
         if (cursoDTO.nome() == null || cursoDTO.nome().trim().isEmpty()) {
-            throw new IllegalArgumentException("O nome do curso é obrigatório");
+            throw new ValidacaoException("O nome do curso é obrigatório");
         }
         
         // Criar uma entidade Curso a partir do DTO
@@ -183,13 +185,13 @@ public class CursoService {
         novoCurso.setDescricao(cursoDTO.descricao());
         novoCurso.setFotoCapa(cursoDTO.fotoCapa());
         if (cursoDTO.tipoId() == null) {
-            throw new IllegalArgumentException("O tipo do curso é obrigatório");
+            throw new ValidacaoException("O tipo do curso é obrigatório");
         }
         TipoCurso tipoCurso = tipoCursoService.recuperarPorId(cursoDTO.tipoId());
         novoCurso.setTipoCurso(tipoCurso);
 
         if (cursoDTO.unidadeAcademicaId() == null) {
-            throw new IllegalArgumentException("A unidade acadêmica é obrigatória");
+            throw new ValidacaoException("A unidade acadêmica é obrigatória");
         }
         novoCurso.setUnidadeAcademica(unidadeAcademicaService.buscarEntidade(cursoDTO.unidadeAcademicaId()));
         Set<Usuario> usuarios = this.usuarioRepository.findAllByRoleName("ROLE_ADMINISTRADOR");
@@ -207,7 +209,7 @@ public class CursoService {
     public CursoDTO updateCurso(Long cursoId, CursoDTO cursoDTO) {
         // Validar que o nome não seja nulo ou vazio
         if (cursoDTO.nome() == null || cursoDTO.nome().trim().isEmpty()) {
-            throw new IllegalArgumentException("O nome do curso é obrigatório");
+            throw new ValidacaoException("O nome do curso é obrigatório");
         }
         
         Curso cursoExistente = cursoRepository.findById(cursoId)
@@ -444,7 +446,7 @@ public class CursoService {
         // Verificar se o arquivo enviado é uma imagem JPG ou PNG
         Set<String> allowedContentTypes = Set.of("image/jpg", "image/jpeg", "image/png");
         if (!allowedContentTypes.contains(Objects.requireNonNullElse(file.getContentType(), "").toLowerCase())) {
-            throw new IllegalArgumentException("O arquivo enviado deve ser um JPG, JPEG ou PNG válido.");
+            throw new ArquivoInvalidoException("O arquivo enviado deve ser um JPG, JPEG ou PNG válido.");
         }
 
         return true;
@@ -458,7 +460,7 @@ public class CursoService {
         // Salvar a foto no diretório
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null) {
-            throw new IllegalArgumentException("O arquivo enviado não possui um nome válido.");
+            throw new ArquivoInvalidoException("O arquivo enviado não possui um nome válido.");
         }
         String fileExtension = originalFilename.substring(originalFilename.lastIndexOf('.'));
         String uniqueFileName = curso.getId() + "/" + UUID.randomUUID().toString() + fileExtension;
@@ -483,7 +485,7 @@ public class CursoService {
 
     private Path resolveFotoPath(String fileName) {
         if (fileName == null || fileName.isBlank()) {
-            throw new IllegalArgumentException("Caminho da foto de capa inválido.");
+            throw new ValidacaoException("Caminho da foto de capa inválido.");
         }
 
         Path candidate = Paths.get(fileName).normalize();

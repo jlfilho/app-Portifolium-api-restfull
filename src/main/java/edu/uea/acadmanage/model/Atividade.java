@@ -20,6 +20,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
+import jakarta.validation.constraints.AssertTrue;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -43,7 +44,17 @@ public class Atividade implements Serializable {
     private Boolean statusPublicacao;
     private String fotoCapa;
     @Column(nullable = false)
-    private LocalDate dataRealizacao;
+    private LocalDate dataRealizacao; // Data de início (ou única data)
+    
+    private LocalDate dataFim; // Data final (opcional - null = evento em data única)
+
+    @AssertTrue(message = "A data final deve ser posterior ou igual à data de realização")
+    private boolean isDataFimValida() {
+        if (dataFim == null) {
+            return true; // dataFim é opcional
+        }
+        return dataFim.isAfter(dataRealizacao) || dataFim.isEqual(dataRealizacao);
+    }
 
     @JsonIgnoreProperties("atividades")
     @ManyToOne

@@ -39,8 +39,12 @@ public interface AtividadeRepository extends JpaRepository<Atividade, Long> {
           FROM Atividade a
           WHERE (:cursoNome IS NULL OR LOWER(a.curso.nome) LIKE LOWER(CONCAT('%', :cursoNome, '%')))
             AND (:categoriaNome IS NULL OR LOWER(a.categoria.nome) LIKE LOWER(CONCAT('%', :categoriaNome, '%')))
-            AND (:dataInicio IS NULL OR a.dataRealizacao >= :dataInicio)
-            AND (:dataFim IS NULL OR a.dataRealizacao <= :dataFim)
+            AND (:dataInicio IS NULL OR 
+                 (a.dataFim IS NULL AND a.dataRealizacao >= :dataInicio) OR
+                 (a.dataFim IS NOT NULL AND a.dataFim >= :dataInicio))
+            AND (:dataFim IS NULL OR 
+                 (a.dataFim IS NULL AND a.dataRealizacao <= :dataFim) OR
+                 (a.dataFim IS NOT NULL AND a.dataRealizacao <= :dataFim))
             AND a.curso.id IN :cursoIds
       """)
   List<Atividade> findByFiltros2(
@@ -55,8 +59,12 @@ public interface AtividadeRepository extends JpaRepository<Atividade, Long> {
           WHERE (:cursoId IS NULL OR a.curso.id = :cursoId)
             AND (:categoriaId IS NULL OR a.categoria.id = :categoriaId)
             AND (:nome IS NULL OR LOWER(a.nome) LIKE LOWER(CONCAT('%', :nome, '%')))
-            AND (:dataInicio IS NULL OR a.dataRealizacao >= :dataInicio)
-            AND (:dataFim IS NULL OR a.dataRealizacao <= :dataFim)
+            AND (:dataInicio IS NULL OR 
+                 (a.dataFim IS NULL AND a.dataRealizacao >= :dataInicio) OR
+                 (a.dataFim IS NOT NULL AND a.dataFim >= :dataInicio))
+            AND (:dataFim IS NULL OR 
+                 (a.dataFim IS NULL AND a.dataRealizacao <= :dataFim) OR
+                 (a.dataFim IS NOT NULL AND a.dataRealizacao <= :dataFim))
             AND (:statusPublicacao IS NULL OR a.statusPublicacao = :statusPublicacao)
       """)
   List<Atividade> findByFiltros(
@@ -72,8 +80,12 @@ public interface AtividadeRepository extends JpaRepository<Atividade, Long> {
           WHERE (:cursoId IS NULL OR a.curso.id = :cursoId)
             AND (:categoriaId IS NULL OR a.categoria.id = :categoriaId)
             AND (:nome IS NULL OR LOWER(a.nome) LIKE LOWER(CONCAT('%', :nome, '%')))
-            AND (:dataInicio IS NULL OR a.dataRealizacao >= :dataInicio)
-            AND (:dataFim IS NULL OR a.dataRealizacao <= :dataFim)
+            AND (:dataInicio IS NULL OR 
+                 (a.dataFim IS NULL AND a.dataRealizacao >= :dataInicio) OR
+                 (a.dataFim IS NOT NULL AND a.dataFim >= :dataInicio))
+            AND (:dataFim IS NULL OR 
+                 (a.dataFim IS NULL AND a.dataRealizacao <= :dataFim) OR
+                 (a.dataFim IS NOT NULL AND a.dataRealizacao <= :dataFim))
             AND (:statusPublicacao IS NULL OR a.statusPublicacao = :statusPublicacao)
       """)
   Page<Atividade> findByFiltrosPaginado(
@@ -91,8 +103,12 @@ public interface AtividadeRepository extends JpaRepository<Atividade, Long> {
       SELECT a
       FROM Atividade a
       WHERE a.curso.id = :cursoId
-        AND (:dataInicio IS NULL OR a.dataRealizacao >= :dataInicio)
-        AND (:dataFim IS NULL OR a.dataRealizacao <= :dataFim)
+        AND (:dataInicio IS NULL OR 
+             (a.dataFim IS NULL AND a.dataRealizacao >= :dataInicio) OR
+             (a.dataFim IS NOT NULL AND a.dataFim >= :dataInicio))
+        AND (:dataFim IS NULL OR 
+             (a.dataFim IS NULL AND a.dataRealizacao <= :dataFim) OR
+             (a.dataFim IS NOT NULL AND a.dataRealizacao <= :dataFim))
         AND (:categorias IS NULL OR a.categoria.id IN :categorias)
         AND a.statusPublicacao = TRUE
       ORDER BY a.categoria.nome ASC, a.dataRealizacao ASC, a.nome ASC

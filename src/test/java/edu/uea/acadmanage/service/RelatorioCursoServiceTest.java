@@ -34,6 +34,7 @@ import edu.uea.acadmanage.model.Curso;
 import edu.uea.acadmanage.model.Evidencia;
 import edu.uea.acadmanage.model.FonteFinanciadora;
 import edu.uea.acadmanage.model.TipoCurso;
+import edu.uea.acadmanage.repository.AtividadePessoaPapelRepository;
 import edu.uea.acadmanage.repository.AtividadeRepository;
 import edu.uea.acadmanage.repository.CursoRepository;
 import edu.uea.acadmanage.repository.EvidenciaRepository;
@@ -49,6 +50,9 @@ class RelatorioCursoServiceTest {
 
     @Mock
     private EvidenciaRepository evidenciaRepository;
+
+    @Mock
+    private AtividadePessoaPapelRepository atividadePessoaPapelRepository;
 
     @Mock
     private CursoService cursoService;
@@ -69,6 +73,7 @@ class RelatorioCursoServiceTest {
                 cursoRepository,
                 atividadeRepository,
                 evidenciaRepository,
+                atividadePessoaPapelRepository,
                 cursoService,
                 templateEngine,
                 properties);
@@ -118,6 +123,10 @@ class RelatorioCursoServiceTest {
                 .thenReturn(List.of(atividade));
         when(evidenciaRepository.findByAtividadeIdsOrderByAtividadeAndOrdem(anyList()))
                 .thenReturn(List.of(evidencia));
+        // Mock para contar participantes da atividade
+        Object[] resultadoParticipantes = new Object[]{atividade.getId(), 5L};
+        when(atividadePessoaPapelRepository.countParticipantesByAtividadeIds(anyList(), anyList()))
+                .thenReturn(List.<Object[]>of(resultadoParticipantes));
 
         Path evidenciasDir = tempDir.resolve("evidencias");
         Files.createDirectories(evidenciasDir);

@@ -27,6 +27,7 @@ import edu.uea.acadmanage.service.exception.AcessoNegadoException;
 import edu.uea.acadmanage.service.exception.ConflitoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
 import edu.uea.acadmanage.service.exception.SenhaIncorretaException;
+import edu.uea.acadmanage.service.exception.ValidacaoException;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -343,7 +344,7 @@ public class UsuarioService {
     // Converte um CursoDTO para um Curso
     public Curso toCurso(CursoDTO cursoDTO) {
         if (cursoDTO == null) {
-            throw new IllegalArgumentException("O CursoDTO não pode ser nulo.");
+            throw new ValidacaoException("O CursoDTO não pode ser nulo.");
         }
         Curso curso = new Curso();
         curso.setId(cursoDTO.id());

@@ -54,7 +54,7 @@ public class EvidenciaController {
 
     // Endpoint para salvar uma evidência
     @PostMapping(consumes = "multipart/form-data")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<EvidenciaDTO> salvarEvidencia(
         @RequestParam("atividadeId") Long atividadeId,
         @RequestParam("legenda") String legenda,
@@ -66,7 +66,7 @@ public class EvidenciaController {
 
     // Endpoint para atualizar uma evidência    
     @PutMapping(value = "/{evidenciaId}", consumes = {"multipart/form-data"})
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<EvidenciaDTO> atualizarEvidencia(
             @PathVariable Long evidenciaId,
             @RequestParam("legenda") String legenda,
@@ -78,14 +78,14 @@ public class EvidenciaController {
 
     // Endpoint para excluir uma evidência
     @DeleteMapping("/{evidenciaId}")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<Void> excluirEvidencia(@PathVariable Long evidenciaId, @AuthenticationPrincipal UserDetails userDetails) {
         evidenciaService.excluirEvidencia(evidenciaId, userDetails.getUsername());
         return ResponseEntity.noContent().build(); // 204 No Content
     }
 
     @PutMapping("/atividade/{atividadeId}/ordem")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<List<EvidenciaDTO>> atualizarOrdem(
             @PathVariable Long atividadeId,
             @RequestBody List<@Valid EvidenciaOrdemDTO> ordens,

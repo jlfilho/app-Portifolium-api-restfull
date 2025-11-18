@@ -229,18 +229,30 @@ public class RelatorioCursoService {
         String coordenador = normalizarTexto(atividade.getCoordenadorNome());
         List<String> fontes = atividade.getFontesFinanciadorasNomes();
         List<ViewEvidencia> evidencias = mapearEvidencias(atividade.getEvidencias());
+        
+        String dataFormatada = formatarDataAtividade(atividade.getDataRealizacao(), atividade.getDataFim());
 
         return new ViewAtividade(
                 atividade.getNome(),
                 normalizarTexto(atividade.getObjetivo()),
                 normalizarTexto(atividade.getPublicoAlvo()),
-                DATE_FORMATTER.format(atividade.getDataRealizacao()),
+                dataFormatada,
                 status,
                 coordenador,
                 fontes,
                 atividade.quantidadeParticipantes(),
                 evidencias
         );
+    }
+
+    private String formatarDataAtividade(LocalDate dataRealizacao, LocalDate dataFim) {
+        if (dataFim == null) {
+            // Evento em data única
+            return DATE_FORMATTER.format(dataRealizacao);
+        } else {
+            // Período
+            return DATE_FORMATTER.format(dataRealizacao) + " a " + DATE_FORMATTER.format(dataFim);
+        }
     }
 
     private List<ViewEvidencia> mapearEvidencias(List<Evidencia> evidencias) {
@@ -466,6 +478,10 @@ public class RelatorioCursoService {
 
         LocalDate getDataRealizacao() {
             return Optional.ofNullable(atividade.getDataRealizacao()).orElse(LocalDate.now());
+        }
+
+        LocalDate getDataFim() {
+            return atividade.getDataFim(); // Pode ser null
         }
 
         Boolean getStatusPublicacao() {

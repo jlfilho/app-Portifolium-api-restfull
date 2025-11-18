@@ -63,7 +63,8 @@ INSERT INTO fonte_financiadora (id, nome) VALUES
 INSERT INTO role (id, nome) VALUES
 (1, 'ROLE_ADMINISTRADOR'),
 (2, 'ROLE_GERENTE'),
-(3, 'ROLE_SECRETARIO');
+(3, 'ROLE_SECRETARIO'),
+(4, 'ROLE_COORDENADOR_ATIVIDADE');
 
 -- Script SQL para criar 10 pessoas na tabela Pessoa
 
@@ -88,7 +89,8 @@ INSERT INTO usuario (id, email, senha, pessoa_id) VALUES
 (5, 'secretario1@uea.edu.br', '$2a$10$X6ex54jciqS6vBx2agfhweVqN730u0R3BLD8wCP21ljBEfN2jZIW.', 5), -- Senha: secretario123
 (6, 'secretario2@uea.edu.br', '$2a$10$X6ex54jciqS6vBx2agfhweVqN730u0R3BLD8wCP21ljBEfN2jZIW.', 6), -- Senha: secretario123
 (7, 'secretario3@uea.edu.br', '$2a$10$X6ex54jciqS6vBx2agfhweVqN730u0R3BLD8wCP21ljBEfN2jZIW.', 7), -- Senha: secretario123
-(8, 'secretario4@uea.edu.br', '$2a$10$X6ex54jciqS6vBx2agfhweVqN730u0R3BLD8wCP21ljBEfN2jZIW.', 8); -- Senha: secretario123
+(8, 'secretario4@uea.edu.br', '$2a$10$X6ex54jciqS6vBx2agfhweVqN730u0R3BLD8wCP21ljBEfN2jZIW.', 8), -- Senha: secretario123
+(9, 'coordenador1@uea.edu.br', '$2a$10$X6ex54jciqS6vBx2agfhweVqN730u0R3BLD8wCP21ljBEfN2jZIW.', 9); -- Senha: secretario123
 
 
 
@@ -101,44 +103,25 @@ INSERT INTO usuario_roles (usuario_id, role_id) VALUES
 (5, 3), -- Secretário Software
 (6, 3), -- Secretário Sistemas
 (7, 3), -- Secretário Ciência
-(8, 1); -- Admin
+(8, 1), -- Admin
+(9, 4); -- ROLE_COORDENADOR_ATIVIDADE');
 
--- Populando a tabela CURSO_USUARIO
--- O administrador tem acesso a todos os cursos
-INSERT INTO curso_usuario (curso_id, usuario_id) VALUES
-(1, 1), -- Administrador no Curso de Engenharia de Software
-(2, 1), -- Administrador no Curso de Sistemas de Informação
-(3, 1), -- Administrador no Curso de Ciência da Computação
-
--- O administrador tem acesso a todos os cursos
-(1, 8), -- Administrador no Curso de Engenharia de Software
-(2, 8), -- Administrador no Curso de Sistemas de Informação
-(3, 8), -- Administrador no Curso de Ciência da Computação
-
--- Gerentes associados aos cursos
-(1, 2), -- Gerente do Curso de Engenharia de Software
-(2, 3), -- Gerente do Curso de Sistemas de Informação
-(3, 4), -- Gerente do Curso de Ciência da Computação
-
--- Secretários associados aos cursos
-(1, 5), -- Secretário do Curso de Engenharia de Software
-(2, 6), -- Secretário do Curso de Sistemas de Informação
-(3, 7); -- Secretário do Curso de Ciência da Computação
 
 /* =========================================================
-   VÍNCULOS CURSO_USUARIO — garantir papéis em TODOS os cursos
-   - Admins (1 e 8) em todos os cursos (1..10)
-   - Gerentes: alternando 2,3,4
-   - Secretários: alternando 5,6,7
+   POPULANDO A TABELA CURSO_USUARIO
+   Associações entre cursos e usuários
    ========================================================= */
 
--- Administradores em todos os cursos (complemento p/ cursos 4..10)
+-- Administradores (usuários 1 e 8) em todos os cursos (1..10)
 INSERT INTO curso_usuario (curso_id, usuario_id) VALUES
-(4, 1), (5, 1), (6, 1), (7, 1), (8, 1), (9, 1), (10, 1),
-(4, 8), (5, 8), (6, 8), (7, 8), (8, 8), (9, 8), (10, 8);
+(1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1), (8, 1), (9, 1), (10, 1),
+(1, 8), (2, 8), (3, 8), (4, 8), (5, 8), (6, 8), (7, 8), (8, 8), (9, 8), (10, 8);
 
--- Gerentes para cursos 4..10 (ciclo: 2,3,4)
+-- Gerentes associados aos cursos (ciclo: 2,3,4)
 INSERT INTO curso_usuario (curso_id, usuario_id) VALUES
+(1, 2),  -- Gerente curso 1
+(2, 3),  -- Gerente curso 2
+(3, 4),  -- Gerente curso 3
 (4, 2),  -- Gerente curso 4
 (5, 3),  -- Gerente curso 5
 (6, 4),  -- Gerente curso 6
@@ -147,8 +130,11 @@ INSERT INTO curso_usuario (curso_id, usuario_id) VALUES
 (9, 4),  -- Gerente curso 9
 (10, 2); -- Gerente curso 10
 
--- Secretários para cursos 4..10 (ciclo: 5,6,7)
+-- Secretários associados aos cursos (ciclo: 5,6,7)
 INSERT INTO curso_usuario (curso_id, usuario_id) VALUES
+(1, 5),  -- Secretário curso 1
+(2, 6),  -- Secretário curso 2
+(3, 7),  -- Secretário curso 3
 (4, 5),  -- Secretário curso 4
 (5, 6),  -- Secretário curso 5
 (6, 7),  -- Secretário curso 6
@@ -157,25 +143,29 @@ INSERT INTO curso_usuario (curso_id, usuario_id) VALUES
 (9, 7),  -- Secretário curso 9
 (10, 5); -- Secretário curso 10
 
+-- Coordenadores de Atividade
+INSERT INTO curso_usuario (curso_id, usuario_id) VALUES
+(1, 9);  -- Coordenador de Atividade no curso 1
+
 -- Populando a tabela Atividade com nomes e objetivos realistas
-INSERT INTO atividade (id, nome, objetivo, foto_capa, publico_alvo, status_publicacao, data_realizacao, categoria_id, curso_id) VALUES
-(1, 'Oficina de Prototipagem com Arduino', 'Promover a aprendizagem prática sobre sensores e atuadores aplicados à automação.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', TRUE, '2023-01-15', 1, 1),
-(2, 'Visita Técnica à Usina Hidrelétrica de Balbina', 'Compreender o funcionamento de sistemas de geração e transmissão de energia elétrica.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', TRUE, '2023-02-20', 2, 1),
-(3, 'Semana de Engenharia e Inovação', 'Estimular o protagonismo estudantil e o intercâmbio de experiências em projetos tecnológicos.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', TRUE, '2023-03-10', 3, 1),
-(4, 'Minicurso de AutoCAD e Modelagem 3D', 'Capacitar os alunos para o uso de ferramentas digitais de desenho técnico.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', FALSE, '2023-04-05', 1, 1),
-(5, 'Projeto Pontes Sustentáveis', 'Desenvolver soluções estruturais com materiais alternativos e enfoque ambiental.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', FALSE, '2023-05-18', 2, 1),
+INSERT INTO atividade (id, nome, objetivo, foto_capa, publico_alvo, status_publicacao, data_realizacao, data_fim, categoria_id, curso_id) VALUES
+(1, 'Oficina de Prototipagem com Arduino', 'Promover a aprendizagem prática sobre sensores e atuadores aplicados à automação.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', TRUE, '2023-01-15', '2023-01-22', 1, 1),
+(2, 'Visita Técnica à Usina Hidrelétrica de Balbina', 'Compreender o funcionamento de sistemas de geração e transmissão de energia elétrica.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', TRUE, '2023-02-20', '2023-02-27', 2, 1),
+(3, 'Semana de Engenharia e Inovação', 'Estimular o protagonismo estudantil e o intercâmbio de experiências em projetos tecnológicos.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', TRUE, '2023-03-10', '2023-03-17', 3, 1),
+(4, 'Minicurso de AutoCAD e Modelagem 3D', 'Capacitar os alunos para o uso de ferramentas digitais de desenho técnico.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', FALSE, '2023-04-05', '2023-04-12', 1, 1),
+(5, 'Projeto Pontes Sustentáveis', 'Desenvolver soluções estruturais com materiais alternativos e enfoque ambiental.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', FALSE, '2023-05-18', '2023-05-25', 2, 1),
 
-(6, 'Hackathon de Desenvolvimento Web', 'Fomentar o trabalho em equipe e o uso de metodologias ágeis em projetos reais.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', TRUE, '2023-06-12', 3, 2),
-(7, 'Oficina de Banco de Dados com PostgreSQL', 'Aprender técnicas de modelagem e otimização de consultas SQL.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', TRUE, '2023-07-08', 2, 2),
-(8, 'Palestra: Cibersegurança e Ética Digital', 'Discutir desafios e boas práticas de segurança em sistemas de informação.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', TRUE, '2023-08-22', 3, 2),
-(9, 'Oficina de APIs com Python e Flask', 'Introduzir os alunos ao desenvolvimento de serviços web e integração de sistemas.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', FALSE, '2023-09-15', 2, 2),
-(10, 'Workshop de UX/UI Design para Aplicações Web', 'Explorar princípios de usabilidade e design centrado no usuário.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', FALSE, '2023-10-30', 1, 2),
+(6, 'Hackathon de Desenvolvimento Web', 'Fomentar o trabalho em equipe e o uso de metodologias ágeis em projetos reais.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', TRUE, '2023-06-12', NULL, 3, 2),
+(7, 'Oficina de Banco de Dados com PostgreSQL', 'Aprender técnicas de modelagem e otimização de consultas SQL.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', TRUE, '2023-07-08', NULL, 2, 2),
+(8, 'Palestra: Cibersegurança e Ética Digital', 'Discutir desafios e boas práticas de segurança em sistemas de informação.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', TRUE, '2023-08-22', NULL, 3, 2),
+(9, 'Oficina de APIs com Python e Flask', 'Introduzir os alunos ao desenvolvimento de serviços web e integração de sistemas.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', FALSE, '2023-09-15', NULL, 2, 2),
+(10, 'Workshop de UX/UI Design para Aplicações Web', 'Explorar princípios de usabilidade e design centrado no usuário.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', FALSE, '2023-10-30', NULL, 1, 2),
 
-(11, 'Seminário de Inteligência Artificial Aplicada à Educação', 'Apresentar projetos de pesquisa em IA voltados para ambientes de aprendizagem.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', TRUE, '2023-11-05', 1, 3),
-(12, 'Oficina de Análise de Dados com Python', 'Desenvolver competências em coleta, limpeza e visualização de dados.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', TRUE, '2023-12-15', 2, 3),
-(13, 'Mostra de Projetos de Computação', 'Divulgar resultados de projetos integradores e iniciação científica.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', TRUE, '2024-01-10', 3, 3),
-(14, 'Minicurso de Machine Learning com Scikit-Learn', 'Capacitar alunos na implementação de modelos de aprendizado supervisionado.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', FALSE, '2024-02-20', 3, 3),
-(15, 'Roda de Conversa: Ética e Tecnologia', 'Refletir sobre os impactos sociais e éticos do uso de tecnologias emergentes.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', FALSE, '2024-03-25', 1, 3);
+(11, 'Seminário de Inteligência Artificial Aplicada à Educação', 'Apresentar projetos de pesquisa em IA voltados para ambientes de aprendizagem.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', TRUE, '2023-11-05', NULL, 1, 3),
+(12, 'Oficina de Análise de Dados com Python', 'Desenvolver competências em coleta, limpeza e visualização de dados.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', TRUE, '2023-12-15', NULL, 2, 3),
+(13, 'Mostra de Projetos de Computação', 'Divulgar resultados de projetos integradores e iniciação científica.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', TRUE, '2024-01-10', NULL, 3, 3),
+(14, 'Minicurso de Machine Learning com Scikit-Learn', 'Capacitar alunos na implementação de modelos de aprendizado supervisionado.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', FALSE, '2024-02-20', NULL, 3, 3),
+(15, 'Roda de Conversa: Ética e Tecnologia', 'Refletir sobre os impactos sociais e éticos do uso de tecnologias emergentes.', '/fotos-capa/1/1/2bdee765-3f33-4abf-83f8-0d96b48b5112.jpg', 'Estudantes', FALSE, '2024-03-25', NULL, 1, 3);
 
 INSERT INTO atividade
 (id, nome, objetivo, foto_capa, publico_alvo, status_publicacao, data_realizacao, categoria_id, curso_id)

@@ -15,7 +15,11 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.validation.ConstraintViolationException;
+import java.io.IOException;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -91,6 +95,32 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<Map<String, Object>> handleExpiredJwtException(ExpiredJwtException ex) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("error", "Token JWT expirado");
+        error.put("message", "Sua sessão expirou. Por favor, faça login novamente.");
+        error.put("status", "UNAUTHORIZED");
+        error.put("action", "refresh_token_required");
+        
+        // Informações adicionais sobre a expiração
+        if (ex.getClaims() != null && ex.getClaims().getExpiration() != null) {
+            error.put("expiredAt", ex.getClaims().getExpiration().toString());
+        }
+        
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<Map<String, Object>> handleJwtException(JwtException ex) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("error", "Token JWT inválido");
+        error.put("message", "O token de autenticação fornecido é inválido ou malformado.");
+        error.put("status", "UNAUTHORIZED");
+        error.put("action", "login_required");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
     @ExceptionHandler({BadCredentialsException.class, AuthenticationException.class})
     public ResponseEntity<Map<String, String>> handleAuthenticationException(AuthenticationException ex) {
         Map<String, String> error = new HashMap<>();
@@ -138,6 +168,61 @@ public class GlobalExceptionHandler {
         error.put("status", "FORBIDDEN");
         error.put("details", ex.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
+    @ExceptionHandler(ArquivoInvalidoException.class)
+    public ResponseEntity<Map<String, Object>> handleArquivoInvalidoException(ArquivoInvalidoException ex) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("error", "Arquivo inválido");
+        error.put("message", ex.getMessage());
+        error.put("status", "BAD_REQUEST");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(ErroProcessamentoArquivoException.class)
+    public ResponseEntity<Map<String, Object>> handleErroProcessamentoArquivoException(ErroProcessamentoArquivoException ex) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("error", "Erro ao processar arquivo");
+        error.put("message", ex.getMessage());
+        error.put("status", "INTERNAL_SERVER_ERROR");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    @ExceptionHandler(ValidacaoException.class)
+    public ResponseEntity<Map<String, Object>> handleValidacaoException(ValidacaoException ex) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("error", "Erro de validação");
+        error.put("message", ex.getMessage());
+        error.put("status", "BAD_REQUEST");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(IOException.class)
+    public ResponseEntity<Map<String, Object>> handleIOException(IOException ex) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("error", "Erro de entrada/saída");
+        error.put("message", "Ocorreu um erro ao processar o arquivo. Por favor, tente novamente.");
+        error.put("status", "INTERNAL_SERVER_ERROR");
+        error.put("details", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("error", "Violação de integridade de dados");
+        error.put("message", "Não é possível realizar esta operação devido a restrições de integridade no banco de dados.");
+        error.put("status", "CONFLICT");
+        
+        // Tentar extrair mensagem mais específica
+        String rootCause = ex.getRootCause() != null ? ex.getRootCause().getMessage() : ex.getMessage();
+        if (rootCause != null && rootCause.contains("duplicate key")) {
+            error.put("message", "Já existe um registro com os mesmos dados.");
+        } else if (rootCause != null && rootCause.contains("foreign key")) {
+            error.put("message", "Este registro está sendo referenciado por outros registros e não pode ser removido.");
+        }
+        
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
     
 }

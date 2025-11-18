@@ -19,7 +19,9 @@ import edu.uea.acadmanage.DTO.PessoaImportResponseDTO;
 import edu.uea.acadmanage.model.Pessoa;
 import edu.uea.acadmanage.repository.PessoaRepository;
 import edu.uea.acadmanage.service.exception.ConflitoException;
+import edu.uea.acadmanage.service.exception.ErroProcessamentoArquivoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
+import edu.uea.acadmanage.service.exception.ValidacaoException;
 
 @Service
 public class PessoaService {
@@ -49,7 +51,7 @@ public class PessoaService {
     public PessoaDTO criar(PessoaDTO dto) {
         String cpfNormalizado = normalizarCpf(dto.cpf());
         if (cpfNormalizado.isEmpty()) {
-            throw new IllegalArgumentException("CPF inválido.");
+            throw new ValidacaoException("CPF inválido.");
         }
         verificarCpfDuplicado(cpfNormalizado);
 
@@ -67,7 +69,7 @@ public class PessoaService {
 
         String cpfNormalizado = normalizarCpf(dto.cpf());
         if (cpfNormalizado.isEmpty()) {
-            throw new IllegalArgumentException("CPF inválido.");
+            throw new ValidacaoException("CPF inválido.");
         }
         if (!pessoa.getCpf().equals(cpfNormalizado) && pessoaRepository.existsByCpf(cpfNormalizado)) {
             Pessoa existente = pessoaRepository.findByCpf(cpfNormalizado).orElse(null);
@@ -90,7 +92,7 @@ public class PessoaService {
 
     public PessoaImportResponseDTO importarCsv(MultipartFile arquivo) {
         if (arquivo == null || arquivo.isEmpty()) {
-            throw new IllegalArgumentException("Arquivo CSV não informado.");
+            throw new ValidacaoException("Arquivo CSV não informado.");
         }
 
         List<String> cadastrados = new ArrayList<>();
@@ -152,7 +154,7 @@ public class PessoaService {
                 cadastrados.add(nome);
             }
         } catch (IOException e) {
-            throw new IllegalArgumentException("Não foi possível ler o arquivo CSV.", e);
+            throw new ErroProcessamentoArquivoException("Não foi possível ler o arquivo CSV.", e);
         }
 
         return new PessoaImportResponseDTO(totalProcessados, cadastrados.size(), cadastrados, duplicados);
