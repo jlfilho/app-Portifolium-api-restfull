@@ -67,9 +67,22 @@ public class UsuarioController {
     public ResponseEntity<Page<UsuarioDTO>> listarUsuarios(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "pessoa.nome") String sortBy,
             @RequestParam(defaultValue = "ASC") String direction,
             @RequestParam(required = false) String nome) {
+        
+        // Mapear campos do frontend para campos da entidade
+        // Se o frontend enviar "nome", mapear para "pessoa.nome"
+        if ("nome".equals(sortBy)) {
+            sortBy = "pessoa.nome";
+        } else if ("email".equals(sortBy)) {
+            sortBy = "email";
+        } else if ("cpf".equals(sortBy)) {
+            sortBy = "pessoa.cpf";
+        } else if ("id".equals(sortBy)) {
+            sortBy = "id";
+        }
+        // Se já for "pessoa.nome" ou outro campo válido, manter como está
         
         Sort.Direction sortDirection = direction.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
@@ -113,10 +126,12 @@ public class UsuarioController {
     }
 
     @PutMapping("/{usuarioId}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<UsuarioDTO> atualizarUsuario(@PathVariable Long usuarioId, 
-    @Validated @RequestBody UsuarioDTO usuario) {
-        UsuarioDTO novoUsuario = usuarioService.update(usuarioId, usuario);
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UsuarioDTO> atualizarUsuario(
+            @PathVariable Long usuarioId, 
+            @Validated @RequestBody UsuarioDTO usuario,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        UsuarioDTO novoUsuario = usuarioService.update(usuarioId, usuario, userDetails.getUsername());
         return ResponseEntity.ok(novoUsuario);  
     }
 

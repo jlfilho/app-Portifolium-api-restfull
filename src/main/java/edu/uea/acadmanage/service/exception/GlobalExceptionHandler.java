@@ -20,6 +20,7 @@ import io.jsonwebtoken.JwtException;
 import jakarta.validation.ConstraintViolationException;
 import java.io.IOException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.transaction.TransactionSystemException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -75,15 +76,73 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleConstraintViolationException(ConstraintViolationException ex) {
         List<String> detalhes = ex.getConstraintViolations()
                 .stream()
-                .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+                .map(violation -> {
+                    String campo = violation.getPropertyPath() != null ? 
+                        violation.getPropertyPath().toString() : "campo desconhecido";
+                    String mensagem = violation.getMessage();
+                    
+                    // Mensagens mais amigáveis para campos comuns
+                    if (campo.contains("cpf") && mensagem.contains("CPF inválido")) {
+                        return "CPF inválido. Verifique se o CPF está correto.";
+                    }
+                    
+                    return campo + ": " + mensagem;
+                })
                 .collect(Collectors.toList());
 
         Map<String, Object> body = new HashMap<>();
         body.put("error", "Falha de validação nos dados enviados.");
         body.put("status", "BAD_REQUEST");
         body.put("detalhes", detalhes);
+        
+        // Se houver apenas um erro, retornar mensagem mais clara
+        if (detalhes.size() == 1) {
+            body.put("message", detalhes.get(0));
+        }
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    @ExceptionHandler(TransactionSystemException.class)
+    public ResponseEntity<Map<String, Object>> handleTransactionSystemException(TransactionSystemException ex) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("error", "Erro na transação do banco de dados");
+        error.put("status", "BAD_REQUEST");
+        
+        // Verificar se a causa raiz é uma ConstraintViolationException
+        Throwable rootCause = ex.getRootCause();
+        if (rootCause instanceof ConstraintViolationException) {
+            ConstraintViolationException cve = (ConstraintViolationException) rootCause;
+            List<String> detalhes = cve.getConstraintViolations()
+                    .stream()
+                    .map(violation -> {
+                        String campo = violation.getPropertyPath() != null ? 
+                            violation.getPropertyPath().toString() : "campo desconhecido";
+                        String mensagem = violation.getMessage();
+                        
+                        // Mensagens mais amigáveis para campos comuns
+                        if (campo.contains("cpf") && mensagem.contains("CPF inválido")) {
+                            return "CPF inválido. Verifique se o CPF está correto.";
+                        }
+                        
+                        return campo + ": " + mensagem;
+                    })
+                    .collect(Collectors.toList());
+            
+            error.put("error", "Falha de validação nos dados enviados.");
+            error.put("message", detalhes.isEmpty() ? "Dados inválidos" : detalhes.get(0));
+            error.put("detalhes", detalhes);
+            
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        }
+        
+        // Se não for ConstraintViolationException, retornar erro genérico
+        error.put("message", "Ocorreu um erro ao processar a operação. Verifique os dados enviados.");
+        if (rootCause != null) {
+            error.put("details", rootCause.getMessage());
+        }
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
@@ -215,7 +274,9 @@ public class GlobalExceptionHandler {
         error.put("status", "CONFLICT");
         
         // Tentar extrair mensagem mais específica
-        String rootCause = ex.getRootCause() != null ? ex.getRootCause().getMessage() : ex.getMessage();
+        Throwable rootCauseObj = ex.getRootCause();
+        String rootCause = rootCauseObj != null && rootCauseObj.getMessage() != null ? 
+            rootCauseObj.getMessage() : ex.getMessage();
         if (rootCause != null && rootCause.contains("duplicate key")) {
             error.put("message", "Já existe um registro com os mesmos dados.");
         } else if (rootCause != null && rootCause.contains("foreign key")) {

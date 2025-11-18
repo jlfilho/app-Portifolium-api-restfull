@@ -74,6 +74,14 @@ public class Pessoa implements Serializable {
         }
     }
 
+    /**
+     * Retorna o CPF normalizado (apenas dígitos) para uso interno.
+     * Use getCpf() para obter o CPF formatado para exibição.
+     */
+    public String getCpfNormalizado() {
+        return this.cpf;
+    }
+
     @PrePersist
     @PreUpdate
     private void normalizarCpf() {

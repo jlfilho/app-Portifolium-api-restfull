@@ -30,8 +30,8 @@ WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
 # Criar diretório para arquivos
-RUN mkdir -p /acadmanage-files && \
-    chown -R appuser:appgroup /acadmanage-files
+RUN mkdir -p /portifolium-files && \
+    chown -R appuser:appgroup /portifolium-files
 
 # Mudar para usuário não-root
 USER appuser

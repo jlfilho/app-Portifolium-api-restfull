@@ -69,16 +69,16 @@ INSERT INTO role (id, nome) VALUES
 -- Script SQL para criar 10 pessoas na tabela Pessoa
 
 INSERT INTO pessoa (id, nome, cpf) VALUES
-(1, 'João Silva', '12345678901'),
-(2, 'Maria Oliveira', '23456789012'),
-(3, 'Carlos Souza', '34567890123'),
-(4, 'Ana Paula', '45678901234'),
-(5, 'Pedro Henrique', '56789012345'),
-(6, 'Juliana Costa', '67890123456'),
-(7, 'Fernando Lima', '78901234567'),
-(8, 'Camila Almeida', '89012345678'),
-(9, 'Lucas Martins', '90123456789'),
-(10, 'Beatriz Santos', '01234567890');
+(1, 'Administrador do Sistema', '31452012040'),
+(2, 'Maria Oliveira', '96443376030'),
+(3, 'Carlos Souza', '40126145091'),
+(4, 'Ana Paula', '58674811078'),
+(5, 'Pedro Henrique', '67530579002'),
+(6, 'Juliana Costa', '72378802099'),
+(7, 'Fernando Lima', '77210958088'),
+(8, 'Camila Almeida', '69570668008'),
+(9, 'Lucas Martins', '28800569005'),
+(10, 'Beatriz Santos', '40085795089');
 
 -- Populando a tabela Usuario com níveis de acesso e senhas criptografadas
 INSERT INTO usuario (id, email, senha, pessoa_id) VALUES

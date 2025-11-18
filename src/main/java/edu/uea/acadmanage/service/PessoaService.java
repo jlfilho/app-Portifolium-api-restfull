@@ -71,14 +71,24 @@ public class PessoaService {
         if (cpfNormalizado.isEmpty()) {
             throw new ValidacaoException("CPF inválido.");
         }
-        if (!pessoa.getCpf().equals(cpfNormalizado) && pessoaRepository.existsByCpf(cpfNormalizado)) {
-            Pessoa existente = pessoaRepository.findByCpf(cpfNormalizado).orElse(null);
-            String nomeDuplicado = existente != null ? existente.getNome() : "";
-            throw new ConflitoException("CPF já cadastrado para a pessoa: " + nomeDuplicado);
+        
+        // Obter CPF atual normalizado diretamente do campo (sem formatação)
+        String cpfAtualNoBanco = pessoa.getCpfNormalizado();
+        
+        // Só verificar duplicação se o CPF realmente mudou
+        if (!cpfNormalizado.equals(cpfAtualNoBanco)) {
+            // Verificar se o novo CPF já existe em outra pessoa (excluindo a pessoa atual)
+            if (pessoaRepository.existsByCpfAndIdNot(cpfNormalizado, id)) {
+                Pessoa existente = pessoaRepository.findByCpf(cpfNormalizado).orElse(null);
+                String nomeDuplicado = existente != null ? existente.getNome() : "";
+                throw new ConflitoException("CPF já cadastrado para a pessoa: " + nomeDuplicado);
+            }
+            // Atualizar o CPF apenas se mudou
+            pessoa.setCpf(cpfNormalizado);
         }
+        // Se o CPF não mudou, não atualizamos (evita validação desnecessária)
 
         pessoa.setNome(dto.nome().trim());
-        pessoa.setCpf(cpfNormalizado);
 
         Pessoa salva = pessoaRepository.save(pessoa);
         return toDTO(salva);

@@ -7,22 +7,22 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/acadmanage_staging
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/portifolium_staging
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
       - SPRING_JPA_HIBERNATE_DDL_AUTO=create-drop
     volumes:
-      - ./acadmanage-files:/acadmanage-files
+      - ./portifolium-files:/portifolium-files
     depends_on:
       - db
     networks:
-      - acadmanage-staging-network
+      - portifolium-staging-network
     restart: unless-stopped
 
   db:
     image: postgres:15-alpine
     environment:
-      - POSTGRES_DB=acadmanage_staging
+      - POSTGRES_DB=portifolium_staging
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     ports:
@@ -30,7 +30,7 @@ services:
     volumes:
       - postgres_staging_data:/var/lib/postgresql/data
     networks:
-      - acadmanage-staging-network
+      - portifolium-staging-network
     restart: unless-stopped
 
   prometheus:
@@ -48,7 +48,7 @@ services:
       - '--storage.tsdb.retention.time=200h'
       - '--web.enable-lifecycle'
     networks:
-      - acadmanage-staging-network
+      - portifolium-staging-network
     restart: unless-stopped
 
   grafana:
@@ -62,7 +62,7 @@ services:
       - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
       - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
     networks:
-      - acadmanage-staging-network
+      - portifolium-staging-network
     restart: unless-stopped
 
 volumes:
@@ -71,5 +71,5 @@ volumes:
   grafana_staging_data:
 
 networks:
-  acadmanage-staging-network:
+  portifolium-staging-network:
     driver: bridge

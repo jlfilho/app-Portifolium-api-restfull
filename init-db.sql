@@ -1,4 +1,4 @@
--- Script de inicialização do banco PostgreSQL para AcadManage
+-- Script de inicialização do banco PostgreSQL para Portifolium
 -- Este script é executado automaticamente quando o container PostgreSQL é criado
 
 -- Criar extensões necessárias
@@ -94,6 +94,6 @@ INSERT INTO atividade (id, nome, objetivo, foto_capa, publico_alvo, status_publi
 ON CONFLICT (id) DO NOTHING;
 
 -- Mensagem de sucesso
-SELECT 'Banco de dados AcadManage inicializado com sucesso!' as status;
+SELECT 'Banco de dados Portifolium inicializado com sucesso!' as status;
 
 

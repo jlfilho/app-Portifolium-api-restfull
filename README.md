@@ -1,4 +1,4 @@
-# API AcadManage
+# API Portifolium
 
 Esta API foi desenvolvida para gerenciar cursos, usuários, atividades, evidências e categorias em um sistema acadêmico. O objetivo é fornecer endpoints RESTful para operações CRUD, consultas avançadas e gerenciamento de arquivos, com autenticação e autorização implementadas.
 
@@ -9,8 +9,11 @@ Esta API foi desenvolvida para gerenciar cursos, usuários, atividades, evidênc
 - **Hibernate/JPA**
 - **H2 Database (Desenvolvimento)**
 - **PostgreSQL (Produção)**
-- **Spring Security**
+- **MySQL 8.0 (Produção)**
+- **Spring Security com JWT**
 - **Swagger/OpenAPI**
+- **Docker & Docker Compose**
+- **Redis (Cache)**
 
 ## Recursos Disponíveis
 
@@ -73,24 +76,31 @@ Esta API foi desenvolvida para gerenciar cursos, usuários, atividades, evidênc
 
 ## Autenticação e Autorização
 
-- **Autenticação:** Basic Authentication.
-- **Autorização:** Baseada em roles (ADMINISTRADOR, GERENTE, SECRETÁRIO).
+- **Autenticação:** JWT (JSON Web Tokens)
+- **Autorização:** Baseada em roles (ADMINISTRADOR, GERENTE, SECRETÁRIO, COORDENADOR_ATIVIDADE).
 
 ### Permissões
 - **ADMINISTRADOR:** Acesso total a todos os recursos.
 - **GERENTE:** CRUD nos cursos associados e consultas nos demais recursos.
 - **SECRETÁRIO:** Consulta em cursos associados e CRUD em atividades e evidências associadas.
+- **COORDENADOR_ATIVIDADE:** Coordenação e gerenciamento de atividades.
 
 ## Configuração
 
 ### Configuração de Banco de Dados
 
 - **H2 (Desenvolvimento):**
-  - URL: `jdbc:h2:mem:acadmanage`
+  - URL: `jdbc:h2:file:./data/testdb`
   - Usuário: `sa`
-  - Senha: `senha`
+  - Senha: (vazio)
+  - Console: `http://localhost:8080/h2-console`
 - **PostgreSQL (Produção):**
-  - Configurar no `application.properties` ou `application.yml`.
+  - Profile: `docker`
+  - Configurar no `application-docker.properties`
+- **MySQL 8.0 (Produção):**
+  - Profile: `mysql,production`
+  - Configurar no `application-mysql.properties`
+  - Veja `ENV_VARIABLES.md` para variáveis de ambiente necessárias
 
 ### Dependências Importantes no `pom.xml`
 ```xml
@@ -133,7 +143,7 @@ A documentação da API pode ser acessada através do Swagger:
    ```
 4. Acesse a aplicação em `http://localhost:8080`.
 
-### Opção 2: Execução com Docker
+### Opção 2: Execução com Docker (Desenvolvimento)
 1. Clone o repositório.
 2. Execute o ambiente completo com:
    ```bash
@@ -145,33 +155,72 @@ A documentação da API pode ser acessada através do Swagger:
    - **Prometheus:** http://localhost:9090
    - **H2 Console:** http://localhost:8080/h2-console
 
-### Opção 3: Deploy Automatizado
+### Opção 3: Deploy em Produção com MySQL
+
+#### Pré-requisitos
+1. Configure as variáveis de ambiente obrigatórias (veja `ENV_VARIABLES.md`):
+   ```bash
+   export JWT_SECRET_KEY="sua_chave_secreta"
+   export MYSQL_ROOT_PASSWORD="senha_root"
+   export MYSQL_PASSWORD="senha_usuario"
+   export MAIL_PASSWORD="senha_email"
+   ```
+
+#### Build e Deploy
+```bash
+# Build da imagem de produção
+./scripts/build-production.sh [tag]
+
+# Deploy completo (build + deploy)
+./scripts/deploy-production.sh
+
+# Deploy sem rebuild
+./scripts/deploy-production.sh --skip-build
+
+# Deploy com backup do banco
+./scripts/deploy-production.sh --backup
+```
+
+#### Deploy Manual
+```bash
+# Build
+docker build -f Dockerfile.production -t portifolium:production .
+
+# Deploy
+docker-compose -f docker-compose.production.yml up -d
+
+# Verificar status
+docker-compose -f docker-compose.production.yml ps
+```
+
+**📖 Para mais detalhes, consulte:** `DOCKER_PRODUCTION.md`
+
+### Opção 4: Deploy Automatizado (Staging)
 Use o script de deploy:
 ```bash
 # Deploy em staging
 ./scripts/deploy.sh staging
-
-# Deploy em produção
-./scripts/deploy.sh production
 ```
 
 ## Estrutura de Pastas
 
 ```
-acadmanage/
+portifolium/
 ├── src/
 │   ├── main/
 │   │   ├── java/
-│   │   │   └── edu/uea/acadmanage/
+│   │   │   └── edu/uea/portifolium/
 │   │   │       ├── controller/
 │   │   │       ├── model/
 │   │   │       ├── repository/
 │   │   │       ├── service/
+│   │   │       │   └── exception/  # Exceções customizadas
 │   │   │       ├── security/
 │   │   │       └── config/
 │   └── resources/
 │       ├── application.properties
 │       ├── application-docker.properties
+│       ├── application-mysql.properties  # Config MySQL produção
 │       └── data.sql
 ├── monitoring/
 │   ├── prometheus.yml
@@ -179,12 +228,20 @@ acadmanage/
 │       ├── dashboards/
 │       └── datasources/
 ├── scripts/
-│   └── deploy.sh
+│   ├── deploy.sh
+│   ├── build-production.sh      # Build para produção
+│   └── deploy-production.sh    # Deploy para produção
+├── mysql-config/               # Configurações MySQL
+│   └── my.cnf
 ├── .github/
 │   └── workflows/
-├── Dockerfile
-├── docker-compose.yml
-├── docker-compose.staging.yml
+├── Dockerfile                  # Dockerfile desenvolvimento
+├── Dockerfile.production       # Dockerfile otimizado produção
+├── docker-compose.yml          # Compose desenvolvimento
+├── docker-compose.production.yml  # Compose produção MySQL
+├── init-mysql.sql              # Script inicialização MySQL
+├── ENV_VARIABLES.md            # Documentação variáveis ambiente
+├── DOCKER_PRODUCTION.md        # Guia deploy produção
 └── pom.xml
 ```
 
@@ -192,27 +249,52 @@ acadmanage/
 
 ### Docker
 - **Containerização:** Aplicação containerizada com Docker multi-stage build
-- **Orquestração:** Docker Compose para desenvolvimento e staging
-- **Segurança:** Usuário não-root e health checks nativos
+- **Orquestração:** Docker Compose para desenvolvimento, staging e produção
+- **Produção:** Dockerfile otimizado com MySQL 8.0, Redis e health checks
+- **Segurança:** Usuário não-root, validações de segurança e variáveis de ambiente
 
 ### CI/CD Pipeline
 - **GitHub Actions:** Pipeline automatizado para build, teste e deploy
 - **Segurança:** Scan de vulnerabilidades com Trivy
 - **Ambientes:** Deploy automático para staging e produção
+- **Scripts:** Scripts automatizados de build e deploy para produção
 
 ### Monitoramento
 - **Health Checks:** Spring Boot Actuator com endpoints de saúde
 - **Métricas:** Prometheus para coleta de métricas
 - **Visualização:** Grafana com dashboards personalizados
 - **Cache:** Redis para melhorar performance
+- **Logs:** Logging estruturado para produção
 
 ### Métricas Disponíveis
 - **Aplicação:** HTTP requests, response time, JVM memory
-- **Banco:** Conexões ativas, performance de queries
+- **Banco:** Conexões ativas, performance de queries (MySQL/PostgreSQL)
 - **Sistema:** CPU, memória, disco
 - **Customizadas:** Métricas de negócio específicas
+
+## Tratamento de Exceções
+
+A aplicação possui tratamento de exceções customizado para melhor experiência de desenvolvimento e produção:
+
+### Exceções Customizadas
+- **ArquivoInvalidoException:** Erros relacionados a arquivos inválidos (400 Bad Request)
+- **ErroProcessamentoArquivoException:** Erros durante processamento de arquivos (500 Internal Server Error)
+- **ValidacaoException:** Erros de validação de dados (400 Bad Request)
+- **JWT Exceptions:** Tratamento específico para tokens expirados ou inválidos (401 Unauthorized)
+
+### Global Exception Handler
+Todas as exceções são tratadas centralmente pelo `GlobalExceptionHandler`, fornecendo:
+- Mensagens de erro claras e consistentes
+- Códigos HTTP apropriados
+- Informações de ação para o frontend (ex: `refresh_token_required`)
+
+## Documentação Adicional
+
+- **DOCKER_PRODUCTION.md:** Guia completo de deploy em produção com MySQL
+- **ENV_VARIABLES.md:** Documentação de todas as variáveis de ambiente necessárias
+- **Swagger UI:** Documentação interativa da API em `/swagger-ui/index.html`
 
 ## Contato
 Para dúvidas ou sugestões, entre em contato:
 - **E-mail:** jlfilho@uea.edu.br
-- **GitHub:** [github.com/acadmanage](https://github.com/acadmanage)
+- **GitHub:** [github.com/portifolium](https://github.com/portifolium)

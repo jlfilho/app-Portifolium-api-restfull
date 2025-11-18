@@ -190,10 +190,22 @@ public class UsuarioService {
 
     // Método para atualizar um usuário
     @Transactional
-    public UsuarioDTO update(Long userId, UsuarioDTO usuario) {
+    public UsuarioDTO update(Long userId, UsuarioDTO usuario, String emailUsuarioLogado) {
         // Buscar o usuário existente
         Usuario usuarioExistente = usuarioRepository.findById(userId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado: " + userId));
+
+        // Buscar usuário logado
+        Usuario usuarioLogado = usuarioRepository.findByEmail(emailUsuarioLogado)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário logado não encontrado: " + emailUsuarioLogado));
+
+        // Verificar se o usuário é administrador ou está atualizando seus próprios dados
+        boolean isAdmin = usuarioLogado.getRoles().stream()
+                .anyMatch(role -> role.getNome().equals("ROLE_ADMINISTRADOR"));
+
+        if (!isAdmin && !usuarioLogado.getId().equals(userId)) {
+            throw new AcessoNegadoException("Você só pode atualizar seus próprios dados");
+        }
 
         // Atualizar informações básicas
         usuarioExistente.getPessoa().setNome(usuario.nome());
@@ -201,18 +213,30 @@ public class UsuarioService {
         // Atualizar CPF se fornecido e diferente do atual
         String cpfAtualizado = normalizarCpf(usuario.cpf());
         if (cpfAtualizado != null && !cpfAtualizado.isEmpty()) {
-            if (!cpfAtualizado.equals(usuarioExistente.getPessoa().getCpf())) {
-                // Verificar se o novo CPF já existe em outra pessoa
-                if (pessoaRepository.existsByCpf(cpfAtualizado)) {
+            // Obter CPF atual diretamente do campo (já está normalizado no banco)
+            String cpfAtualNoBanco = usuarioExistente.getPessoa().getCpfNormalizado();
+            
+            // Só atualizar se o CPF realmente mudou
+            if (!cpfAtualizado.equals(cpfAtualNoBanco)) {
+                // Verificar se o novo CPF já existe em outra pessoa (excluindo a pessoa atual)
+                Long pessoaIdAtual = usuarioExistente.getPessoa().getId();
+                if (pessoaRepository.existsByCpfAndIdNot(cpfAtualizado, pessoaIdAtual)) {
                     throw new AcessoNegadoException("CPF já cadastrado: " + usuario.cpf());
                 }
+                // Atualizar o CPF (o setCpf já normaliza internamente)
                 usuarioExistente.getPessoa().setCpf(cpfAtualizado);
+            } else {
+                // Se o CPF não mudou, garantir que o CPF no campo esteja normalizado
+                // Isso evita problemas de validação quando a entidade é atualizada
+                // Não chamamos setCpf() para evitar marcar a entidade como "dirty"
+                // O CPF já está normalizado no banco, então não precisamos fazer nada
             }
         }
 
         // Atualizar email se diferente do atual
         if (!usuario.email().equals(usuarioExistente.getEmail())) {
-            if (usuarioRepository.existsByEmail(usuario.email())) {
+            // Verificar se o novo email já existe em outro usuário (excluindo o usuário atual)
+            if (usuarioRepository.existsByEmailAndIdNot(usuario.email(), userId)) {
                 throw new AcessoNegadoException("Email já cadastrado: " + usuario.email());
             }
             usuarioExistente.setEmail(usuario.email());

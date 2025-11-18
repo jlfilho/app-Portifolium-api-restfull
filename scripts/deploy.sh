@@ -21,7 +21,7 @@ deploy_staging() {
     echo "📦 Deploying to staging environment..."
     
     # Build da imagem
-    docker build -t acadmanage:staging .
+    docker build -t portifolium:staging .
     
     # Parar containers existentes
     docker-compose -f docker-compose.staging.yml down || true
@@ -46,10 +46,10 @@ deploy_production() {
     fi
     
     # Build da imagem de produção
-    docker build -t acadmanage:production .
+    docker build -t portifolium:production .
     
     # Tag da imagem
-    docker tag acadmanage:production acadmanage:$VERSION
+    docker tag portifolium:production portifolium:$VERSION
     
     # Parar containers existentes
     docker-compose -f docker-compose.production.yml down || true
@@ -58,7 +58,7 @@ deploy_production() {
     docker-compose -f docker-compose.production.yml up -d
     
     echo "✅ Production deployment completed!"
-    echo "🏷️  Image tagged as: acadmanage:$VERSION"
+    echo "🏷️  Image tagged as: portifolium:$VERSION"
 }
 
 # Função para rollback
