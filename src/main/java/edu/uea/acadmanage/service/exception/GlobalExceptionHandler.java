@@ -285,5 +285,14 @@ public class GlobalExceptionHandler {
         
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
+
+    @ExceptionHandler(ErroEnvioEmailException.class)
+    public ResponseEntity<Map<String, Object>> handleErroEnvioEmailException(ErroEnvioEmailException ex) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("error", "Erro ao enviar e-mail");
+        error.put("message", ex.getMessage());
+        error.put("status", "SERVICE_UNAVAILABLE");
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(error);
+    }
     
 }
