@@ -283,7 +283,7 @@ class CursoControllerIT {
 
     @Test
     void deveCriarCursoComoAdministrador() {
-        String nomeNovo = "Novo Curso Teste";
+        String nomeNovo = "Novo Curso Teste " + System.currentTimeMillis();
         String jsonBody = """
             {
               "nome": "%s",
@@ -444,11 +444,11 @@ class CursoControllerIT {
 
     @Test
     void deveAtualizarCurso() {
-        Long cursoId = 10L; // ID do Doutorado do data.sql
-        String nomeOriginal = "Doutorado em Engenharia de Computação";
-        String nomeAtualizado = "Doutorado Atualizado";
-        Long tipoIdOriginal = 7L;
-        Long tipoIdNovo = 6L; // Mestrado
+        Long cursoId = 3L; // ID do curso do data-test.sql
+        String nomeOriginal = "Ciência da Computação";
+        String nomeAtualizado = "Ciência da Computação Atualizada";
+        Long tipoIdOriginal = 1L;
+        Long tipoIdNovo = 1L; // Mantém o mesmo tipo
 
         String jsonBody = """
             {
@@ -480,7 +480,7 @@ class CursoControllerIT {
             String jsonBodyRestaurar = """
                 {
                   "nome": "%s",
-                  "descricao": "Curso stricto sensu que visa o desenvolvimento de pesquisas avançadas em hardware, sistemas embarcados, IoT e automação inteligente.",
+                  "descricao": "Formação sólida em algoritmos e estruturas de dados",
                   "ativo": true,
                   "tipoId": %d,
                   "unidadeAcademicaId": 1
@@ -526,7 +526,7 @@ class CursoControllerIT {
 
     @Test
     void devePermitirGerenteAtualizarCurso() {
-        Long cursoId = 9L; // ID de um curso do data.sql
+        Long cursoId = 2L; // ID de um curso do data-test.sql
         
         String jsonBody = """
             {
@@ -556,7 +556,7 @@ class CursoControllerIT {
 
     @Test
     void deveAtualizarStatusDoCurso() {
-        Long cursoId = 8L; // ID de um curso do data.sql
+        Long cursoId = 2L; // ID de um curso do data-test.sql
         Boolean statusOriginal = true;
         Boolean statusNovo = false;
 
@@ -603,7 +603,7 @@ class CursoControllerIT {
 
     @Test
     void deveAdicionarUsuarioAoCurso() {
-        Long cursoId = 5L; // ID de um curso do data.sql
+        Long cursoId = 2L; // ID de um curso do data-test.sql
         Long usuarioId = 2L; // ID de um gerente
 
         given()
@@ -640,7 +640,7 @@ class CursoControllerIT {
     @Test
     void deveDeletarCursoComoAdministrador() {
         // Primeiro criar um curso para deletar
-        String nomeTemp = "Curso Temporário";
+        String nomeTemp = "Curso Temporário " + System.currentTimeMillis();
         String jsonBodyCriar = """
             {
               "nome": "%s",
@@ -701,7 +701,7 @@ class CursoControllerIT {
 
     @Test
     void deveRetornar403QuandoGerenteTentaDeletarCurso() {
-        Long cursoId = 7L; // ID de um curso do data.sql
+        Long cursoId = 3L; // ID de um curso do data-test.sql
 
         given()
             .port(port)
@@ -719,7 +719,7 @@ class CursoControllerIT {
     @Test
     void deveRemoverUsuarioDoCurso() {
         // Criar um curso temporário para testar
-        String nomeTemp = "Curso Temp Remove User";
+        String nomeTemp = "Curso Temp Remove User " + System.currentTimeMillis();
         String jsonBodyCriar = """
             {
               "nome": "%s",

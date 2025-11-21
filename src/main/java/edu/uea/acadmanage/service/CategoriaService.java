@@ -3,6 +3,8 @@ package edu.uea.acadmanage.service;
 import java.util.List;
 import java.util.Objects;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,8 @@ import edu.uea.acadmanage.repository.UsuarioRepository;
 import edu.uea.acadmanage.service.exception.AcessoNegadoException;
 import edu.uea.acadmanage.service.exception.ConflitoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
+import edu.uea.acadmanage.model.AuditLog;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class CategoriaService {
@@ -28,13 +32,20 @@ public class CategoriaService {
         private final CategoriaRepository categoriaRepository;
         private final UsuarioRepository usuarioRepository;
         private final AtividadeRepository atividadeRepository;
+        private final AuditLogService auditLogService;
+        private final ObjectMapper objectMapper;
 
-        public CategoriaService(CategoriaRepository categoriaRepository, UsuarioRepository usuarioRepository, AtividadeRepository atividadeRepository) {
+        public CategoriaService(CategoriaRepository categoriaRepository, UsuarioRepository usuarioRepository, 
+                                AtividadeRepository atividadeRepository, AuditLogService auditLogService, 
+                                ObjectMapper objectMapper) {
                 this.categoriaRepository = categoriaRepository;
                 this.usuarioRepository = usuarioRepository;
                 this.atividadeRepository = atividadeRepository;
+                this.auditLogService = auditLogService;
+                this.objectMapper = objectMapper;
         }
         
+        @Cacheable(value = "categorias", key = "'all'")
         public List<CategoriaResumidaDTO> listarTodasCategorias() {
                 return categoriaRepository.findAll().stream()
                         .map(categoria -> new CategoriaResumidaDTO(
@@ -51,6 +62,7 @@ public class CategoriaService {
                                 categoria.getNome()));
         }
 
+        @Cacheable(value = "categorias", key = "#categoriaId")
         public CategoriaResumidaDTO recuperarCategoriaPorId(Long categoriaId) {
                 Categoria categoria = categoriaRepository.findById(categoriaId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Categoria não encontrada com o ID: " + categoriaId));
@@ -116,27 +128,62 @@ public class CategoriaService {
                                                 toList();
         }
 
+        @CacheEvict(value = "categorias", allEntries = true)
         public Categoria salvar(Categoria categoria) {
                 if (categoriaRepository.findByNomeIgnoreCase(categoria.getNome()).isPresent()) {
                     throw new AcessoNegadoException("Já existe uma categoria com o nome: " + categoria.getNome());
                 }
-                return categoriaRepository.save(categoria);
+                Categoria categoriaSalva = categoriaRepository.save(categoria);
+                
+                // CAMADA 2: Audit Log
+                auditLogService.log(
+                    AuditLog.AuditAction.CREATE,
+                    "Categoria",
+                    categoriaSalva.getId(),
+                    null,
+                    categoriaSalva,
+                    "Categoria criada: " + categoriaSalva.getNome()
+                );
+                
+                return categoriaSalva;
         }
         
+        @CacheEvict(value = "categorias", key = "#categoriaId", allEntries = true)
         public void deletar(Long categoriaId) {
                 if (!categoriaRepository.existsById(categoriaId)) {
                     throw new RecursoNaoEncontradoException("Categoria não encontrada com o ID: " + categoriaId);
                 }
+                
+                // Capturar dados para audit log antes de deletar
+                Categoria categoria = categoriaRepository.findById(categoriaId).orElse(null);
+                String categoriaNome = categoria != null ? categoria.getNome() : "ID: " + categoriaId;
+                
                 long numAtividades = atividadeRepository.countByCategoriaId(categoriaId);
                 if (numAtividades > 0) {
                     throw new ConflitoException("Não é possível excluir a categoria. Existem " + numAtividades + " atividade(s) associada(s).");
                 }
                 categoriaRepository.deleteById(categoriaId);
+                
+                // CAMADA 2: Audit Log
+                if (categoria != null) {
+                    auditLogService.log(
+                        AuditLog.AuditAction.DELETE,
+                        "Categoria",
+                        categoriaId,
+                        categoria,
+                        null,
+                        "Categoria excluída: " + categoriaNome
+                    );
+                }
         }
 
+        @CacheEvict(value = "categorias", key = "#categoriaId", allEntries = true)
         public Categoria atualizar(Long categoriaId, Categoria novaCategoria) {
                 Categoria categoriaExistente = categoriaRepository.findById(categoriaId)
                         .orElseThrow(() -> new RecursoNaoEncontradoException("Categoria não encontrada com o ID: " + categoriaId));
+
+                // Capturar estado antigo para audit log
+                Categoria oldState = copyCategoriaForAudit(categoriaExistente);
 
                 if (categoriaRepository.findByNomeIgnoreCase(novaCategoria.getNome()).isPresent() && !categoriaExistente.getNome().equalsIgnoreCase(novaCategoria.getNome())) {  
                                 throw new AcessoNegadoException("Já existe uma categoria com o nome: " + novaCategoria.getNome());
@@ -145,7 +192,19 @@ public class CategoriaService {
                 categoriaExistente.setNome(novaCategoria.getNome());
         
                 // Salvando no repositório
-                return categoriaRepository.save(categoriaExistente);
+                Categoria categoriaAtualizada = categoriaRepository.save(categoriaExistente);
+                
+                // CAMADA 2: Audit Log
+                auditLogService.log(
+                    AuditLog.AuditAction.UPDATE,
+                    "Categoria",
+                    categoriaAtualizada.getId(),
+                    oldState,
+                    categoriaAtualizada,
+                    "Categoria atualizada: " + categoriaAtualizada.getNome()
+                );
+                
+                return categoriaAtualizada;
         }
 
         public boolean verificarSeCategoriaExiste(Long categoriaId) {
@@ -161,6 +220,20 @@ private CategoriaDTO toCategoriaDTO(Categoria categoria, List<AtividadeDTO> ativ
         );
     }
     
+    // Método auxiliar para copiar categoria para audit log
+    private Categoria copyCategoriaForAudit(Categoria categoria) {
+        try {
+            String json = objectMapper.writeValueAsString(categoria);
+            return objectMapper.readValue(json, Categoria.class);
+        } catch (Exception e) {
+            // Se falhar a cópia profunda, criar manualmente uma cópia superficial
+            Categoria copy = new Categoria();
+            copy.setId(categoria.getId());
+            copy.setNome(categoria.getNome());
+            return copy;
+        }
+    }
+
     // Converte uma entidade Atividade para AtividadeDTO
     private AtividadeDTO toAtividadeDTO(Atividade atividade) {
         return new AtividadeDTO(

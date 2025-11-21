@@ -32,6 +32,9 @@ import edu.uea.acadmanage.service.exception.ArquivoInvalidoException;
 import edu.uea.acadmanage.service.exception.ErroProcessamentoArquivoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
 import edu.uea.acadmanage.service.exception.ValidacaoException;
+import edu.uea.acadmanage.model.AuditLog;
+import edu.uea.acadmanage.model.ActionLog;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class EvidenciaService {
@@ -40,6 +43,9 @@ public class EvidenciaService {
     private final AtividadeRepository atividadeRepository;
     private final CursoService cursoService;
     private final AtividadeAutorizacaoService atividadeAutorizacaoService;
+    private final AuditLogService auditLogService;
+    private final ActionLogService actionLogService;
+    private final ObjectMapper objectMapper;
     private final Path fileStorageLocation;
     private final String baseStorageLocation;
 
@@ -48,11 +54,17 @@ public class EvidenciaService {
             AtividadeRepository atividadeRepository,
             CursoService cursoService,
             AtividadeAutorizacaoService atividadeAutorizacaoService,
+            AuditLogService auditLogService,
+            ActionLogService actionLogService,
+            ObjectMapper objectMapper,
             FileStorageProperties fileStorageProperties) throws IOException {
         this.evidenciaRepository = evidenciaRepository;
         this.atividadeRepository = atividadeRepository;
         this.cursoService = cursoService;
         this.atividadeAutorizacaoService = atividadeAutorizacaoService;
+        this.auditLogService = auditLogService;
+        this.actionLogService = actionLogService;
+        this.objectMapper = objectMapper;
         this.baseStorageLocation = "/evidencias";
         this.fileStorageLocation = Paths.get(fileStorageProperties.getStorageLocation()+this.baseStorageLocation).toAbsolutePath().normalize();
         Files.createDirectories(this.fileStorageLocation);
@@ -113,6 +125,11 @@ public class EvidenciaService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Evidência não encontrada com o ID: " + evidenciaId));
 
+        // Capturar dados para audit log antes de deletar
+        String evidenciaLegenda = evidenciaExistente.getLegenda();
+        Long evidenciaIdValue = evidenciaExistente.getId();
+        String evidenciaUrlFoto = evidenciaExistente.getUrlFoto();
+
         // Verificar se a atividade associada existe e obter o ID da atividade
         Long atividadeId = evidenciaExistente.getAtividade().getId();
         Atividade atividade = atividadeRepository.findById(atividadeId)
@@ -129,6 +146,25 @@ public class EvidenciaService {
         evidenciaRepository.deleteById(evidenciaId);
         excluirImagem(evidenciaExistente.getUrlFoto());
         compactarOrdem(atividade.getId());
+
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.DELETE,
+            "Evidencia",
+            evidenciaIdValue,
+            evidenciaExistente,
+            null,
+            "Evidência excluída: " + evidenciaLegenda
+        );
+
+        // CAMADA 3: Action Log - Exclusão de arquivo
+        actionLogService.log(
+            ActionLog.ActionType.FILE_DELETE,
+            true,
+            "Arquivo de evidência excluído: " + evidenciaUrlFoto,
+            null,
+            null
+        );
     }
 
     // Método para salvar uma evidência
@@ -162,6 +198,25 @@ public class EvidenciaService {
         // Salvar no banco
         Evidencia evidenciaSalva = evidenciaRepository.save(evidencia);
 
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.CREATE,
+            "Evidencia",
+            evidenciaSalva.getId(),
+            null,
+            evidenciaSalva,
+            "Evidência criada: " + evidenciaSalva.getLegenda()
+        );
+
+        // CAMADA 3: Action Log - Upload de arquivo
+        actionLogService.log(
+            ActionLog.ActionType.FILE_UPLOAD,
+            true,
+            "Arquivo de evidência enviado: " + uniqueFileName + " para atividade ID: " + atividadeId,
+            null,
+            null
+        );
+
         // Retornar o DTO da evidência salva
         return toEvidenciaDTO(evidenciaSalva);
     }
@@ -174,6 +229,10 @@ public class EvidenciaService {
         Evidencia evidenciaExistente = evidenciaRepository.findById(evidenciaId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Evidência não encontrada com o ID: " + evidenciaId));
+
+        // Capturar estado antigo para audit log
+        Evidencia oldState = copyEvidenciaForAudit(evidenciaExistente);
+        String oldUrlFoto = evidenciaExistente.getUrlFoto();
 
         // Buscar a atividade da evidência e verificar permissão
         Long atividadeId = evidenciaExistente.getAtividade().getId();
@@ -195,6 +254,27 @@ public class EvidenciaService {
 
         // Salvar a evidência atualizada
         Evidencia evidenciaAtualizada = evidenciaRepository.save(evidenciaExistente);
+
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.UPDATE,
+            "Evidencia",
+            evidenciaAtualizada.getId(),
+            oldState,
+            evidenciaAtualizada,
+            "Evidência atualizada: " + evidenciaAtualizada.getLegenda()
+        );
+
+        // CAMADA 3: Action Log - Upload de arquivo (se arquivo foi substituído)
+        if (file != null && !evidenciaAtualizada.getUrlFoto().equals(oldUrlFoto)) {
+            actionLogService.log(
+                ActionLog.ActionType.FILE_UPLOAD,
+                true,
+                "Arquivo de evidência atualizado: " + evidenciaAtualizada.getUrlFoto(),
+                null,
+                null
+            );
+        }
 
         // Retornar o DTO da evidência atualizada
         return toEvidenciaDTO(evidenciaAtualizada);
@@ -256,6 +336,25 @@ public class EvidenciaService {
                 .map(Evidencia::getAtividade) // Recupera a atividade associada
                 .orElseThrow(
                         () -> new RecursoNaoEncontradoException("Evidência não encontrada com ID: " + evidenciaId));
+    }
+
+    // Método auxiliar para copiar evidência para audit log
+    private Evidencia copyEvidenciaForAudit(Evidencia evidencia) {
+        try {
+            // Usar ObjectMapper para criar uma cópia profunda do objeto
+            String json = objectMapper.writeValueAsString(evidencia);
+            return objectMapper.readValue(json, Evidencia.class);
+        } catch (Exception e) {
+            // Se falhar a cópia profunda, criar manualmente uma cópia superficial
+            Evidencia copy = new Evidencia();
+            copy.setId(evidencia.getId());
+            copy.setUrlFoto(evidencia.getUrlFoto());
+            copy.setLegenda(evidencia.getLegenda());
+            copy.setOrdem(evidencia.getOrdem());
+            copy.setCriadoPor(evidencia.getCriadoPor());
+            copy.setAtividade(evidencia.getAtividade());
+            return copy;
+        }
     }
 
     private EvidenciaDTO toEvidenciaDTO(Evidencia evidencia) {

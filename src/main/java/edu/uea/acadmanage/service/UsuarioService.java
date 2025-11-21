@@ -1,9 +1,13 @@
 package edu.uea.acadmanage.service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -28,6 +32,9 @@ import edu.uea.acadmanage.service.exception.ConflitoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
 import edu.uea.acadmanage.service.exception.SenhaIncorretaException;
 import edu.uea.acadmanage.service.exception.ValidacaoException;
+import edu.uea.acadmanage.model.AuditLog;
+import edu.uea.acadmanage.model.ActionLog;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -38,14 +45,21 @@ public class UsuarioService {
     private final RoleService roleService;
     private final CursoRepository cursoRepository;
     private final edu.uea.acadmanage.repository.PessoaRepository pessoaRepository;
+    private final AuditLogService auditLogService;
+    private final ActionLogService actionLogService;
+    private final ObjectMapper objectMapper;
 
     public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, RoleService roleService,
-            CursoRepository cursoRepository, edu.uea.acadmanage.repository.PessoaRepository pessoaRepository) {
+            CursoRepository cursoRepository, edu.uea.acadmanage.repository.PessoaRepository pessoaRepository,
+            AuditLogService auditLogService, ActionLogService actionLogService, ObjectMapper objectMapper) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleService = roleService;
         this.cursoRepository = cursoRepository;
         this.pessoaRepository = pessoaRepository;
+        this.auditLogService = auditLogService;
+        this.actionLogService = actionLogService;
+        this.objectMapper = objectMapper;
     }
 
 
@@ -105,6 +119,7 @@ public class UsuarioService {
     }
 
     // Buscar um único usuário por ID
+    @Cacheable(value = "usuarios", key = "#usuarioId")
     public UsuarioDTO getUsuarioById(Long usuarioId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado com ID: " + usuarioId));
@@ -114,19 +129,20 @@ public class UsuarioService {
 
     // Método para salvar um usuário
     @Transactional
+    @CacheEvict(value = "usuarios", allEntries = true)
     public UsuarioDTO save(UsuarioDTO usuario) {
         // Validar se role existe
         Role role = roleService.getRoleByNome(usuario.role().toUpperCase());
 
         // Verificar se o usuário já existe
         if (usuarioRepository.existsByEmail(usuario.email())) {
-            throw new AcessoNegadoException("Usuário já existe com email: " + usuario.email());
+            throw new ConflitoException("Usuário já existe com email: " + usuario.email());
         }
 
         // Verificar se CPF já existe
         String cpfNormalizado = normalizarCpf(usuario.cpf());
         if (cpfNormalizado != null && !cpfNormalizado.isEmpty() && pessoaRepository.existsByCpf(cpfNormalizado)) {
-            throw new AcessoNegadoException("CPF já cadastrado: " + usuario.cpf());
+            throw new ConflitoException("CPF já cadastrado: " + usuario.cpf());
         }
 
         // Buscar cursos associados
@@ -146,11 +162,22 @@ public class UsuarioService {
         // Salvar no banco
         Usuario usuarioSalvo = usuarioRepository.save(novoUsuario);
 
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.CREATE,
+            "Usuario",
+            usuarioSalvo.getId(),
+            null,
+            usuarioSalvo,
+            "Usuário criado: " + usuarioSalvo.getEmail()
+        );
+
         // Converter para DTO e retornar
         return toUsuarioDTO(usuarioSalvo);
     }
 
     @Transactional
+    @CacheEvict(value = {"usuarios", "pessoas"}, allEntries = true)
     public UsuarioDTO criarUsuarioParaPessoa(UsuarioPessoaRequestDTO request) {
         String roleNome = request.role().toUpperCase();
         Role role = roleService.getRoleByNome(roleNome);
@@ -185,15 +212,30 @@ public class UsuarioService {
         pessoa.setUsuario(usuario);
 
         Usuario salvo = usuarioRepository.save(usuario);
+        
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.CREATE,
+            "Usuario",
+            salvo.getId(),
+            null,
+            salvo,
+            "Usuário criado para pessoa: " + pessoa.getNome() + " (" + salvo.getEmail() + ")"
+        );
+        
         return toUsuarioDTO(salvo);
     }
 
     // Método para atualizar um usuário
     @Transactional
+    @CacheEvict(value = {"usuarios", "pessoas"}, key = "#userId", allEntries = true)
     public UsuarioDTO update(Long userId, UsuarioDTO usuario, String emailUsuarioLogado) {
         // Buscar o usuário existente
         Usuario usuarioExistente = usuarioRepository.findById(userId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado: " + userId));
+        
+        // Capturar estado antigo para audit log (antes das modificações)
+        Usuario oldState = copyUsuarioForAudit(usuarioExistente);
 
         // Buscar usuário logado
         Usuario usuarioLogado = usuarioRepository.findByEmail(emailUsuarioLogado)
@@ -269,15 +311,30 @@ public class UsuarioService {
         // Salvar usuário atualizado no banco de dados
         Usuario usuarioAtualizado = usuarioRepository.save(usuarioExistente);
 
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.UPDATE,
+            "Usuario",
+            usuarioAtualizado.getId(),
+            oldState,
+            usuarioAtualizado,
+            "Usuário atualizado: " + usuarioAtualizado.getEmail()
+        );
+
         // Retornar o DTO do usuário atualizado
         return toUsuarioDTO(usuarioAtualizado);
     }
 
     @Transactional
+    @CacheEvict(value = {"usuarios", "pessoas", "cursos"}, key = "#usuarioId", allEntries = true)
     public void deleteUsuario(Long usuarioId) {
         // Buscar o usuário
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado com ID: " + usuarioId));
+        
+        // Capturar dados para audit log antes de deletar
+        String usuarioEmail = usuario.getEmail();
+        Long usuarioIdValue = usuario.getId();
 
         // Desassociar a pessoa para não removê-la em cascata
         Pessoa pessoaAssociada = usuario.getPessoa();
@@ -301,6 +358,16 @@ public class UsuarioService {
 
         // Agora podemos deletar o usuário mantendo a pessoa
         usuarioRepository.delete(usuario);
+        
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.DELETE,
+            "Usuario",
+            usuarioIdValue,
+            usuario,
+            null,
+            "Usuário excluído: " + usuarioEmail
+        );
     }
     
     @Transactional
@@ -326,6 +393,15 @@ public class UsuarioService {
         // Atualizar a senha
         usuario.setSenha(passwordEncoder.encode(passwordChangeRequest.getNewPassword()));
         usuarioRepository.save(usuario);
+        
+        // CAMADA 3: Action Log - Alteração de senha
+        actionLogService.log(
+            ActionLog.ActionType.PASSWORD_CHANGE,
+            true,
+            "Senha alterada para usuário: " + usuario.getEmail(),
+            null,
+            null
+        );
     }
 
     // Método para buscar um usuário pelo email
@@ -435,6 +511,30 @@ public class UsuarioService {
         Long tipoId = curso.getTipoCurso() != null ? curso.getTipoCurso().getId() : null;
         Long unidadeId = curso.getUnidadeAcademica() != null ? curso.getUnidadeAcademica().getId() : null;
         return new CursoDTO(curso.getId(), curso.getNome(), curso.getDescricao(), curso.getFotoCapa(), curso.getAtivo(), tipoId, unidadeId);
+    }
+
+    // Método auxiliar para copiar usuário para audit log
+    private Usuario copyUsuarioForAudit(Usuario usuario) {
+        try {
+            // Usar ObjectMapper para criar uma cópia profunda do objeto
+            String json = objectMapper.writeValueAsString(usuario);
+            return objectMapper.readValue(json, Usuario.class);
+        } catch (Exception e) {
+            // Se falhar a cópia profunda, criar manualmente uma cópia superficial
+            Usuario copy = new Usuario();
+            copy.setId(usuario.getId());
+            copy.setEmail(usuario.getEmail());
+            if (usuario.getPessoa() != null) {
+                copy.setPessoa(new Pessoa(
+                    usuario.getPessoa().getId(),
+                    usuario.getPessoa().getNome(),
+                    usuario.getPessoa().getCpfNormalizado()
+                ));
+            }
+            // Roles é um Set, então usar HashSet
+            copy.setRoles(new java.util.HashSet<>(usuario.getRoles()));
+            return copy;
+        }
     }
 
     private String normalizarCpf(String cpf) {

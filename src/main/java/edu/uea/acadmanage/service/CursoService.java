@@ -14,6 +14,8 @@ import java.util.UUID;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -36,6 +38,8 @@ import edu.uea.acadmanage.service.exception.ConflitoException;
 import edu.uea.acadmanage.service.exception.CursoComAtividadesException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
 import edu.uea.acadmanage.service.exception.ValidacaoException;
+import edu.uea.acadmanage.model.AuditLog;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class CursoService {
@@ -44,6 +48,8 @@ public class CursoService {
     private final UsuarioRepository usuarioRepository;
     private final TipoCursoService tipoCursoService;
     private final UnidadeAcademicaService unidadeAcademicaService;
+    private final AuditLogService auditLogService;
+    private final ObjectMapper objectMapper;
     private final Path fileStorageLocation;
     private final String baseStorageLocation;
 
@@ -52,11 +58,15 @@ public class CursoService {
         UsuarioRepository usuarioRepository,
         TipoCursoService tipoCursoService,
         UnidadeAcademicaService unidadeAcademicaService,
+        AuditLogService auditLogService,
+        ObjectMapper objectMapper,
         FileStorageProperties fileStorageProperties) throws IOException {
         this.cursoRepository = cursoRepository;
         this.usuarioRepository = usuarioRepository;
         this.tipoCursoService = tipoCursoService;
         this.unidadeAcademicaService = unidadeAcademicaService;
+        this.auditLogService = auditLogService;
+        this.objectMapper = objectMapper;
         this.baseStorageLocation = "fotos-capa";
         this.fileStorageLocation = Paths.get(fileStorageProperties.getStorageLocation())
                 .resolve(this.baseStorageLocation)
@@ -66,6 +76,7 @@ public class CursoService {
     }
 
     // Método para buscar um curso por ID
+    @Cacheable(value = "cursos", key = "#cursoId")
     public CursoDTO getCursoById(Long cursoId) {
         return cursoRepository.findById(cursoId)
                 .map(this::toCursoDTO)
@@ -73,6 +84,7 @@ public class CursoService {
     }
 
     // Método para buscar todos os curso
+    @Cacheable(value = "cursos", key = "'all'")
     public List<CursoDTO> getAllCursos() {
         return cursoRepository.findAll().stream()
                 .map(this::toCursoDTO)
@@ -130,9 +142,20 @@ public class CursoService {
             throw new RecursoNaoEncontradoException("Usuário não encontrado com o ID: " + usuarioId);
         }
 
-        String nomeTratado = nome != null && !nome.trim().isEmpty() ? nome.trim() : null;
-        Page<Curso> cursos = cursoRepository.findByUsuarioAndFiltros(usuarioId, ativo, nomeTratado, tipoId, unidadeAcademicaId, pageable);
-        return cursos.map(this::toCursoDTO);
+        // Tratar o nome: remover espaços para busca
+        String nomeTratado = null;
+        if (nome != null && !nome.trim().isEmpty() && !nome.trim().equalsIgnoreCase("sem filtro")) {
+            nomeTratado = nome.trim();
+        }
+        
+        try {
+            Page<Curso> cursos = cursoRepository.findByUsuarioAndFiltros(usuarioId, ativo, nomeTratado, tipoId, unidadeAcademicaId, pageable);
+            return cursos.map(this::toCursoDTO);
+        } catch (Exception e) {
+            // Se houver erro na query (ex: tabela vazia ou problema de tipo), retornar página vazia
+            // O handler de exceções já captura e retorna mensagem amigável
+            throw e;
+        }
     }
 
     // Método para buscar todos os usuários e suas permissões associados a um curso
@@ -173,6 +196,7 @@ public class CursoService {
     }
 
 
+    @CacheEvict(value = "cursos", allEntries = true)
     public CursoDTO saveCurso(CursoDTO cursoDTO, Usuario usuario) {
         // Validar que o nome não seja nulo ou vazio
         if (cursoDTO.nome() == null || cursoDTO.nome().trim().isEmpty()) {
@@ -201,11 +225,22 @@ public class CursoService {
         // Salvar no banco de dados
         Curso cursoSalvo = cursoRepository.save(novoCurso);
 
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.CREATE, 
+            "Curso", 
+            cursoSalvo.getId(), 
+            null, 
+            cursoSalvo, 
+            "Curso criado: " + cursoSalvo.getNome()
+        );
+
         // Retornar um DTO com os dados do curso salvo
         return toCursoDTO(cursoSalvo);
     }
 
     // Método para atualizar um curso
+    @CacheEvict(value = "cursos", key = "#cursoId", allEntries = true)
     public CursoDTO updateCurso(Long cursoId, CursoDTO cursoDTO) {
         // Validar que o nome não seja nulo ou vazio
         if (cursoDTO.nome() == null || cursoDTO.nome().trim().isEmpty()) {
@@ -214,6 +249,10 @@ public class CursoService {
         
         Curso cursoExistente = cursoRepository.findById(cursoId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
+        
+        // Capturar estado antigo para audit log
+        Curso oldState = copyCursoForAudit(cursoExistente);
+        
         // Atualizando os campos permitidos
         cursoExistente.setNome(cursoDTO.nome());
         cursoExistente.setDescricao(cursoDTO.descricao());
@@ -228,11 +267,23 @@ public class CursoService {
         cursoExistente.setAtivo(cursoDTO.ativo());
         // Salvando no banco
         Curso cursoAtualizado = cursoRepository.save(cursoExistente);
+        
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.UPDATE, 
+            "Curso", 
+            cursoAtualizado.getId(), 
+            oldState, 
+            cursoAtualizado, 
+            "Curso atualizado: " + cursoAtualizado.getNome()
+        );
+        
         return toCursoDTO(cursoAtualizado);
     }
 
     // Método para adicionar usuário a um curso
     @Transactional
+    @CacheEvict(value = {"cursos", "usuarios"}, key = "#cursoId", allEntries = true)
     public List<PermissaoCursoDTO> adicionarUsuarioCurso(Long cursoId, Long usuarioId) {
         // Buscar curso
         Curso cursoExistente = cursoRepository.findById(cursoId)
@@ -271,6 +322,7 @@ public class CursoService {
 
     // Método para remover usuário de um curso
     @Transactional
+    @CacheEvict(value = {"cursos", "usuarios"}, key = "#cursoId", allEntries = true)
     public List<PermissaoCursoDTO> removerUsuarioCurso(Long cursoId, Long usuarioId, Long solicitanteId) {
         // Buscar curso
         Curso cursoExistente = cursoRepository.findById(cursoId)
@@ -318,19 +370,36 @@ public class CursoService {
                 .toList();
     }
 
-    // Método para atualizar um curso
+        // Método para atualizar um curso
+    @CacheEvict(value = "cursos", key = "#cursoId", allEntries = true)
     public CursoDTO updateStatusCurso(Long cursoId, Boolean ativo) {
         Curso cursoExistente = cursoRepository.findById(cursoId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
+        
+        // Capturar estado antigo para audit log
+        Curso oldState = copyCursoForAudit(cursoExistente);
+        
         // Atualizando os campos permitidos
         cursoExistente.setAtivo(ativo);
         // Salvando no banco
         Curso cursoAtualizado = cursoRepository.save(cursoExistente);
+        
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.UPDATE, 
+            "Curso", 
+            cursoAtualizado.getId(), 
+            oldState, 
+            cursoAtualizado, 
+            "Status do curso atualizado: " + cursoAtualizado.getNome() + " (ativo: " + ativo + ")"
+        );
+        
         return toCursoDTO(cursoAtualizado);
     }
 
     // Método para excluir um curso
     @Transactional
+    @CacheEvict(value = "cursos", key = "#cursoId", allEntries = true)
     public void excluirCurso(Long cursoId) {
         // Verificar se o curso existe
         Curso curso = cursoRepository.findById(cursoId)
@@ -340,6 +409,10 @@ public class CursoService {
         if (curso.getAtividades() != null && !curso.getAtividades().isEmpty()) {
             throw new CursoComAtividadesException();
         }
+        
+        // Capturar dados para audit log antes de deletar
+        String cursoNome = curso.getNome();
+        Long cursoIdValue = curso.getId();
         
         // Remover associações com usuários antes de deletar
         List<Usuario> usuariosAssociados = new ArrayList<>(curso.getUsuarios());
@@ -351,6 +424,16 @@ public class CursoService {
         // Tentar deletar o curso
         try {
             cursoRepository.delete(curso);
+            
+            // CAMADA 2: Audit Log
+            auditLogService.log(
+                AuditLog.AuditAction.DELETE, 
+                "Curso", 
+                cursoIdValue, 
+                curso, 
+                null, 
+                "Curso excluído: " + cursoNome
+            );
         } catch (DataIntegrityViolationException e) {
             throw new ConflitoException("Não é possível excluir o curso. Existem registros dependentes associados.");
         }
@@ -373,6 +456,7 @@ public class CursoService {
     }
 
     // Método para atualizar uma foto de capa
+    @CacheEvict(value = "cursos", key = "#cursoId", allEntries = true)
     public CursoDTO atualizarFotoCapa(Long cursoId, MultipartFile file, String username) throws IOException {
         // Verificar se o curso existe
         Curso curso = cursoRepository.findById(cursoId)
@@ -399,6 +483,7 @@ public class CursoService {
     }
 
     // Método para excluir uma foto de capa
+    @CacheEvict(value = "cursos", key = "#cursoId", allEntries = true)
     public void excluirFotoCapa(Long cursoId, String username) {
         Curso curso = cursoRepository.findById(cursoId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
@@ -507,6 +592,26 @@ public class CursoService {
         }
 
         return this.fileStorageLocation.resolve(normalized).normalize();
+    }
+
+    // Método auxiliar para copiar curso para audit log
+    private Curso copyCursoForAudit(Curso curso) {
+        try {
+            // Usar ObjectMapper para criar uma cópia profunda do objeto
+            String json = objectMapper.writeValueAsString(curso);
+            return objectMapper.readValue(json, Curso.class);
+        } catch (Exception e) {
+            // Se falhar a cópia profunda, criar manualmente uma cópia superficial
+            Curso copy = new Curso();
+            copy.setId(curso.getId());
+            copy.setNome(curso.getNome());
+            copy.setDescricao(curso.getDescricao());
+            copy.setFotoCapa(curso.getFotoCapa());
+            copy.setAtivo(curso.getAtivo());
+            copy.setTipoCurso(curso.getTipoCurso());
+            copy.setUnidadeAcademica(curso.getUnidadeAcademica());
+            return copy;
+        }
     }
 
     private CursoDTO toCursoDTO(Curso curso) {

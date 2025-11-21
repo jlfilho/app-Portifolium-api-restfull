@@ -3,6 +3,8 @@ package edu.uea.acadmanage.controller;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
+import java.util.Random;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -49,6 +51,54 @@ class UsuarioControllerIT {
             .statusCode(200)
             .extract()
             .path("token");
+    }
+
+    /**
+     * Gera um CPF válido para testes.
+     * O CPF gerado passa na validação algorítmica do dígito verificador.
+     */
+    private String gerarCpfValido() {
+        Random random = new Random();
+        int[] cpf = new int[11];
+
+        // Gera os 9 primeiros dígitos aleatórios (evitando todos iguais)
+        do {
+            for (int i = 0; i < 9; i++) {
+                cpf[i] = random.nextInt(10);
+            }
+        } while (todosIguais(cpf, 9));
+
+        // Calcula o primeiro dígito verificador
+        int soma = 0;
+        for (int i = 0; i < 9; i++) {
+            soma += cpf[i] * (10 - i);
+        }
+        int resto = soma % 11;
+        cpf[9] = (resto < 2) ? 0 : 11 - resto;
+
+        // Calcula o segundo dígito verificador
+        soma = 0;
+        for (int i = 0; i < 10; i++) {
+            soma += cpf[i] * (11 - i);
+        }
+        resto = soma % 11;
+        cpf[10] = (resto < 2) ? 0 : 11 - resto;
+
+        // Retorna apenas dígitos (sem formatação)
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 11; i++) {
+            sb.append(cpf[i]);
+        }
+        return sb.toString();
+    }
+
+    private boolean todosIguais(int[] array, int tamanho) {
+        for (int i = 1; i < tamanho; i++) {
+            if (array[i] != array[0]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Test
@@ -149,17 +199,19 @@ class UsuarioControllerIT {
 
     @Test
     void deveCriarUsuarioComoAdministrador() {
-        String novoEmail = "novousuario@uea.edu.br";
+        long timestamp = System.currentTimeMillis();
+        String novoEmail = "novousuario" + timestamp + "@uea.edu.br";
+        String cpfNovo = gerarCpfValido();
         String jsonBody = """
             {
               "nome": "Novo Usuário Teste",
-              "cpf": "11122233344",
+              "cpf": "%s",
               "email": "%s",
               "senha": "senha123",
               "role": "ROLE_SECRETARIO",
               "cursos": []
             }
-        """.formatted(novoEmail);
+        """.formatted(cpfNovo, novoEmail);
 
         given()
             .port(port)
@@ -179,16 +231,17 @@ class UsuarioControllerIT {
 
     @Test
     void deveRetornar403QuandoGerenteTentaCriarUsuario() {
+        String cpf = gerarCpfValido();
         String jsonBody = """
             {
               "nome": "Usuario Teste",
-              "cpf": "22233344455",
+              "cpf": "%s",
               "email": "teste@uea.edu.br",
               "senha": "senha123",
               "role": "ROLE_SECRETARIO",
               "cursos": []
             }
-        """;
+        """.formatted(cpf);
 
         given()
             .port(port)
@@ -205,7 +258,8 @@ class UsuarioControllerIT {
 
     @Test
     void deveCriarUsuarioParaPessoaExistente() {
-        String cpfValido = "39053344705";
+        long timestamp = System.currentTimeMillis();
+        String cpfValido = gerarCpfValido();
         String pessoaBody = """
             {
               "nome": "Pessoa Vinculo Teste",
@@ -227,7 +281,7 @@ class UsuarioControllerIT {
             .extract()
             .path("id");
 
-        String emailNovo = "pessoa.vinculo@uea.edu.br";
+        String emailNovo = "pessoa.vinculo" + timestamp + "@uea.edu.br";
         String usuarioBody = """
             {
               "pessoaId": %d,
@@ -284,14 +338,15 @@ class UsuarioControllerIT {
     @Test
     void deveAtualizarUsuario() {
         Long usuarioId = 2L; // ID de um gerente
+        String cpf = gerarCpfValido();
         String jsonBody = """
             {
               "nome": "Gerente Atualizado",
-              "cpf": "23456789012",
+              "cpf": "%s",
               "email": "gerente1@uea.edu.br",
               "role": "ROLE_GERENTE"
             }
-        """;
+        """.formatted(cpf);
 
         given()
             .port(port)
@@ -338,9 +393,7 @@ class UsuarioControllerIT {
         String senhaOriginal = "gerente123";
         String senhaNova = "novaSenha123";
         
-        // Primeiro obter token com senha original
-        String tokenOriginal = obterToken("gerente1@uea.edu.br", senhaOriginal);
-        
+        // O endpoint requer ROLE_ADMINISTRADOR, então usar adminToken
         String jsonBody = """
             {
               "currentPassword": "%s",
@@ -351,7 +404,7 @@ class UsuarioControllerIT {
         try {
             given()
                 .port(port)
-                .header("Authorization", "Bearer " + tokenOriginal)
+                .header("Authorization", "Bearer " + adminToken)
                 .contentType(ContentType.JSON)
                 .body(jsonBody)
                 .log().all()
@@ -372,10 +425,10 @@ class UsuarioControllerIT {
             """.formatted(senhaNova, senhaOriginal);
 
             try {
-                String tokenNovaSenha = obterToken("gerente1@uea.edu.br", senhaNova);
+                // Usar admin token para restaurar (admin pode alterar senha de qualquer usuário)
                 given()
                     .port(port)
-                    .header("Authorization", "Bearer " + tokenNovaSenha)
+                    .header("Authorization", "Bearer " + adminToken)
                     .contentType(ContentType.JSON)
                     .body(jsonBodyRestaurar)
                 .when()
@@ -439,17 +492,19 @@ class UsuarioControllerIT {
     @Test
     void deveDeletarUsuarioComoAdministrador() {
         // Primeiro criar um usuário para deletar
-        String emailTemp = "usuarioTemp@uea.edu.br";
+        long timestamp = System.currentTimeMillis();
+        String emailTemp = "usuarioTemp" + timestamp + "@uea.edu.br";
+        String cpfTemp = gerarCpfValido();
         String jsonBodyCriar = """
             {
               "nome": "Usuário Temporário",
-              "cpf": "99988877766",
+              "cpf": "%s",
               "email": "%s",
               "senha": "senha123",
               "role": "ROLE_SECRETARIO",
               "cursos": []
             }
-        """.formatted(emailTemp);
+        """.formatted(cpfTemp, emailTemp);
 
         Integer novoUsuarioId = given()
             .port(port)

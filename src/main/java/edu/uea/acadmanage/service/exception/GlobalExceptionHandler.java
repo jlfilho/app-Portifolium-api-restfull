@@ -20,7 +20,10 @@ import io.jsonwebtoken.JwtException;
 import jakarta.validation.ConstraintViolationException;
 import java.io.IOException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.transaction.TransactionSystemException;
+import org.hibernate.exception.SQLGrammarException;
+import org.springframework.jdbc.BadSqlGrammarException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -293,6 +296,59 @@ public class GlobalExceptionHandler {
         error.put("message", ex.getMessage());
         error.put("status", "SERVICE_UNAVAILABLE");
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(error);
+    }
+
+    @ExceptionHandler({DataAccessException.class, SQLGrammarException.class, BadSqlGrammarException.class})
+    public ResponseEntity<Map<String, Object>> handleDataAccessException(DataAccessException ex) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("error", "Erro ao acessar o banco de dados");
+        error.put("status", "INTERNAL_SERVER_ERROR");
+        
+        // Extrair mensagem mais amigável
+        String message = "Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente.";
+        
+        Throwable rootCause = ex.getRootCause();
+        if (rootCause != null) {
+            String rootMessage = rootCause.getMessage();
+            if (rootMessage != null) {
+                // Mensagens específicas para erros comuns
+                if (rootMessage.contains("function lower(bytea) does not exist") || 
+                    rootMessage.contains("function lower") && rootMessage.contains("does not exist")) {
+                    message = "Erro ao realizar busca. O sistema está com problemas de compatibilidade com o banco de dados. Por favor, entre em contato com o suporte técnico.";
+                } else if (rootMessage.contains("syntax error") || rootMessage.contains("SQL syntax")) {
+                    message = "Erro na consulta ao banco de dados. Por favor, tente novamente ou entre em contato com o suporte técnico.";
+                } else if (rootMessage.contains("relation") && rootMessage.contains("does not exist")) {
+                    message = "Erro de configuração do banco de dados. Por favor, entre em contato com o suporte técnico.";
+                }
+            }
+        }
+        
+        error.put("message", message);
+        
+        // Em desenvolvimento, incluir detalhes técnicos
+        if (ex.getMessage() != null && ex.getMessage().contains("lower(bytea)")) {
+            error.put("technicalDetails", "Erro de tipo de dados na consulta SQL. O campo está sendo interpretado incorretamente pelo banco de dados.");
+        }
+        
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    @ExceptionHandler(NullPointerException.class)
+    public ResponseEntity<Map<String, Object>> handleNullPointerException(NullPointerException ex) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("error", "Erro ao processar dados");
+        error.put("message", "O sistema está processando dados incompletos. Isso pode ocorrer quando algumas informações ainda não foram cadastradas. Por favor, tente novamente em alguns instantes.");
+        error.put("status", "INTERNAL_SERVER_ERROR");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    @ExceptionHandler(ArithmeticException.class)
+    public ResponseEntity<Map<String, Object>> handleArithmeticException(ArithmeticException ex) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("error", "Erro ao calcular métricas");
+        error.put("message", "Não foi possível calcular algumas métricas devido à falta de dados. Isso é normal quando o sistema está sendo inicializado.");
+        error.put("status", "INTERNAL_SERVER_ERROR");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
     
 }

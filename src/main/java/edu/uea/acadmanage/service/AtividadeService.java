@@ -37,6 +37,8 @@ import edu.uea.acadmanage.service.exception.ArquivoInvalidoException;
 import edu.uea.acadmanage.service.exception.AtividadeComEvidenciasException;
 import edu.uea.acadmanage.service.exception.ErroProcessamentoArquivoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
+import edu.uea.acadmanage.model.AuditLog;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class AtividadeService {
@@ -48,6 +50,8 @@ public class AtividadeService {
     private final FonteFinanciadoraService fonteFinanciadoraService;
     private final PessoaRepository pessoaRepository;
     private final AtividadeAutorizacaoService atividadeAutorizacaoService;
+    private final AuditLogService auditLogService;
+    private final ObjectMapper objectMapper;
     private final Path fileStorageLocation;
     private final String baseStorageLocation;
 
@@ -59,6 +63,8 @@ public class AtividadeService {
             FonteFinanciadoraService fonteFinanciadoraService,
             PessoaRepository pessoaRepository,
             AtividadeAutorizacaoService atividadeAutorizacaoService,
+            AuditLogService auditLogService,
+            ObjectMapper objectMapper,
             FileStorageProperties fileStorageProperties) throws IOException {
         this.atividadeRepository = atividadeRepository;
         this.usuarioRepository = usuarioRepository;
@@ -67,6 +73,8 @@ public class AtividadeService {
         this.fonteFinanciadoraService = fonteFinanciadoraService;
         this.pessoaRepository = pessoaRepository;
         this.atividadeAutorizacaoService = atividadeAutorizacaoService;
+        this.auditLogService = auditLogService;
+        this.objectMapper = objectMapper;
         this.baseStorageLocation = "fotos-capa";
         this.fileStorageLocation = Paths.get(fileStorageProperties.getStorageLocation())
                 .resolve(this.baseStorageLocation)
@@ -192,6 +200,16 @@ public class AtividadeService {
         // Salvar novamente com os integrantes
         atividadeSalva = atividadeRepository.save(atividadeSalva);
 
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.CREATE,
+            "Atividade",
+            atividadeSalva.getId(),
+            null,
+            atividadeSalva,
+            "Atividade criada: " + atividadeSalva.getNome()
+        );
+
         // Retornar o DTO da atividade salva
         return toAtividadeDTO(atividadeSalva);
     }
@@ -255,6 +273,9 @@ public class AtividadeService {
                 .orElseThrow(
                         () -> new RecursoNaoEncontradoException("Atividade não encontrada com o ID: " + atividadeId));
 
+        // Capturar estado antigo para audit log
+        Atividade oldState = copyAtividadeForAudit(atividadeExistente);
+
         // Verificar se o curso existe
         if (!cursoService.verificarSeCursoExiste(atividadeDTO.curso().getId())) {
             throw new RecursoNaoEncontradoException(
@@ -298,6 +319,16 @@ public class AtividadeService {
         // Salvar no banco
         Atividade atividadeAtualizada = atividadeRepository.save(atividadeExistente);
 
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.UPDATE,
+            "Atividade",
+            atividadeAtualizada.getId(),
+            oldState,
+            atividadeAtualizada,
+            "Atividade atualizada: " + atividadeAtualizada.getNome()
+        );
+
         // Retornar o DTO da atividade atualizada
         return toAtividadeDTO(atividadeAtualizada);
     }
@@ -308,6 +339,10 @@ public class AtividadeService {
         Atividade atividade = atividadeRepository.findById(atividadeId)
                 .orElseThrow(
                         () -> new RecursoNaoEncontradoException("Atividade não encontrada com o ID: " + atividadeId));
+
+        // Capturar dados para audit log antes de deletar
+        String atividadeNome = atividade.getNome();
+        Long atividadeIdValue = atividade.getId();
 
         // Verificar se o usuário tem permissão para excluir a atividade
         if (!atividadeAutorizacaoService.podeEditarAtividade(username, atividadeId)) {
@@ -327,6 +362,16 @@ public class AtividadeService {
 
         // Excluir a atividade
         atividadeRepository.deleteById(atividadeId);
+
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.DELETE,
+            "Atividade",
+            atividadeIdValue,
+            atividade,
+            null,
+            "Atividade excluída: " + atividadeNome
+        );
     }
 
     // Método para buscar um curso por atividade
@@ -348,6 +393,29 @@ public class AtividadeService {
     }
 
     // Método privado para converter Atividade para AtividadeDTO
+    // Método auxiliar para copiar atividade para audit log
+    private Atividade copyAtividadeForAudit(Atividade atividade) {
+        try {
+            // Usar ObjectMapper para criar uma cópia profunda do objeto
+            String json = objectMapper.writeValueAsString(atividade);
+            return objectMapper.readValue(json, Atividade.class);
+        } catch (Exception e) {
+            // Se falhar a cópia profunda, criar manualmente uma cópia superficial
+            Atividade copy = new Atividade();
+            copy.setId(atividade.getId());
+            copy.setNome(atividade.getNome());
+            copy.setObjetivo(atividade.getObjetivo());
+            copy.setPublicoAlvo(atividade.getPublicoAlvo());
+            copy.setStatusPublicacao(atividade.getStatusPublicacao());
+            copy.setDataRealizacao(atividade.getDataRealizacao());
+            copy.setDataFim(atividade.getDataFim());
+            copy.setFotoCapa(atividade.getFotoCapa());
+            copy.setCurso(atividade.getCurso());
+            copy.setCategoria(atividade.getCategoria());
+            return copy;
+        }
+    }
+
     private AtividadeDTO toAtividadeDTO(Atividade atividade) {
         return new AtividadeDTO(
                 atividade.getId(),

@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import edu.uea.acadmanage.model.RecoveryCode;
 import edu.uea.acadmanage.model.Usuario;
+import edu.uea.acadmanage.model.ActionLog;
 import edu.uea.acadmanage.repository.RecoveryCodeRepository;
 import edu.uea.acadmanage.repository.UsuarioRepository;
 import edu.uea.acadmanage.service.exception.AcessoNegadoException;
@@ -21,16 +22,19 @@ public class PasswordRecoveryService {
     private final UsuarioRepository usuarioRepository;
     private final EmailService emailService;
     private final RecoveryCodeRepository recoveryCodeRepository;
+    private final ActionLogService actionLogService;
     private final String frontendUrl;
 
     public PasswordRecoveryService(
             UsuarioRepository usuarioRepository,
             EmailService emailService,
             RecoveryCodeRepository recoveryCodeRepository,
+            ActionLogService actionLogService,
             @Value("${app.frontend.url:http://localhost:4200}") String frontendUrl) {
         this.usuarioRepository = usuarioRepository;
         this.emailService = emailService;
         this.recoveryCodeRepository = recoveryCodeRepository;
+        this.actionLogService = actionLogService;
         this.frontendUrl = frontendUrl;
     }
 
@@ -66,7 +70,28 @@ public class PasswordRecoveryService {
                 "Se você não solicitou esta recuperação, ignore este email.",
                 usuario.getPessoa().getNome(), recoveryCode);
 
-        emailService.sendSimpleEmail(email, subject, message);
+        try {
+            emailService.sendSimpleEmail(email, subject, message);
+            
+            // CAMADA 3: Action Log - Solicitação de recuperação de senha
+            actionLogService.log(
+                ActionLog.ActionType.PASSWORD_RESET_REQUEST,
+                true,
+                "Código de recuperação de senha solicitado para: " + email,
+                null,
+                null
+            );
+        } catch (Exception e) {
+            // CAMADA 3: Action Log - Falha ao enviar email
+            actionLogService.log(
+                ActionLog.ActionType.PASSWORD_RESET_REQUEST,
+                false,
+                "Falha ao enviar código de recuperação para: " + email,
+                e.getMessage(),
+                null
+            );
+            throw e;
+        }
     }
 
     @Transactional
@@ -85,6 +110,15 @@ public class PasswordRecoveryService {
 
         // Remover o código de recuperação após o uso
         recoveryCodeRepository.deleteByCode(recoveryCode);
+        
+        // CAMADA 3: Action Log - Senha redefinida com sucesso
+        actionLogService.log(
+            ActionLog.ActionType.PASSWORD_RESET_COMPLETE,
+            true,
+            "Senha redefinida com sucesso para: " + email,
+            null,
+            null
+        );
     }
 
     // Verifica o código de recuperação

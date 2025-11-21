@@ -9,6 +9,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,14 +24,25 @@ import edu.uea.acadmanage.service.exception.ConflitoException;
 import edu.uea.acadmanage.service.exception.ErroProcessamentoArquivoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
 import edu.uea.acadmanage.service.exception.ValidacaoException;
+import edu.uea.acadmanage.model.AuditLog;
+import edu.uea.acadmanage.model.ActionLog;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashMap;
 
 @Service
 public class PessoaService {
 
     private final PessoaRepository pessoaRepository;
+    private final AuditLogService auditLogService;
+    private final ActionLogService actionLogService;
+    private final ObjectMapper objectMapper;
 
-    public PessoaService(PessoaRepository pessoaRepository) {
+    public PessoaService(PessoaRepository pessoaRepository, AuditLogService auditLogService, 
+                         ActionLogService actionLogService, ObjectMapper objectMapper) {
         this.pessoaRepository = pessoaRepository;
+        this.auditLogService = auditLogService;
+        this.actionLogService = actionLogService;
+        this.objectMapper = objectMapper;
     }
 
     public Page<PessoaDTO> listar(String nome, Pageable pageable) {
@@ -42,12 +55,14 @@ public class PessoaService {
         return page.map(this::toDTO);
     }
 
+    @Cacheable(value = "pessoas", key = "#id")
     public PessoaDTO buscarPorId(Long id) {
         Pessoa pessoa = pessoaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Pessoa não encontrada: " + id));
         return toDTO(pessoa);
     }
 
+    @CacheEvict(value = "pessoas", allEntries = true)
     public PessoaDTO criar(PessoaDTO dto) {
         String cpfNormalizado = normalizarCpf(dto.cpf());
         if (cpfNormalizado.isEmpty()) {
@@ -60,12 +75,27 @@ public class PessoaService {
         pessoa.setCpf(cpfNormalizado);
 
         Pessoa salva = pessoaRepository.save(pessoa);
+        
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.CREATE,
+            "Pessoa",
+            salva.getId(),
+            null,
+            salva,
+            "Pessoa criada: " + salva.getNome()
+        );
+        
         return toDTO(salva);
     }
 
+    @CacheEvict(value = "pessoas", key = "#id", allEntries = true)
     public PessoaDTO atualizar(Long id, PessoaDTO dto) {
         Pessoa pessoa = pessoaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Pessoa não encontrada: " + id));
+
+        // Capturar estado antigo para audit log
+        Pessoa oldState = copyPessoaForAudit(pessoa);
 
         String cpfNormalizado = normalizarCpf(dto.cpf());
         if (cpfNormalizado.isEmpty()) {
@@ -91,15 +121,43 @@ public class PessoaService {
         pessoa.setNome(dto.nome().trim());
 
         Pessoa salva = pessoaRepository.save(pessoa);
+        
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.UPDATE,
+            "Pessoa",
+            salva.getId(),
+            oldState,
+            salva,
+            "Pessoa atualizada: " + salva.getNome()
+        );
+        
         return toDTO(salva);
     }
 
+    @CacheEvict(value = "pessoas", key = "#id", allEntries = true)
     public void excluir(Long id) {
         Pessoa pessoa = pessoaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Pessoa não encontrada: " + id));
+        
+        // Capturar dados para audit log antes de deletar
+        String pessoaNome = pessoa.getNome();
+        Long pessoaIdValue = pessoa.getId();
+        
         pessoaRepository.delete(pessoa);
+        
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.DELETE,
+            "Pessoa",
+            pessoaIdValue,
+            pessoa,
+            null,
+            "Pessoa excluída: " + pessoaNome
+        );
     }
 
+    @CacheEvict(value = "pessoas", allEntries = true)
     public PessoaImportResponseDTO importarCsv(MultipartFile arquivo) {
         if (arquivo == null || arquivo.isEmpty()) {
             throw new ValidacaoException("Arquivo CSV não informado.");
@@ -160,12 +218,48 @@ public class PessoaService {
                 Pessoa nova = new Pessoa();
                 nova.setNome(nome);
                 nova.setCpf(cpfNormalizado);
-                pessoaRepository.save(nova);
+                Pessoa salva = pessoaRepository.save(nova);
+                
+                // CAMADA 2: Audit Log - registrar cada pessoa criada
+                auditLogService.log(
+                    AuditLog.AuditAction.CREATE,
+                    "Pessoa",
+                    salva.getId(),
+                    null,
+                    salva,
+                    "Pessoa criada via importação CSV: " + salva.getNome()
+                );
+                
                 cadastrados.add(nome);
             }
         } catch (IOException e) {
+            // CAMADA 3: Action Log - importação falhou
+            actionLogService.log(
+                ActionLog.ActionType.IMPORT_CSV,
+                false,
+                "Erro ao importar pessoas via CSV",
+                e.getMessage(),
+                new HashMap<>()
+            );
             throw new ErroProcessamentoArquivoException("Não foi possível ler o arquivo CSV.", e);
         }
+
+        // CAMADA 3: Action Log - importação concluída com sucesso
+        HashMap<String, Object> metadata = new HashMap<>();
+        metadata.put("totalProcessados", totalProcessados);
+        metadata.put("totalCadastrados", cadastrados.size());
+        metadata.put("totalDuplicados", duplicados.size());
+        metadata.put("nomeArquivo", arquivo.getOriginalFilename());
+        metadata.put("tamanhoArquivo", arquivo.getSize());
+        
+        actionLogService.log(
+            ActionLog.ActionType.IMPORT_CSV,
+            true,
+            "Importação de pessoas via CSV concluída: " + cadastrados.size() + " cadastradas, " + 
+            duplicados.size() + " duplicadas/ignoradas",
+            null,
+            metadata
+        );
 
         return new PessoaImportResponseDTO(totalProcessados, cadastrados.size(), cadastrados, duplicados);
     }
@@ -191,6 +285,21 @@ public class PessoaService {
             return "";
         }
         return cpf.replaceAll("\\D", "");
+    }
+
+    // Método auxiliar para copiar pessoa para audit log
+    private Pessoa copyPessoaForAudit(Pessoa pessoa) {
+        try {
+            String json = objectMapper.writeValueAsString(pessoa);
+            return objectMapper.readValue(json, Pessoa.class);
+        } catch (Exception e) {
+            // Se falhar a cópia profunda, criar manualmente uma cópia superficial
+            Pessoa copy = new Pessoa();
+            copy.setId(pessoa.getId());
+            copy.setNome(pessoa.getNome());
+            copy.setCpf(pessoa.getCpfNormalizado());
+            return copy;
+        }
     }
 
     private PessoaDTO toDTO(Pessoa pessoa) {

@@ -29,12 +29,12 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Atividade implements Serializable {
+public class Atividade extends BaseAuditableEntity implements Serializable {
     private static final long serialVersionUID = 1L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String nome;
     @Column(length = 1000)
     private String objetivo;
@@ -42,6 +42,8 @@ public class Atividade implements Serializable {
     private String publicoAlvo;
     @Column(nullable = false)
     private Boolean statusPublicacao;
+    
+    @Column(name = "foto_capa", columnDefinition = "VARCHAR(500)")
     private String fotoCapa;
     @Column(nullable = false)
     private LocalDate dataRealizacao; // Data de início (ou única data)

@@ -261,7 +261,7 @@ class CategoriaControllerIT {
 
     @Test
     void deveCriarCategoriaComoAdministrador() {
-        String nomeNovo = "Nova Categoria Teste";
+        String nomeNovo = "Nova Categoria Teste " + System.currentTimeMillis();
         String jsonBody = """
             {
               "nome": "%s"
@@ -497,7 +497,7 @@ class CategoriaControllerIT {
     @Test
     void deveDeletarCategoriaSemAtividadesAssociadas() {
         // Primeiro criar uma categoria para deletar
-        String nomeTemp = "Categoria Temporária";
+        String nomeTemp = "Categoria Temporária " + System.currentTimeMillis();
         String jsonBodyCriar = """
             {
               "nome": "%s"

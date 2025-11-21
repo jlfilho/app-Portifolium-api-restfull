@@ -40,7 +40,7 @@ public class JwtSecurityConfig {
                                                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**",
                                                                 "/v3/api-docs.yaml", "/swagger-resources/**")
                                                 .permitAll()
-                                                .requestMatchers("/api/auth/login/**", "/logout**",
+                                                .requestMatchers("/api/auth/login/**", "/api/auth/logout/**", "/logout**",
                                                                 "/api/atividades/**", "/api/cursos/**",
                                                                 "/api/categorias/**", "/api/evidencias/**",
                                                                 "/api/evidencias/atividade/**",
@@ -54,6 +54,9 @@ public class JwtSecurityConfig {
                                                 .requestMatchers("/css/**", "/js/**", "/images/**", "/api/files/**")
                                                 .permitAll()
                                                 .requestMatchers("/h2-console/**").permitAll()
+                                                // Endpoints do Actuator para healthcheck e monitoramento
+                                                .requestMatchers("/actuator/health/**", "/actuator/info/**")
+                                                .permitAll()
                                                 .anyRequest().authenticated())
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))

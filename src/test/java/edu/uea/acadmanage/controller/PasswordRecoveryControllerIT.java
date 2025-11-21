@@ -2,6 +2,9 @@ package edu.uea.acadmanage.controller;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.reset;
 
 import java.time.LocalDateTime;
 
@@ -37,6 +40,13 @@ class PasswordRecoveryControllerIT {
         io.restassured.RestAssured.port = port;
         // Limpar códigos de recuperação antes de cada teste
         recoveryCodeRepository.deleteAll();
+        
+        // Resetar o mock antes de cada teste para garantir comportamento consistente
+        reset(emailService);
+        
+        // Configurar o mock do EmailService para não lançar exceções
+        // doNothing() faz com que o método não faça nada quando chamado
+        doNothing().when(emailService).sendSimpleEmail(anyString(), anyString(), anyString());
     }
 
     @Test

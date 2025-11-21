@@ -135,38 +135,104 @@ A documentação da API pode ser acessada através do Swagger:
 ## Execução do Projeto
 
 ### Opção 1: Execução Local
-1. Clone o repositório.
-2. Configure o arquivo `application.properties` conforme seu ambiente.
-3. Execute o projeto usando o comando:
-   ```bash
-   ./mvnw spring-boot:run
-   ```
-4. Acesse a aplicação em `http://localhost:8080`.
-
-### Opção 2: Execução com Docker (Desenvolvimento)
-1. Clone o repositório.
-2. Execute o ambiente completo com:
-   ```bash
-   docker-compose up -d
-   ```
-3. Acesse:
-   - **Aplicação:** http://localhost:8080
-   - **Grafana:** http://localhost:3000 (admin/admin)
-   - **Prometheus:** http://localhost:9090
-   - **H2 Console:** http://localhost:8080/h2-console
-
-### Opção 3: Deploy em Produção com MySQL
 
 #### Pré-requisitos
-1. Configure as variáveis de ambiente obrigatórias (veja `ENV_VARIABLES.md`):
-   ```bash
-   export JWT_SECRET_KEY="sua_chave_secreta"
-   export MYSQL_ROOT_PASSWORD="senha_root"
-   export MYSQL_PASSWORD="senha_usuario"
-   export MAIL_PASSWORD="senha_email"
-   ```
+- Java 17+ instalado
+- Maven instalado (ou use o `mvnw` wrapper incluído)
+
+#### Executar
+```bash
+# Windows (PowerShell/CMD)
+.\mvnw.cmd spring-boot:run
+
+# Linux/Mac
+./mvnw spring-boot:run
+```
+
+#### Acessar
+- **Aplicação:** http://localhost:8080
+- **Swagger UI:** http://localhost:8080/swagger-ui/index.html
+- **H2 Console:** http://localhost:8080/h2-console
+  - JDBC URL: `jdbc:h2:file:./data/testdb`
+  - Usuário: `sa`
+  - Senha: (vazio)
+
+### Opção 2: Execução com Docker (Desenvolvimento)
+
+#### Executar
+```bash
+# Iniciar todos os serviços
+docker-compose up -d
+
+# Ver logs
+docker-compose logs -f
+
+# Parar serviços
+docker-compose down
+
+# Reconstruir e iniciar
+docker-compose up -d --build
+```
+
+#### Acessar
+- **Aplicação:** http://localhost:8080
+- **Grafana:** http://localhost:3000 (admin/admin)
+- **Prometheus:** http://localhost:9090
+- **H2 Console:** http://localhost:8080/h2-console
+
+### Opção 3: Deploy em Produção com Docker e MySQL
+
+#### Pré-requisitos
+- Docker e Docker Compose instalados
+- Variáveis de ambiente configuradas (veja seção "Variáveis de Ambiente")
+
+#### Variáveis de Ambiente Obrigatórias
+
+Defina as variáveis de ambiente no sistema ou crie um arquivo `.env` (não commite no repositório):
+
+```bash
+# Banco de Dados MySQL
+MYSQL_ROOT_PASSWORD=your_secure_root_password_here
+MYSQL_DATABASE=portifolium
+MYSQL_USER=portifolium_user
+MYSQL_PASSWORD=your_secure_password_here
+
+# Segurança JWT (gerar com: openssl rand -hex 32)
+JWT_SECRET_KEY=your_jwt_secret_key_minimum_256_bits_here
+JWT_EXPIRATION_TIME=3600000  # 1 hora em milissegundos
+
+# Email
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=tecnocomp@uea.edu.br
+MAIL_PASSWORD=your_email_password_here
+
+# Estratégia DDL (use 'create' na primeira vez, depois 'validate')
+SPRING_JPA_HIBERNATE_DDL_AUTO=create  # Primeira vez
+# SPRING_JPA_HIBERNATE_DDL_AUTO=validate  # Após primeira inicialização
+```
+
+**⚠️ IMPORTANTE:** 
+- Todas as senhas devem ser fortes e únicas
+- JWT_SECRET_KEY deve ter pelo menos 256 bits (64 caracteres hexadecimais)
+- Após a primeira inicialização, mude `SPRING_JPA_HIBERNATE_DDL_AUTO` para `validate` para segurança
+
+#### Dados Iniciais
+
+Na primeira inicialização com `SPRING_JPA_HIBERNATE_DDL_AUTO=create`, os seguintes dados serão inseridos automaticamente:
+
+- **Categorias:** Ensino, Pesquisa, Extensão
+- **Tipos de Curso:** Bacharelado, Licenciatura, Tecnólogo, Especialização, MBA, Mestrado, Doutorado
+- **Fontes Financiadoras:** UEA, FAPEAM, CAPES, CNPq, Outros
+- **Roles:** ROLE_ADMINISTRADOR, ROLE_GERENTE, ROLE_SECRETARIO, ROLE_COORDENADOR_ATIVIDADE
+- **Usuário Administrador:**
+  - Email: `admin@uea.edu.br`
+  - Senha: `admin123`
+  - Role: ROLE_ADMINISTRADOR
 
 #### Build e Deploy
+
+**Usando Scripts (Recomendado):**
 ```bash
 # Build da imagem de produção
 ./scripts/build-production.sh [tag]
@@ -181,25 +247,128 @@ A documentação da API pode ser acessada através do Swagger:
 ./scripts/deploy-production.sh --backup
 ```
 
-#### Deploy Manual
+**Deploy Manual:**
 ```bash
 # Build
 docker build -f Dockerfile.production -t portifolium:production .
 
-# Deploy
+# Parar containers existentes
+docker-compose -f docker-compose.production.yml down
+
+# Iniciar serviços
 docker-compose -f docker-compose.production.yml up -d
 
 # Verificar status
 docker-compose -f docker-compose.production.yml ps
+
+# Ver logs
+docker-compose -f docker-compose.production.yml logs -f
 ```
 
-**📖 Para mais detalhes, consulte:** `DOCKER_PRODUCTION.md`
+#### Verificação
+
+```bash
+# Verificar health check
+curl http://localhost:8080/actuator/health
+
+# Ver logs da aplicação
+docker logs -f portifolium-app
+
+# Ver logs do MySQL
+docker logs -f portifolium-mysql
+```
+
+#### Manutenção
+
+**Backup do Banco de Dados:**
+```bash
+docker exec portifolium-mysql mysqldump -u root -p${MYSQL_ROOT_PASSWORD} portifolium > backup-$(date +%Y%m%d).sql
+```
+
+**Restaurar Backup:**
+```bash
+docker exec -i portifolium-mysql mysql -u root -p${MYSQL_ROOT_PASSWORD} portifolium < backup-20241117.sql
+```
+
+**Atualizar Aplicação:**
+```bash
+# 1. Fazer backup (opcional)
+./scripts/deploy-production.sh --backup
+
+# 2. Fazer pull das mudanças
+git pull
+
+# 3. Rebuild e redeploy
+./scripts/deploy-production.sh
+```
 
 ### Opção 4: Deploy Automatizado (Staging)
-Use o script de deploy:
+
 ```bash
 # Deploy em staging
 ./scripts/deploy.sh staging
+```
+
+## Comandos Úteis
+
+### Executar Testes
+
+```bash
+# Executar todos os testes
+.\mvnw.cmd test
+
+# Executar teste específico
+.\mvnw.cmd test -Dtest=EvidenciaControllerIT
+
+# Executar todos os testes de integração (ordem específica)
+.\run-all-tests.ps1
+```
+
+### Compilar o Projeto
+
+```bash
+# Limpar e compilar
+.\mvnw.cmd clean compile
+
+# Compilar ignorando testes
+.\mvnw.cmd clean package -DskipTests
+
+# Compilar e gerar JAR
+.\mvnw.cmd clean package
+```
+
+### Verificar Dependências
+
+```bash
+# Ver dependências do projeto
+.\mvnw.cmd dependency:tree
+
+# Verificar atualizações
+.\mvnw.cmd versions:display-dependency-updates
+```
+
+### Troubleshooting
+
+**Erro: Porta já em uso**
+```bash
+# Windows
+netstat -ano | findstr :8080
+taskkill /PID <PID> /F
+
+# Linux/Mac
+lsof -ti:8080 | xargs kill
+```
+
+**Erro: Aplicação não inicia**
+```bash
+# Verificar logs
+docker logs portifolium-app
+
+# Verificar se o MySQL está rodando
+docker ps | grep mysql
+
+# Verificar variáveis de ambiente
+docker exec portifolium-app env | grep -E "SPRING|JWT|MYSQL"
 ```
 
 ## Estrutura de Pastas
@@ -239,9 +408,6 @@ portifolium/
 ├── Dockerfile.production       # Dockerfile otimizado produção
 ├── docker-compose.yml          # Compose desenvolvimento
 ├── docker-compose.production.yml  # Compose produção MySQL
-├── init-mysql.sql              # Script inicialização MySQL
-├── ENV_VARIABLES.md            # Documentação variáveis ambiente
-├── DOCKER_PRODUCTION.md        # Guia deploy produção
 └── pom.xml
 ```
 
@@ -288,11 +454,30 @@ Todas as exceções são tratadas centralmente pelo `GlobalExceptionHandler`, fo
 - Códigos HTTP apropriados
 - Informações de ação para o frontend (ex: `refresh_token_required`)
 
-## Documentação Adicional
+## Segurança em Produção
 
-- **DOCKER_PRODUCTION.md:** Guia completo de deploy em produção com MySQL
-- **ENV_VARIABLES.md:** Documentação de todas as variáveis de ambiente necessárias
-- **Swagger UI:** Documentação interativa da API em `/swagger-ui/index.html`
+### Checklist de Segurança
+
+- [ ] Todas as senhas são fortes e únicas
+- [ ] JWT_SECRET_KEY tem pelo menos 256 bits
+- [ ] SPRING_JPA_HIBERNATE_DDL_AUTO está configurado como 'validate' após primeira inicialização
+- [ ] Portas do MySQL e Redis não estão expostas publicamente
+- [ ] Variáveis de ambiente não estão em arquivos versionados
+- [ ] Backups são feitos regularmente
+- [ ] Logs são monitorados
+
+### Recomendações
+
+1. Use um gerenciador de segredos (ex: HashiCorp Vault, AWS Secrets Manager)
+2. Configure firewall para restringir acesso às portas
+3. Use HTTPS com certificado válido
+4. Configure rate limiting
+5. Monitore logs e métricas regularmente
+
+## Documentação da API
+
+A documentação interativa da API pode ser acessada através do Swagger:
+- **URL:** http://localhost:8080/swagger-ui/index.html
 
 ## Contato
 Para dúvidas ou sugestões, entre em contato:
