@@ -41,12 +41,15 @@ import edu.uea.acadmanage.model.Evidencia;
 import edu.uea.acadmanage.model.FonteFinanciadora;
 import edu.uea.acadmanage.model.Papel;
 import edu.uea.acadmanage.model.UnidadeAcademica;
+import edu.uea.acadmanage.model.Usuario;
 import edu.uea.acadmanage.repository.AtividadePessoaPapelRepository;
 import edu.uea.acadmanage.repository.AtividadeRepository;
 import edu.uea.acadmanage.repository.CursoRepository;
 import edu.uea.acadmanage.repository.EvidenciaRepository;
+import edu.uea.acadmanage.repository.UsuarioRepository;
 import edu.uea.acadmanage.service.exception.AcessoNegadoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import javax.imageio.ImageIO;
 
@@ -62,6 +65,7 @@ public class RelatorioCursoService {
     private final EvidenciaRepository evidenciaRepository;
     private final AtividadePessoaPapelRepository atividadePessoaPapelRepository;
     private final CursoService cursoService;
+    private final UsuarioRepository usuarioRepository;
     private final TemplateEngine templateEngine;
     private final Path evidenciasBasePath;
 
@@ -71,6 +75,7 @@ public class RelatorioCursoService {
             EvidenciaRepository evidenciaRepository,
             AtividadePessoaPapelRepository atividadePessoaPapelRepository,
             CursoService cursoService,
+            UsuarioRepository usuarioRepository,
             TemplateEngine templateEngine,
             FileStorageProperties fileStorageProperties) throws IOException {
         this.cursoRepository = cursoRepository;
@@ -78,6 +83,7 @@ public class RelatorioCursoService {
         this.evidenciaRepository = evidenciaRepository;
         this.atividadePessoaPapelRepository = atividadePessoaPapelRepository;
         this.cursoService = cursoService;
+        this.usuarioRepository = usuarioRepository;
         this.templateEngine = templateEngine;
         this.evidenciasBasePath = Paths.get(fileStorageProperties.getStorageLocation())
                 .resolve("evidencias")
@@ -100,12 +106,64 @@ public class RelatorioCursoService {
         Curso curso = cursoRepository.findById(cursoId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + cursoId));
 
-        if (!cursoService.verificarAcessoAoCurso(solicitanteEmail, cursoId)) {
+        // Verificar se o usuário é ADMINISTRADOR
+        Usuario usuario = usuarioRepository.findByEmail(solicitanteEmail)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + solicitanteEmail));
+        
+        boolean isAdmin = usuario.getRoles().stream()
+                .anyMatch(role -> role.getNome().equals("ROLE_ADMINISTRADOR"));
+
+        // Se NÃO for admin, verificar se tem acesso ao curso
+        if (!isAdmin && !cursoService.verificarAcessoAoCurso(solicitanteEmail, cursoId)) {
             throw new AcessoNegadoException("Usuário não possui permissão para gerar o relatório deste curso.");
         }
 
         List<Long> categoriasFiltro = (categorias == null || categorias.isEmpty()) ? null : categorias;
-        List<Atividade> atividades = atividadeRepository.findForRelatorio(cursoId, dataInicio, dataFim, categoriasFiltro);
+        
+        // Buscar todas as atividades do curso primeiro (sem filtros de data)
+        List<Atividade> todasAtividades = atividadeRepository.findByCursoId(cursoId);
+        
+        // Filtrar no código Java para evitar problema com parâmetros NULL no PostgreSQL
+        List<Atividade> atividades = todasAtividades.stream()
+                .filter(a -> a.getStatusPublicacao() != null && a.getStatusPublicacao())
+                .filter(a -> {
+                    if (dataInicio != null) {
+                        LocalDate dataComparacao = a.getDataFim() != null ? a.getDataFim() : a.getDataRealizacao();
+                        if (dataComparacao == null || dataComparacao.isBefore(dataInicio)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                })
+                .filter(a -> {
+                    if (dataFim != null) {
+                        LocalDate dataComparacao = a.getDataFim() != null ? a.getDataFim() : a.getDataRealizacao();
+                        if (dataComparacao == null || dataComparacao.isAfter(dataFim)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                })
+                .filter(a -> {
+                    if (categoriasFiltro != null && !categoriasFiltro.isEmpty()) {
+                        return categoriasFiltro.contains(a.getCategoria().getId());
+                    }
+                    return true;
+                })
+                .sorted((a1, a2) -> {
+                    // Ordenar por categoria.nome, dataRealizacao, nome
+                    int categoriaCompare = a1.getCategoria().getNome().compareToIgnoreCase(a2.getCategoria().getNome());
+                    if (categoriaCompare != 0) return categoriaCompare;
+                    
+                    if (a1.getDataRealizacao() != null && a2.getDataRealizacao() != null) {
+                        int dataCompare = a1.getDataRealizacao().compareTo(a2.getDataRealizacao());
+                        if (dataCompare != 0) return dataCompare;
+                    } else if (a1.getDataRealizacao() != null) return -1;
+                    else if (a2.getDataRealizacao() != null) return 1;
+                    
+                    return a1.getNome().compareToIgnoreCase(a2.getNome());
+                })
+                .toList();
 
         List<Long> atividadeIds = atividades.stream()
                 .map(Atividade::getId)

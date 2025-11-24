@@ -1,30 +1,27 @@
--- Script de dados iniciais para MySQL em produção
--- Este script é executado automaticamente pelo Spring Boot após a criação das tabelas
--- Apenas na primeira inicialização (quando as tabelas estão vazias)
-
 -- Populando a tabela Categoria
-INSERT IGNORE INTO categoria (id, nome) VALUES 
-(1, 'Ensino'),
-(2, 'Pesquisa'),
-(3, 'Extensão');
+INSERT IGNORE INTO categoria (id, nome, created_at, created_by, updated_at, updated_by) VALUES 
+(1, 'Ensino', NOW(), 'system', NOW(), 'system'),
+(2, 'Pesquisa', NOW(), 'system', NOW(), 'system'),
+(3, 'Extensão', NOW(), 'system', NOW(), 'system');
 
 -- Populando a tabela Tipo Curso
-INSERT IGNORE INTO tipo_curso (id, nome) VALUES
-(1, 'Bacharelado'),
-(2, 'Licenciatura'),
-(3, 'Tecnólogo'),
-(4, 'Especialização'),
-(5, 'MBA'),
-(6, 'Mestrado'),
-(7, 'Doutorado');
+INSERT IGNORE INTO tipo_curso (id, nome, created_at, created_by, updated_at, updated_by) VALUES
+(1, 'Bacharelado', NOW(), 'system', NOW(), 'system'),
+(2, 'Licenciatura', NOW(), 'system', NOW(), 'system'),
+(3, 'Tecnólogo', NOW(), 'system', NOW(), 'system'),
+(4, 'Especialização', NOW(), 'system', NOW(), 'system'),
+(5, 'MBA', NOW(), 'system', NOW(), 'system'),
+(6, 'Mestrado', NOW(), 'system', NOW(), 'system'),
+(7, 'Doutorado', NOW(), 'system', NOW(), 'system');
+
 
 -- Populando a tabela Fonte Financiadora
-INSERT IGNORE INTO fonte_financiadora (id, nome) VALUES 
-(1, 'UEA'),
-(2, 'FAPEAM'),
-(3, 'CAPES'),
-(4, 'CNPq'),
-(5, 'Outros');
+INSERT IGNORE INTO fonte_financiadora (id, nome, created_at, created_by, updated_at, updated_by) VALUES 
+(1, 'UEA', NOW(), 'system', NOW(), 'system'),
+(2, 'FAPEAM', NOW(), 'system', NOW(), 'system'),
+(3, 'CAPES', NOW(), 'system', NOW(), 'system'),
+(4, 'CNPq', NOW(), 'system', NOW(), 'system'),
+(5, 'Outros', NOW(), 'system', NOW(), 'system');
 
 -- Populando a tabela Role
 INSERT IGNORE INTO role (id, nome) VALUES
@@ -33,16 +30,16 @@ INSERT IGNORE INTO role (id, nome) VALUES
 (3, 'ROLE_SECRETARIO'),
 (4, 'ROLE_COORDENADOR_ATIVIDADE');
 
--- Populando a tabela Pessoa (Administrador do Sistema)
-INSERT IGNORE INTO pessoa (id, nome, cpf) VALUES
-(1, 'Administrador do Sistema', '12345678901');
+-- Script SQL para criar 10 pessoas na tabela Pessoa
+INSERT IGNORE INTO pessoa (id, nome, cpf, created_at, created_by, updated_at, updated_by) VALUES
+(1, 'Administrador do Sistema', '31452012040', NOW(), 'system', NOW(), 'system');
 
--- Populando a tabela Usuario (admin)
--- Senha: admin123 (criptografada com BCrypt)
-INSERT IGNORE INTO usuario (id, email, senha, pessoa_id) VALUES
-(1, 'admin@uea.edu.br', '$2a$10$Ebmi/uPZlhTEB7e39gsPTOfADOsL0IdEcEQllZyogM/WI/WKUMYdW', 1);
+-- Populando a tabela Usuario com níveis de acesso e senhas criptografadas
+INSERT IGNORE INTO usuario (id, email, senha, pessoa_id, created_at, updated_at) VALUES
+(1, 'admin@uea.edu.br', '$2a$10$Ebmi/uPZlhTEB7e39gsPTOfADOsL0IdEcEQllZyogM/WI/WKUMYdW', 1, NOW(), NOW()); -- Senha: secretario123
 
--- Populando a tabela Usuario_Roles (associação admin com role de administrador)
+
+
+-- Populando a tabela Usuario_Roles para associar usuários a roles
 INSERT IGNORE INTO usuario_roles (usuario_id, role_id) VALUES
 (1, 1); -- Admin
-

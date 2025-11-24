@@ -3,24 +3,45 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.simple
+    container_name: portifolium-app-postgres
     ports:
       - "8080:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=docker,jwt
+      - SPRING_PROFILES_ACTIVE=postgresql,jwt
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/portifolium
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - JWT_SECRET_KEY=3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b
+      - JWT_EXPIRATION_TIME=3600000
+      - MAIL_HOST=smtp.gmail.com
+      - MAIL_PORT=587
+      - MAIL_USERNAME=tecnocomp@uea.edu.br
+      - MAIL_PASSWORD=
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LOGGING_LEVEL_ORG_HIBERNATE_SQL=DEBUG
+      - LOGGING_LEVEL_ORG_HIBERNATE_TYPE_DESCRIPTOR_SQL_BASICBINDER=TRACE
     volumes:
       - ./portifolium-files:/portifolium-files
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - portifolium-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
 
   db:
     image: postgres:15-alpine
+    container_name: portifolium-postgres
     environment:
       - POSTGRES_DB=portifolium
       - POSTGRES_USER=postgres
@@ -29,23 +50,39 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # NOTA: Os dados são populados via data-mysql.sql pelo Spring Boot (application-docker.properties)
+      # NOTA: Os dados são populados via data-postgresql.sql pelo Spring Boot (application-postgresql.properties)
     networks:
       - portifolium-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
-  # Redis para cache (opcional)
+  # Redis para cache (opcional - desabilitado por padrão)
   redis:
     image: redis:7-alpine
+    container_name: portifolium-redis-postgres
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
     networks:
       - portifolium-network
     restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   # Prometheus para monitoramento
   prometheus:
     image: prom/prometheus:latest
+    container_name: portifolium-prometheus-postgres
     ports:
       - "9090:9090"
     volumes:
@@ -65,6 +102,7 @@ services:
   # Grafana para visualização
   grafana:
     image: grafana/grafana:latest
+    container_name: portifolium-grafana-postgres
     ports:
       - "3000:3000"
     environment:
@@ -79,8 +117,13 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  redis_data:
+    driver: local
   prometheus_data:
+    driver: local
   grafana_data:
+    driver: local
 
 networks:
   portifolium-network:

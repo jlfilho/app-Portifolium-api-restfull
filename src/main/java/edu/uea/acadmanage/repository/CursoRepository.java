@@ -23,46 +23,28 @@ public interface CursoRepository extends JpaRepository<Curso, Long> {
 
     boolean existsByUnidadeAcademica_Id(Long unidadeId);
 
-    @Query(value = """
-            SELECT c.* FROM curso c
+    @Query("""
+            SELECT c FROM Curso c
             WHERE (:ativo IS NULL OR c.ativo = :ativo)
-              AND (:nome IS NULL OR LOWER(c.nome::text) LIKE LOWER('%' || :nome || '%'))
-              AND (:tipoId IS NULL OR c.tipo_curso_id = :tipoId)
-              AND (:unidadeId IS NULL OR c.unidade_academica_id = :unidadeId)
-            """,
-            countQuery = """
-            SELECT COUNT(*) FROM curso c
-            WHERE (:ativo IS NULL OR c.ativo = :ativo)
-              AND (:nome IS NULL OR LOWER(c.nome::text) LIKE LOWER('%' || :nome || '%'))
-              AND (:tipoId IS NULL OR c.tipo_curso_id = :tipoId)
-              AND (:unidadeId IS NULL OR c.unidade_academica_id = :unidadeId)
-            """,
-            nativeQuery = true)
+              AND (:nome IS NULL OR :nome = '' OR LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%')))
+              AND (:tipoId IS NULL OR c.tipoCurso.id = :tipoId)
+              AND (:unidadeId IS NULL OR c.unidadeAcademica.id = :unidadeId)
+            """)
     Page<Curso> findAllByFiltros(@Param("ativo") Boolean ativo,
             @Param("nome") String nome,
             @Param("tipoId") Long tipoId,
             @Param("unidadeId") Long unidadeId,
             Pageable pageable);
 
-    @Query(value = """
-            SELECT c.* FROM curso c
-            INNER JOIN curso_usuario cu ON c.id = cu.curso_id
-            WHERE cu.usuario_id = :usuarioId
+    @Query("""
+            SELECT DISTINCT c FROM Curso c
+            JOIN c.usuarios u
+            WHERE u.id = :usuarioId
               AND (:ativo IS NULL OR c.ativo = :ativo)
-              AND (:nome IS NULL OR LOWER(c.nome::text) LIKE LOWER('%' || :nome || '%'))
-              AND (:tipoId IS NULL OR c.tipo_curso_id = :tipoId)
-              AND (:unidadeId IS NULL OR c.unidade_academica_id = :unidadeId)
-            """, 
-            countQuery = """
-            SELECT COUNT(*) FROM curso c
-            INNER JOIN curso_usuario cu ON c.id = cu.curso_id
-            WHERE cu.usuario_id = :usuarioId
-              AND (:ativo IS NULL OR c.ativo = :ativo)
-              AND (:nome IS NULL OR LOWER(c.nome::text) LIKE LOWER('%' || :nome || '%'))
-              AND (:tipoId IS NULL OR c.tipo_curso_id = :tipoId)
-              AND (:unidadeId IS NULL OR c.unidade_academica_id = :unidadeId)
-            """,
-            nativeQuery = true)
+              AND (:nome IS NULL OR :nome = '' OR LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%')))
+              AND (:tipoId IS NULL OR c.tipoCurso.id = :tipoId)
+              AND (:unidadeId IS NULL OR c.unidadeAcademica.id = :unidadeId)
+            """)
     Page<Curso> findByUsuarioAndFiltros(@Param("usuarioId") Long usuarioId,
             @Param("ativo") Boolean ativo,
             @Param("nome") String nome,

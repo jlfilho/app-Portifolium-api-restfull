@@ -55,7 +55,7 @@ public class JwtSecurityConfig {
                                                 .permitAll()
                                                 .requestMatchers("/h2-console/**").permitAll()
                                                 // Endpoints do Actuator para healthcheck e monitoramento
-                                                .requestMatchers("/actuator/health/**", "/actuator/info/**")
+                                                .requestMatchers("/actuator/**")
                                                 .permitAll()
                                                 .anyRequest().authenticated())
                                 .sessionManagement(session -> session

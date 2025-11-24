@@ -13,6 +13,7 @@ import edu.uea.acadmanage.repository.CursoRepository;
 import edu.uea.acadmanage.service.exception.ConflitoException;
 import edu.uea.acadmanage.service.exception.TipoCursoEmUsoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
+import edu.uea.acadmanage.service.exception.ValidacaoException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
@@ -53,8 +54,15 @@ public class TipoCursoService {
         }
 
         public TipoCurso salvar(TipoCurso tipoCurso) {
-                if (tipoCursoRepository.existsByNomeIgnoreCase(tipoCurso.getNome())) {
-                        throw new ConflitoException("Já existe um tipo de curso com o nome: " + tipoCurso.getNome());
+                // Normalizar o nome (trim e validar)
+                if (tipoCurso.getNome() == null || tipoCurso.getNome().trim().isEmpty()) {
+                        throw new ValidacaoException("O nome do tipo de curso é obrigatório.");
+                }
+                String nomeNormalizado = tipoCurso.getNome().trim();
+                tipoCurso.setNome(nomeNormalizado);
+                
+                if (tipoCursoRepository.existsByNomeIgnoreCase(nomeNormalizado)) {
+                        throw new ConflitoException("Já existe um tipo de curso com o nome: " + nomeNormalizado);
                 }
                 TipoCurso tipoSalvo = tipoCursoRepository.save(tipoCurso);
                 
@@ -77,11 +85,18 @@ public class TipoCursoService {
                 // Capturar estado antigo para audit log
                 TipoCurso oldState = copyTipoCursoForAudit(existente);
 
-                if (!existente.getNome().equalsIgnoreCase(novo.getNome()) && tipoCursoRepository.existsByNomeIgnoreCase(novo.getNome())) {
-                        throw new ConflitoException("Já existe um tipo de curso com o nome: " + novo.getNome());
+                // Normalizar o nome (trim e validar)
+                if (novo.getNome() == null || novo.getNome().trim().isEmpty()) {
+                        throw new ValidacaoException("O nome do tipo de curso é obrigatório.");
+                }
+                String nomeNormalizado = novo.getNome().trim();
+                novo.setNome(nomeNormalizado);
+
+                if (!existente.getNome().equalsIgnoreCase(nomeNormalizado) && tipoCursoRepository.existsByNomeIgnoreCase(nomeNormalizado)) {
+                        throw new ConflitoException("Já existe um tipo de curso com o nome: " + nomeNormalizado);
                 }
 
-                existente.setNome(novo.getNome());
+                existente.setNome(nomeNormalizado);
                 TipoCurso tipoAtualizado = tipoCursoRepository.save(existente);
                 
                 // CAMADA 2: Audit Log
