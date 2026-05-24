@@ -94,6 +94,8 @@ Esta API foi desenvolvida para gerenciar cursos, usuários, atividades, evidênc
   - Usuário: `sa`
   - Senha: (vazio)
   - Console: `http://localhost:8080/h2-console`
+  - O console so fica acessivel quando `app.security.allow-h2-console=true`.
+  - Em ambientes de producao, mantenha `app.security.allow-h2-console=false` ou omita a propriedade.
 - **PostgreSQL (Produção):**
   - Profile: `docker`
   - Configurar no `application-docker.properties`
@@ -152,8 +154,10 @@ A documentação da API pode ser acessada através do Swagger:
 #### Acessar
 - **Aplicação:** http://localhost:8080
 - **Swagger UI:** http://localhost:8080/swagger-ui/index.html
-- **H2 Console:** http://localhost:8080/h2-console
+- **H2 Console:** http://localhost:8080/h2-console, somente se `app.security.allow-h2-console=true`
   - JDBC URL: `jdbc:h2:file:./data/testdb`
+  - Requer `app.security.allow-h2-console=true`.
+  - Status de seguranca: as permissoes publicas foram limitadas a rotas explicitamente publicas e `GET` de consulta, o H2 Console passou a depender de `app.security.allow-h2-console` e o Actuator publico ficou restrito a `health`.
   - Usuário: `sa`
   - Senha: (vazio)
 
@@ -178,7 +182,7 @@ docker-compose up -d --build
 - **Aplicação:** http://localhost:8080
 - **Grafana:** http://localhost:3000 (admin/admin)
 - **Prometheus:** http://localhost:9090
-- **H2 Console:** http://localhost:8080/h2-console
+- **H2 Console:** http://localhost:8080/h2-console, somente se `app.security.allow-h2-console=true`
 
 ### Opção 3: Deploy em Produção com Docker e MySQL
 
