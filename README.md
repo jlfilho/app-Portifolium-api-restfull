@@ -90,19 +90,24 @@ Esta API foi desenvolvida para gerenciar cursos, usuários, atividades, evidênc
 ### Configuração de Banco de Dados
 
 - **H2 (Desenvolvimento):**
+  - Arquivo: `application.properties`
   - URL: `jdbc:h2:file:./data/testdb`
-  - Usuário: `sa`
+  - Usuario: `sa`
   - Senha: (vazio)
   - Console: `http://localhost:8080/h2-console`
-  - O console so fica acessivel quando `app.security.allow-h2-console=true`.
-  - Em ambientes de producao, mantenha `app.security.allow-h2-console=false` ou omita a propriedade.
-- **PostgreSQL (Produção):**
-  - Profile: `docker`
-  - Configurar no `application-docker.properties`
-- **MySQL 8.0 (Produção):**
+  - Hibernate: `spring.jpa.hibernate.ddl-auto=create-drop`
+  - Carga inicial: `spring.sql.init.mode=always`
+- **PostgreSQL (Producao):**
+  - Profile: `postgresql`
+  - Configurar no `application-postgresql.properties`
+  - Hibernate padrao: `spring.jpa.hibernate.ddl-auto=validate`
+  - Carga inicial padrao: `spring.sql.init.mode=never`
+  - SQL em log desabilitado por padrao: `spring.jpa.show-sql=false`
+  - Sobrescrever por variaveis de ambiente somente quando necessario: `SPRING_JPA_HIBERNATE_DDL_AUTO`, `SPRING_SQL_INIT_MODE`, `SPRING_JPA_SHOW_SQL`.
+- **MySQL 8.0 (Producao):**
   - Profile: `mysql,production`
   - Configurar no `application-mysql.properties`
-  - Veja `ENV_VARIABLES.md` para variáveis de ambiente necessárias
+  - Veja `ENV_VARIABLES.md` para variaveis de ambiente necessarias
 
 ### Dependências Importantes no `pom.xml`
 ```xml
@@ -216,7 +221,7 @@ SPRING_JPA_HIBERNATE_DDL_AUTO=create  # Primeira vez
 # SPRING_JPA_HIBERNATE_DDL_AUTO=validate  # Após primeira inicialização
 ```
 
-**⚠️ IMPORTANTE:** 
+**⚠️ IMPORTANTE:**
 - Todas as senhas devem ser fortes e únicas
 - JWT_SECRET_KEY deve ter pelo menos 256 bits (64 caracteres hexadecimais)
 - Após a primeira inicialização, mude `SPRING_JPA_HIBERNATE_DDL_AUTO` para `validate` para segurança
