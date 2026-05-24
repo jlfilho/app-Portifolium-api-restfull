@@ -146,10 +146,8 @@ class AtividadeControllerIT {
     }
 
     @Test
-    void deveRetornar204QuandoNaoHaAtividadesParaCurso() {
-        // Assumindo que pode haver um curso sem atividades
-        // Por padrão, todos os cursos têm atividades no data-test.sql
-        Long cursoId = 9999L; // Curso inexistente deve retornar 404 ou 204
+    void deveRetornar404QuandoCursoInexistenteNaoTemAtividades() {
+        Long cursoId = 9999L;
         
         given()
             .port(port)
@@ -158,7 +156,7 @@ class AtividadeControllerIT {
             .get("/api/atividades/curso/{cursoId}", cursoId)
         .then()
             .log().all()
-            .statusCode(anyOf(is(200), is(204)));
+            .statusCode(404);
     }
 
     // ========== GET /api/atividades/{atividadeId} ==========

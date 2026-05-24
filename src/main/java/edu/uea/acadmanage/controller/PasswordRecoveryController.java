@@ -2,6 +2,7 @@ package edu.uea.acadmanage.controller;
 
 import java.util.Map;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,29 +41,34 @@ public class PasswordRecoveryController {
         }
     }
 
-    @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(
+    @PostMapping(value = "/reset-password", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> resetPasswordJson(@RequestBody(required = false) Map<String, String> requestBody) {
+        String email = requestBody != null ? requestBody.get("email") : null;
+        String recoveryCode = requestBody != null ? requestBody.get("recoveryCode") : null;
+        String newPassword = requestBody != null ? requestBody.get("newPassword") : null;
+        return resetPassword(email, recoveryCode, newPassword);
+    }
+
+    @PostMapping(value = "/reset-password", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    public ResponseEntity<String> resetPasswordForm(
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String recoveryCode,
-            @RequestParam(required = false) String newPassword,
-            @RequestBody(required = false) Map<String, String> requestBody) {
-        
-        // Aceita tanto query parameters quanto body JSON
+            @RequestParam(required = false) String newPassword) {
+        return resetPassword(email, recoveryCode, newPassword);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPasswordParams(
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String recoveryCode,
+            @RequestParam(required = false) String newPassword) {
+        return resetPassword(email, recoveryCode, newPassword);
+    }
+
+    private ResponseEntity<String> resetPassword(String email, String recoveryCode, String newPassword) {
         String emailToUse = email;
         String codeToUse = recoveryCode;
         String passwordToUse = newPassword;
-        
-        if (requestBody != null) {
-            if (!StringUtils.hasText(emailToUse)) {
-                emailToUse = requestBody.get("email");
-            }
-            if (!StringUtils.hasText(codeToUse)) {
-                codeToUse = requestBody.get("recoveryCode");
-            }
-            if (!StringUtils.hasText(passwordToUse)) {
-                passwordToUse = requestBody.get("newPassword");
-            }
-        }
         
         if (!StringUtils.hasText(emailToUse) || !StringUtils.hasText(codeToUse) || !StringUtils.hasText(passwordToUse)) {
             return ResponseEntity.badRequest().body("Email, código de recuperação e nova senha são obrigatórios");
