@@ -3,6 +3,7 @@ package edu.uea.acadmanage.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -21,12 +22,15 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class JwtSecurityConfig {
         private final AuthenticationProvider authenticationProvider;
         private final JwtAuthenticationFilter jwtAuthenticationFilter;
+        private final boolean allowH2Console;
 
         public JwtSecurityConfig(
                         JwtAuthenticationFilter jwtAuthenticationFilter,
-                        AuthenticationProvider authenticationProvider) {
+                        AuthenticationProvider authenticationProvider,
+                        @Value("${app.security.allow-h2-console:false}") boolean allowH2Console) {
                 this.jwtAuthenticationFilter = jwtAuthenticationFilter;
                 this.authenticationProvider = authenticationProvider;
+                this.allowH2Console = allowH2Console;
         }
 
         @Bean
@@ -36,28 +40,35 @@ public class JwtSecurityConfig {
                                                                                                    // a CORS
                                 .csrf(csrf -> csrf.disable())
                                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
-                                .authorizeHttpRequests(auth -> auth
-                                                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**",
-                                                                "/v3/api-docs.yaml", "/swagger-resources/**")
-                                                .permitAll()
-                                                .requestMatchers("/api/auth/login/**", "/api/auth/logout/**", "/logout**",
-                                                                "/api/atividades/**", "/api/cursos/**",
-                                                                "/api/categorias/**", "/api/evidencias/**",
-                                                                "/api/evidencias/atividade/**",
-                                                                "/api/categorias/curso/**")
-                                                .permitAll()
-                                                .requestMatchers(HttpMethod.GET, "/api/unidades-academicas/**")
-                                                .permitAll()
-                                                .requestMatchers("/api/recovery/generate/**",
-                                                                "/api/recovery/reset-password/**")
-                                                .permitAll()
-                                                .requestMatchers("/css/**", "/js/**", "/images/**", "/api/files/**")
-                                                .permitAll()
-                                                .requestMatchers("/h2-console/**").permitAll()
-                                                // Endpoints do Actuator para healthcheck e monitoramento
-                                                .requestMatchers("/actuator/**")
-                                                .permitAll()
-                                                .anyRequest().authenticated())
+                                .authorizeHttpRequests(auth -> {
+                                        auth.requestMatchers("/swagger-ui/**", "/v3/api-docs/**",
+                                                        "/v3/api-docs.yaml", "/swagger-resources/**")
+                                                        .permitAll();
+                                        auth.requestMatchers("/api/auth/login/**", "/api/auth/logout/**", "/logout**")
+                                                        .permitAll();
+                                        auth.requestMatchers("/api/recovery/generate/**",
+                                                        "/api/recovery/reset-password/**")
+                                                        .permitAll();
+                                        auth.requestMatchers("/css/**", "/js/**", "/images/**", "/api/files/**")
+                                                        .permitAll();
+                                        auth.requestMatchers(HttpMethod.GET,
+                                                        "/api/atividades/**",
+                                                        "/api/cursos/**",
+                                                        "/api/categorias/**",
+                                                        "/api/evidencias/**",
+                                                        "/api/unidades-academicas/**")
+                                                        .permitAll();
+                                        auth.requestMatchers("/actuator/health", "/actuator/health/**")
+                                                        .permitAll();
+                                        auth.requestMatchers("/actuator/**")
+                                                        .authenticated();
+                                        if (allowH2Console) {
+                                                auth.requestMatchers("/h2-console/**").permitAll();
+                                        } else {
+                                                auth.requestMatchers("/h2-console/**").denyAll();
+                                        }
+                                        auth.anyRequest().authenticated();
+                                })
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .authenticationProvider(authenticationProvider)
