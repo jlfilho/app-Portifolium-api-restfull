@@ -1,5 +1,9 @@
 package edu.uea.acadmanage.security;
 
+import java.util.Arrays;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -20,12 +24,18 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class JwtSecurityConfig {
         private final AuthenticationProvider authenticationProvider;
         private final JwtAuthenticationFilter jwtAuthenticationFilter;
+        private final List<String> allowedOrigins;
 
         public JwtSecurityConfig(
                         JwtAuthenticationFilter jwtAuthenticationFilter,
-                        AuthenticationProvider authenticationProvider) {
+                        AuthenticationProvider authenticationProvider,
+                        @Value("${app.cors.allowed-origins}") String allowedOrigins) {
                 this.jwtAuthenticationFilter = jwtAuthenticationFilter;
                 this.authenticationProvider = authenticationProvider;
+                this.allowedOrigins = Arrays.stream(allowedOrigins.split(","))
+                                .map(String::trim)
+                                .filter(origin -> !origin.isEmpty())
+                                .toList();
         }
 
         @Bean
@@ -63,7 +73,7 @@ public class JwtSecurityConfig {
         @Bean
         public UrlBasedCorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration configuration = new CorsConfiguration();
-                configuration.addAllowedOrigin("http://localhost:4200"); // URL do frontend
+                configuration.setAllowedOrigins(allowedOrigins);
                 configuration.addAllowedMethod("*");
                 configuration.addAllowedHeader("*");
                 configuration.setAllowCredentials(true);

@@ -92,6 +92,21 @@ Esta API foi desenvolvida para gerenciar cursos, usuários, atividades, evidênc
 - **PostgreSQL (Produção):**
   - Configurar no `application.properties` ou `application.yml`.
 
+### Variáveis de Ambiente
+
+- `JWT_SECRET_KEY`: chave Base64 usada para assinar tokens JWT. Obrigatória para iniciar a API; em produção, não use valor compartilhado com desenvolvimento.
+- `JWT_EXPIRATION_TIME`: tempo de expiração do JWT em milissegundos. Padrão local: `3600000`.
+- `APP_CORS_ALLOWED_ORIGINS`: origens permitidas no CORS, separadas por vírgula. Exemplo local: `http://localhost:4200`.
+- `EMAIL_PASSWORD`: senha da conta SMTP usada para envio de e-mails.
+
+Exemplo:
+
+```bash
+JWT_SECRET_KEY=$(openssl rand -base64 32)
+APP_CORS_ALLOWED_ORIGINS=https://app.exemplo.com
+JWT_EXPIRATION_TIME=3600000
+```
+
 ### Dependências Importantes no `pom.xml`
 ```xml
 <dependency>
