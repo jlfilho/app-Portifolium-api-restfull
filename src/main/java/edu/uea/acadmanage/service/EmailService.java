@@ -1,8 +1,12 @@
 package edu.uea.acadmanage.service;
 
+import org.springframework.mail.MailAuthenticationException;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+
+import edu.uea.acadmanage.service.exception.ErroEnvioEmailException;
 
 @Service
 public class EmailService {
@@ -19,6 +23,7 @@ public class EmailService {
      * @param to      Endereço de e-mail do destinatário.
      * @param subject Assunto do e-mail.
      * @param text    Corpo do e-mail.
+     * @throws ErroEnvioEmailException se houver erro ao enviar o email
      */
     public void sendSimpleEmail(String to, String subject, String text) {
         try {
@@ -28,8 +33,14 @@ public class EmailService {
             message.setText(text);
             message.setFrom("no-reply@tecnocomp.uea.edu.br"); // Endereço de envio padrão
             mailSender.send(message);
+        } catch (MailAuthenticationException e) {
+            throw new ErroEnvioEmailException(
+                "Erro de autenticação no serviço de email. Verifique as credenciais configuradas.", e);
+        } catch (MailException e) {
+            throw new ErroEnvioEmailException(
+                "Erro ao enviar e-mail para " + to + ". Verifique a configuração do servidor de email.", e);
         } catch (Exception e) {
-            throw new IllegalStateException("Erro ao enviar e-mail para " + to, e);
+            throw new ErroEnvioEmailException("Erro inesperado ao enviar e-mail para " + to, e);
         }
     }
 }

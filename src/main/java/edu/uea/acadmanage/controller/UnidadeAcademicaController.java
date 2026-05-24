@@ -46,7 +46,6 @@ public class UnidadeAcademicaController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
     public ResponseEntity<Page<UnidadeAcademicaDTO>> listar(
             @RequestParam(required = false) String nome,
             @PageableDefault(size = 10, sort = "nome") Pageable pageable) {

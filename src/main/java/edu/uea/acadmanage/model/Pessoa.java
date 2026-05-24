@@ -30,7 +30,7 @@ import lombok.ToString;
 @ToString(exclude = {"usuario", "atividades"})
 @AllArgsConstructor
 @NoArgsConstructor
-public class Pessoa implements Serializable {
+public class Pessoa extends BaseAuditableEntity implements Serializable {
     private static final long serialVersionUID = 1L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -72,6 +72,14 @@ public class Pessoa implements Serializable {
         } else {
             this.cpf = cpf.replaceAll("\\D", "");
         }
+    }
+
+    /**
+     * Retorna o CPF normalizado (apenas dígitos) para uso interno.
+     * Use getCpf() para obter o CPF formatado para exibição.
+     */
+    public String getCpfNormalizado() {
+        return this.cpf;
     }
 
     @PrePersist

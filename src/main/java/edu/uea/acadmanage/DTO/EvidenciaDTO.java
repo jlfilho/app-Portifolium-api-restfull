@@ -11,5 +11,7 @@ public record EvidenciaDTO(
         String foto,
         @NotBlank(message = "A legenda não pode ser vazia.")
         String legenda,
+        @NotNull(message = "A ordem da evidência é obrigatória.")
+        Integer ordem,
         String criadoPor
 ) {}

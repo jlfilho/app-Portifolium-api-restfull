@@ -3,6 +3,7 @@ package edu.uea.acadmanage.service;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import edu.uea.acadmanage.model.RecoveryCode;
 import edu.uea.acadmanage.model.Usuario;
+import edu.uea.acadmanage.model.ActionLog;
 import edu.uea.acadmanage.repository.RecoveryCodeRepository;
 import edu.uea.acadmanage.repository.UsuarioRepository;
 import edu.uea.acadmanage.service.exception.AcessoNegadoException;
@@ -20,14 +22,20 @@ public class PasswordRecoveryService {
     private final UsuarioRepository usuarioRepository;
     private final EmailService emailService;
     private final RecoveryCodeRepository recoveryCodeRepository;
+    private final ActionLogService actionLogService;
+    private final String frontendUrl;
 
     public PasswordRecoveryService(
             UsuarioRepository usuarioRepository,
             EmailService emailService,
-            RecoveryCodeRepository recoveryCodeRepository) {
+            RecoveryCodeRepository recoveryCodeRepository,
+            ActionLogService actionLogService,
+            @Value("${app.frontend.url:http://localhost:4200}") String frontendUrl) {
         this.usuarioRepository = usuarioRepository;
         this.emailService = emailService;
         this.recoveryCodeRepository = recoveryCodeRepository;
+        this.actionLogService = actionLogService;
+        this.frontendUrl = frontendUrl;
     }
 
     @Transactional
@@ -49,13 +57,41 @@ public class PasswordRecoveryService {
 
         recoveryCodeRepository.save(codeEntity);
 
-        // Enviar email com o código
-        String subject = "Código de Recuperação";
+        // Enviar email com o código e link
+        // Se o envio falhar, a exceção será propagada e a transação será revertida
+        // (o código não será salvo no banco)
+        String subject = "Código de Recuperação de Senha";
+        
         String message = String.format(
-                "Olá, %s! Use este código para recuperar sua senha: %s\nO código expira em 30 minutos.",
+                "Olá, %s!\n\n" +
+                "Você solicitou a recuperação de senha. Use o código abaixo ou clique no link para redefinir sua senha:\n\n" +
+                "Código: %s\n\n" +
+                "O código expira em 30 minutos.\n\n" +
+                "Se você não solicitou esta recuperação, ignore este email.",
                 usuario.getPessoa().getNome(), recoveryCode);
 
-        emailService.sendSimpleEmail(email, subject, message);
+        try {
+            emailService.sendSimpleEmail(email, subject, message);
+            
+            // CAMADA 3: Action Log - Solicitação de recuperação de senha
+            actionLogService.log(
+                ActionLog.ActionType.PASSWORD_RESET_REQUEST,
+                true,
+                "Código de recuperação de senha solicitado para: " + email,
+                null,
+                null
+            );
+        } catch (Exception e) {
+            // CAMADA 3: Action Log - Falha ao enviar email
+            actionLogService.log(
+                ActionLog.ActionType.PASSWORD_RESET_REQUEST,
+                false,
+                "Falha ao enviar código de recuperação para: " + email,
+                e.getMessage(),
+                null
+            );
+            throw e;
+        }
     }
 
     @Transactional
@@ -74,6 +110,15 @@ public class PasswordRecoveryService {
 
         // Remover o código de recuperação após o uso
         recoveryCodeRepository.deleteByCode(recoveryCode);
+        
+        // CAMADA 3: Action Log - Senha redefinida com sucesso
+        actionLogService.log(
+            ActionLog.ActionType.PASSWORD_RESET_COMPLETE,
+            true,
+            "Senha redefinida com sucesso para: " + email,
+            null,
+            null
+        );
     }
 
     // Verifica o código de recuperação

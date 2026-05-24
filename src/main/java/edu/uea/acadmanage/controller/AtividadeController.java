@@ -11,7 +11,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -30,7 +33,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import edu.uea.acadmanage.DTO.AtividadeDTO;
 import edu.uea.acadmanage.DTO.AtividadeFiltroDTO;
+import edu.uea.acadmanage.DTO.RelatorioAtividadeRequestDTO;
+import edu.uea.acadmanage.model.Usuario;
 import edu.uea.acadmanage.service.AtividadeService;
+import edu.uea.acadmanage.service.RelatorioAtividadeService;
+import edu.uea.acadmanage.service.exception.ValidacaoException;
 import jakarta.validation.Valid;
 
 @RestController
@@ -38,6 +45,7 @@ import jakarta.validation.Valid;
 public class AtividadeController {
 
     private final AtividadeService atividadeService;
+    private final RelatorioAtividadeService relatorioAtividadeService;
 
     // Mapeamento de campos para ordenação (nome amigável → nome real na entidade)
     private static final Map<String, String> FIELD_MAPPING = Map.of(
@@ -52,8 +60,9 @@ public class AtividadeController {
 
     private static final Set<String> ALLOWED_SORT_FIELDS = FIELD_MAPPING.keySet();
 
-    public AtividadeController(AtividadeService atividadeService) {
+    public AtividadeController(AtividadeService atividadeService, RelatorioAtividadeService relatorioAtividadeService) {
         this.atividadeService = atividadeService;
+        this.relatorioAtividadeService = relatorioAtividadeService;
     }
 
     // Endpoint para pesquisar atividades por curso
@@ -98,7 +107,7 @@ public class AtividadeController {
 
         // Validar e mapear o campo de ordenação
         if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
-            throw new IllegalArgumentException(
+            throw new ValidacaoException(
                 "Campo de ordenação inválido: '" + sortBy + "'. " +
                 "Campos permitidos: " + String.join(", ", ALLOWED_SORT_FIELDS)
             );
@@ -122,7 +131,7 @@ public class AtividadeController {
 
     // Endpoint para salvar uma atividade
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<AtividadeDTO> salvarAtividade(@Validated @RequestBody AtividadeDTO atividadeDTO,
             @AuthenticationPrincipal UserDetails userDetails) {
 
@@ -132,7 +141,7 @@ public class AtividadeController {
 
     // Endpoint para salvar foto de capa
     @PutMapping(value = "/foto-capa/{atividadeId}", consumes = { "multipart/form-data" })
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<AtividadeDTO> salvarFotoCapa(
             @PathVariable Long atividadeId,
             @RequestParam("file") MultipartFile file,
@@ -144,7 +153,7 @@ public class AtividadeController {
 
     // Endpoint para atualizar uma atividade
     @PutMapping("/{atividadeId}")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<AtividadeDTO> atualizarAtividade(
             @PathVariable Long atividadeId,
             @Valid @RequestBody AtividadeDTO atividadeDTO,
@@ -156,7 +165,7 @@ public class AtividadeController {
 
     // Endpoint para excluir foto de capa de uma atividade
     @DeleteMapping(value = "/{atividadeId}/foto-capa")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<Void> excluirFotoCapa(@PathVariable Long atividadeId,
             @AuthenticationPrincipal UserDetails userDetails) {
         atividadeService.excluirFotoCapa(atividadeId, userDetails.getUsername());
@@ -165,11 +174,34 @@ public class AtividadeController {
 
     // Endpoint para excluir uma atividade
     @DeleteMapping("/{atividadeId}")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<Void> excluirAtividade(@PathVariable Long atividadeId,
             @AuthenticationPrincipal UserDetails userDetails) {
         atividadeService.excluirAtividade(atividadeId, userDetails.getUsername());
         return ResponseEntity.noContent().build(); // Retorna 204 No Content
+    }
+
+    @PostMapping(value = "/{atividadeId}/relatorios", produces = MediaType.APPLICATION_PDF_VALUE)
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
+    public ResponseEntity<byte[]> gerarRelatorioAtividade(
+            @PathVariable Long atividadeId,
+            @RequestBody(required = false) RelatorioAtividadeRequestDTO relatorioRequest,
+            @AuthenticationPrincipal Usuario usuarioAutenticado) {
+
+        String solicitante = usuarioAutenticado != null ? usuarioAutenticado.getUsername() : null;
+
+        String introducao = relatorioRequest != null ? relatorioRequest.introducao() : null;
+
+        byte[] relatorio = relatorioAtividadeService.gerarRelatorioAtividade(atividadeId, introducao, solicitante);
+
+        String filename = "relatorio-atividade-" + atividadeId + ".pdf";
+        ContentDisposition contentDisposition = ContentDisposition.inline().filename(filename).build();
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
+                .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(relatorio.length))
+                .body(relatorio);
     }
 
 }

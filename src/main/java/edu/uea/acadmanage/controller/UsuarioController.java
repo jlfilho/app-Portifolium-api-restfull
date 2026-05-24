@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 import edu.uea.acadmanage.DTO.AuthorityCheckDTO;
 import edu.uea.acadmanage.DTO.PasswordChangeRequest;
 import edu.uea.acadmanage.DTO.UsuarioDTO;
+import edu.uea.acadmanage.DTO.UsuarioPessoaRequestDTO;
 import edu.uea.acadmanage.service.UsuarioService;
 
 @RestController
@@ -61,13 +63,26 @@ public class UsuarioController {
 
     // Método para listar todos os usuários com paginação e filtro por nome
     @GetMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<Page<UsuarioDTO>> listarUsuarios(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "pessoa.nome") String sortBy,
             @RequestParam(defaultValue = "ASC") String direction,
             @RequestParam(required = false) String nome) {
+        
+        // Mapear campos do frontend para campos da entidade
+        // Se o frontend enviar "nome", mapear para "pessoa.nome"
+        if ("nome".equals(sortBy)) {
+            sortBy = "pessoa.nome";
+        } else if ("email".equals(sortBy)) {
+            sortBy = "email";
+        } else if ("cpf".equals(sortBy)) {
+            sortBy = "pessoa.cpf";
+        } else if ("id".equals(sortBy)) {
+            sortBy = "id";
+        }
+        // Se já for "pessoa.nome" ou outro campo válido, manter como está
         
         Sort.Direction sortDirection = direction.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
@@ -82,14 +97,14 @@ public class UsuarioController {
 
     // Método para buscar um único usuário por ID
     @GetMapping("/{usuarioId}")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<UsuarioDTO> getUsuarioById(@PathVariable Long usuarioId) {
         UsuarioDTO usuario = usuarioService.getUsuarioById(usuarioId);
         return ResponseEntity.ok(usuario);
     }
 
     @GetMapping("/email")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<UsuarioDTO> getUsuarioByEmail(@RequestParam String email) {
         UsuarioDTO usuario = usuarioService.getUsuarioByEmailAsDTO(email);
         return ResponseEntity.ok(usuario);
@@ -102,11 +117,21 @@ public class UsuarioController {
         return ResponseEntity.status(201).body(novoUsuario); // 201 Created
     }
 
-    @PutMapping("/{usuarioId}")
+    @PostMapping("/pessoa")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<UsuarioDTO> atualizarUsuario(@PathVariable Long usuarioId, 
-    @Validated @RequestBody UsuarioDTO usuario) {
-        UsuarioDTO novoUsuario = usuarioService.update(usuarioId, usuario);
+    public ResponseEntity<UsuarioDTO> criarUsuarioParaPessoa(
+            @Validated @RequestBody UsuarioPessoaRequestDTO request) {
+        UsuarioDTO novoUsuario = usuarioService.criarUsuarioParaPessoa(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(novoUsuario);
+    }
+
+    @PutMapping("/{usuarioId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UsuarioDTO> atualizarUsuario(
+            @PathVariable Long usuarioId, 
+            @Validated @RequestBody UsuarioDTO usuario,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        UsuarioDTO novoUsuario = usuarioService.update(usuarioId, usuario, userDetails.getUsername());
         return ResponseEntity.ok(novoUsuario);  
     }
 

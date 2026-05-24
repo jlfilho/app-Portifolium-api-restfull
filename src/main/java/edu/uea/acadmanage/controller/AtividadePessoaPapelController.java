@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import edu.uea.acadmanage.DTO.PessoaPapelDTO;
 import edu.uea.acadmanage.model.AtividadePessoaId;
 import edu.uea.acadmanage.model.AtividadePessoaPapel;
 import edu.uea.acadmanage.model.Papel;
@@ -58,9 +59,8 @@ public class AtividadePessoaPapelController {
 
     // Método para listar as pessoas associadas a uma atividade
     @GetMapping("/{atividadeId}/pessoas")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
-    public ResponseEntity<List<AtividadePessoaPapel>> listarPessoasPorAtividade(@PathVariable Long atividadeId) {
-        List<AtividadePessoaPapel> pessoas = atividadePessoaPapelService.listarPorAtividade(atividadeId);
+    public ResponseEntity<List<PessoaPapelDTO>> listarPessoasPorAtividade(@PathVariable Long atividadeId) {
+        List<PessoaPapelDTO> pessoas = atividadePessoaPapelService.listarPorAtividade(atividadeId);
         return ResponseEntity.ok(pessoas); // 200 OK
     }
     

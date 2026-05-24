@@ -3,6 +3,7 @@ package edu.uea.acadmanage.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -39,11 +40,13 @@ public class JwtSecurityConfig {
                                                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**",
                                                                 "/v3/api-docs.yaml", "/swagger-resources/**")
                                                 .permitAll()
-                                                .requestMatchers("/api/auth/login/**", "/logout**",
+                                                .requestMatchers("/api/auth/login/**", "/api/auth/logout/**", "/logout**",
                                                                 "/api/atividades/**", "/api/cursos/**",
                                                                 "/api/categorias/**", "/api/evidencias/**",
                                                                 "/api/evidencias/atividade/**",
                                                                 "/api/categorias/curso/**")
+                                                .permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/api/unidades-academicas/**")
                                                 .permitAll()
                                                 .requestMatchers("/api/recovery/generate/**",
                                                                 "/api/recovery/reset-password/**")
@@ -51,6 +54,9 @@ public class JwtSecurityConfig {
                                                 .requestMatchers("/css/**", "/js/**", "/images/**", "/api/files/**")
                                                 .permitAll()
                                                 .requestMatchers("/h2-console/**").permitAll()
+                                                // Endpoints do Actuator para healthcheck e monitoramento
+                                                .requestMatchers("/actuator/**")
+                                                .permitAll()
                                                 .anyRequest().authenticated())
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
