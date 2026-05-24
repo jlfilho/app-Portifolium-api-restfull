@@ -25,17 +25,21 @@ logs/
 *.pid
 *.port
 
-# Docker
-Dockerfile*
-docker-compose*.yml
+# Docker (manter Dockerfile.production e docker-compose.production.yml)
+Dockerfile.simple
+docker-compose.yml
+docker-compose.staging.yml
 .dockerignore
 
-# Documentation
+# Documentation (manter apenas alguns arquivos essenciais)
 README.md
 *.md
+!ENV_VARIABLES.md
 
-# Scripts
+# Scripts (manter scripts de build)
 scripts/
+!scripts/build-production.sh
+!scripts/deploy-production.sh
 monitoring/
 
 # GitHub Actions
@@ -45,3 +49,4 @@ monitoring/
 .env
 .env.local
 .env.production
+# Manter ENV_VARIABLES.md para referência

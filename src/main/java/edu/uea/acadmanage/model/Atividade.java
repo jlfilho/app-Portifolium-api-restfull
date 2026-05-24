@@ -20,6 +20,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
+import jakarta.validation.constraints.AssertTrue;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,12 +29,12 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Atividade implements Serializable {
+public class Atividade extends BaseAuditableEntity implements Serializable {
     private static final long serialVersionUID = 1L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String nome;
     @Column(length = 1000)
     private String objetivo;
@@ -41,9 +42,21 @@ public class Atividade implements Serializable {
     private String publicoAlvo;
     @Column(nullable = false)
     private Boolean statusPublicacao;
+    
+    @Column(name = "foto_capa", columnDefinition = "VARCHAR(500)")
     private String fotoCapa;
     @Column(nullable = false)
-    private LocalDate dataRealizacao;
+    private LocalDate dataRealizacao; // Data de início (ou única data)
+    
+    private LocalDate dataFim; // Data final (opcional - null = evento em data única)
+
+    @AssertTrue(message = "A data final deve ser posterior ou igual à data de realização")
+    private boolean isDataFimValida() {
+        if (dataFim == null) {
+            return true; // dataFim é opcional
+        }
+        return dataFim.isAfter(dataRealizacao) || dataFim.isEqual(dataRealizacao);
+    }
 
     @JsonIgnoreProperties("atividades")
     @ManyToOne

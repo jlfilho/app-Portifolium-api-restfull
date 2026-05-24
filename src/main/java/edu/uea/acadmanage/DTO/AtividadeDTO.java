@@ -23,6 +23,7 @@ public record AtividadeDTO(
         String coordenador,
         @NotNull(message = "A data de realização deve ser informada.")
         LocalDate dataRealizacao,
+        LocalDate dataFim, // Data final (opcional - null = evento em data única)
         @JsonIgnoreProperties({"atividades","usuarios"})
         @NotNull(message = "O ID do curso deve ser informado.")
         Curso curso,

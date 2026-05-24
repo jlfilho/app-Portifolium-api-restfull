@@ -23,6 +23,8 @@ import edu.uea.acadmanage.repository.AtividadeRepository;
 import edu.uea.acadmanage.repository.PessoaRepository;
 import edu.uea.acadmanage.service.exception.AcessoNegadoException;
 import edu.uea.acadmanage.service.exception.ConflitoException;
+import edu.uea.acadmanage.service.exception.ErroProcessamentoArquivoException;
+import edu.uea.acadmanage.service.exception.ValidacaoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
 
 @Service
@@ -120,7 +122,7 @@ public class AtividadePessoaPapelService {
 
     public List<AtividadePessoaPapel> importarAssociacoesCsv(Long atividadeId, MultipartFile arquivo, String username) {
         if (arquivo == null || arquivo.isEmpty()) {
-            throw new IllegalArgumentException("Arquivo CSV não informado.");
+            throw new ValidacaoException("Arquivo CSV não informado.");
         }
 
         Atividade atividade = atividadeRepository.findById(atividadeId)
@@ -155,7 +157,7 @@ public class AtividadePessoaPapelService {
 
                 String[] partes = dividirLinhaCsv(texto);
                 if (partes.length < 3) {
-                    throw new IllegalArgumentException("Linha inválida no CSV: " + texto);
+                    throw new ValidacaoException("Linha inválida no CSV: " + texto);
                 }
 
                 String nome = partes[0].trim();
@@ -163,7 +165,7 @@ public class AtividadePessoaPapelService {
                 String papelTexto = partes[2].trim();
 
                 if (nome.isEmpty() || cpf.isEmpty() || papelTexto.isEmpty()) {
-                    throw new IllegalArgumentException("Dados incompletos no CSV: " + texto);
+                    throw new ValidacaoException("Dados incompletos no CSV: " + texto);
                 }
 
                 Papel papel = parsePapel(papelTexto);
@@ -184,7 +186,7 @@ public class AtividadePessoaPapelService {
                 associacoesCriadas.add(papelRepository.save(associacao));
             }
         } catch (IOException e) {
-            throw new IllegalArgumentException("Não foi possível ler o arquivo CSV.", e);
+            throw new ErroProcessamentoArquivoException("Não foi possível ler o arquivo CSV.", e);
         }
 
         return associacoesCriadas;
@@ -205,7 +207,7 @@ public class AtividadePessoaPapelService {
             String valores = List.of(Papel.values()).stream()
                     .map(Enum::name)
                     .collect(Collectors.joining(", "));
-            throw new IllegalArgumentException("Papel inválido: " + texto + ". Valores permitidos: " + valores);
+            throw new ValidacaoException("Papel inválido: " + texto + ". Valores permitidos: " + valores);
         }
     }
 

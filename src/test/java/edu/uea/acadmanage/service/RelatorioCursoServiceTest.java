@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -13,8 +12,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,10 +34,14 @@ import edu.uea.acadmanage.model.Categoria;
 import edu.uea.acadmanage.model.Curso;
 import edu.uea.acadmanage.model.Evidencia;
 import edu.uea.acadmanage.model.FonteFinanciadora;
+import edu.uea.acadmanage.model.Role;
 import edu.uea.acadmanage.model.TipoCurso;
+import edu.uea.acadmanage.model.Usuario;
+import edu.uea.acadmanage.repository.AtividadePessoaPapelRepository;
 import edu.uea.acadmanage.repository.AtividadeRepository;
 import edu.uea.acadmanage.repository.CursoRepository;
 import edu.uea.acadmanage.repository.EvidenciaRepository;
+import edu.uea.acadmanage.repository.UsuarioRepository;
 
 @ExtendWith(MockitoExtension.class)
 class RelatorioCursoServiceTest {
@@ -51,7 +56,13 @@ class RelatorioCursoServiceTest {
     private EvidenciaRepository evidenciaRepository;
 
     @Mock
+    private AtividadePessoaPapelRepository atividadePessoaPapelRepository;
+
+    @Mock
     private CursoService cursoService;
+
+    @Mock
+    private UsuarioRepository usuarioRepository;
 
     @TempDir
     Path tempDir;
@@ -69,7 +80,9 @@ class RelatorioCursoServiceTest {
                 cursoRepository,
                 atividadeRepository,
                 evidenciaRepository,
+                atividadePessoaPapelRepository,
                 cursoService,
+                usuarioRepository,
                 templateEngine,
                 properties);
     }
@@ -112,12 +125,27 @@ class RelatorioCursoServiceTest {
         LocalDate dataFim = LocalDate.of(2024, 7, 1);
         String solicitante = "usuario@teste.com";
 
+        // Criar usuário mock com role ADMINISTRADOR
+        Usuario usuario = new Usuario();
+        usuario.setId(1L);
+        usuario.setEmail(solicitante);
+        Role roleAdmin = new Role();
+        roleAdmin.setId(1L);
+        roleAdmin.setNome("ROLE_ADMINISTRADOR");
+        Set<Role> roles = new HashSet<>();
+        roles.add(roleAdmin);
+        usuario.setRoles(roles);
+        
         when(cursoRepository.findById(curso.getId())).thenReturn(Optional.of(curso));
-        when(cursoService.verificarAcessoAoCurso(solicitante, curso.getId())).thenReturn(true);
-        when(atividadeRepository.findForRelatorio(eq(curso.getId()), eq(dataInicio), eq(dataFim), eq(categoriasFiltro)))
+        when(usuarioRepository.findByEmail(solicitante)).thenReturn(Optional.of(usuario));
+        when(atividadeRepository.findByCursoId(curso.getId()))
                 .thenReturn(List.of(atividade));
         when(evidenciaRepository.findByAtividadeIdsOrderByAtividadeAndOrdem(anyList()))
                 .thenReturn(List.of(evidencia));
+        // Mock para contar participantes da atividade
+        Object[] resultadoParticipantes = new Object[]{atividade.getId(), 5L};
+        when(atividadePessoaPapelRepository.countParticipantesByAtividadeIds(anyList(), anyList()))
+                .thenReturn(List.<Object[]>of(resultadoParticipantes));
 
         Path evidenciasDir = tempDir.resolve("evidencias");
         Files.createDirectories(evidenciasDir);

@@ -87,7 +87,7 @@ class UnidadeAcademicaControllerIT {
 
     @Test
     void deveCriarAtualizarEExcluirUnidadeAcademica() {
-        String nomeOriginal = "Instituto de Ciências Aplicadas";
+        String nomeOriginal = "Instituto de Ciências Aplicadas " + System.currentTimeMillis();
 
         Integer unidadeId = given()
             .port(port)

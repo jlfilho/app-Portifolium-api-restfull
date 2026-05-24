@@ -26,7 +26,7 @@ public interface CursoRepository extends JpaRepository<Curso, Long> {
     @Query("""
             SELECT c FROM Curso c
             WHERE (:ativo IS NULL OR c.ativo = :ativo)
-              AND (:nome IS NULL OR LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%')))
+              AND (:nome IS NULL OR :nome = '' OR LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%')))
               AND (:tipoId IS NULL OR c.tipoCurso.id = :tipoId)
               AND (:unidadeId IS NULL OR c.unidadeAcademica.id = :unidadeId)
             """)
@@ -37,10 +37,11 @@ public interface CursoRepository extends JpaRepository<Curso, Long> {
             Pageable pageable);
 
     @Query("""
-            SELECT c FROM Curso c JOIN c.usuarios u
+            SELECT DISTINCT c FROM Curso c
+            JOIN c.usuarios u
             WHERE u.id = :usuarioId
               AND (:ativo IS NULL OR c.ativo = :ativo)
-              AND (:nome IS NULL OR LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%')))
+              AND (:nome IS NULL OR :nome = '' OR LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%')))
               AND (:tipoId IS NULL OR c.tipoCurso.id = :tipoId)
               AND (:unidadeId IS NULL OR c.unidadeAcademica.id = :unidadeId)
             """)

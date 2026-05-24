@@ -74,7 +74,7 @@ public class CursoController {
 
     // Endpoint para buscar todos os usuários e suas permissões associados a um curso
     @GetMapping("/permissoes/{cursoId}")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<List<PermissaoCursoDTO>> getAllUsuarioByCurso(@PathVariable Long cursoId, @AuthenticationPrincipal Usuario userDetails) {
         Usuario usuario = usuarioService.getUsuarioByEmail(userDetails.getUsername());
         List<PermissaoCursoDTO> permissaoCursoDTO = cursoService.getAllUsuarioByCurso(cursoId, usuario.getEmail());
@@ -84,7 +84,7 @@ public class CursoController {
     
     // Endpoint para buscar todos os cursos associados a um usuário com paginação e filtros
     @GetMapping("/usuarios")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('GERENTE') or hasRole('SECRETARIO') or hasRole('COORDENADOR_ATIVIDADE')")
     public ResponseEntity<Page<CursoDTO>> getCursosByUsuarioId(
             @AuthenticationPrincipal Usuario userDetails,
             @RequestParam(required = false) Boolean ativo,

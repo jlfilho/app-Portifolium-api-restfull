@@ -381,7 +381,7 @@ class AtividadePessoaPapelControllerIT {
     @Test
     void deveRemoverPessoaDaAtividade() {
         // Primeiro associar uma pessoa para depois remover
-        Long atividadeId = 15L; // ID de uma atividade do data.sql
+        Long atividadeId = 15L; // ID de uma atividade do data-test.sql (existe)
         Long pessoaId = 1L;
         
         // Verificar se já está associada, se não, associar

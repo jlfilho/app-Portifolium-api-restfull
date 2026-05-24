@@ -1,8 +1,10 @@
 package edu.uea.acadmanage.security;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,29 +17,43 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableMethodSecurity
 public class BasicSecurityConfig {
 
+    @Value("${app.security.allow-h2-console:false}")
+    private boolean allowH2Console;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-        .csrf(csrf -> csrf.disable()) // Desabilita CSRF (caso necessário)
-            // Desabilita proteção de frames para o H2 Console
+            .csrf(csrf -> csrf.disable())
             .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
-            .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/login", "/logout","/api/atividades/**", "/api/cursos/**", "/api/categorias/**", "/api/evidencias/**", "/api/evidencias/atividade/**").permitAll() // Permite acesso a login e logout sem autenticação
-            .requestMatchers("/api/recovery/generate/**", "/api/recovery/reset-password/**").permitAll()
-                .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
-                .requestMatchers("/h2-console/**").permitAll()
-                .anyRequest().authenticated() // Todas as outras requisições requerem autenticação
-            )
-            .httpBasic(Customizer.withDefaults()) // Habilita autenticação básica
+            .authorizeHttpRequests(auth -> {
+                auth.requestMatchers("/login", "/logout").permitAll();
+                auth.requestMatchers("/api/recovery/generate/**", "/api/recovery/reset-password/**").permitAll();
+                auth.requestMatchers("/css/**", "/js/**", "/images/**", "/api/files/**").permitAll();
+                auth.requestMatchers(HttpMethod.GET,
+                    "/api/atividades/**",
+                    "/api/cursos/**",
+                    "/api/categorias/**",
+                    "/api/evidencias/**",
+                    "/api/unidades-academicas/**").permitAll();
+                auth.requestMatchers("/actuator/health", "/actuator/health/**").permitAll();
+                auth.requestMatchers("/actuator/**").authenticated();
+                if (allowH2Console) {
+                    auth.requestMatchers("/h2-console/**").permitAll();
+                } else {
+                    auth.requestMatchers("/h2-console/**").denyAll();
+                }
+                auth.anyRequest().authenticated();
+            })
+            .httpBasic(Customizer.withDefaults())
             .formLogin(form -> form
-                .loginPage("/login") // Página de login personalizada
-                .defaultSuccessUrl("/swagger-ui/index.html", true) // Redireciona para o Swagger após login
-                .permitAll() // Permite acesso à página de login para todos
+                .loginPage("/login")
+                .defaultSuccessUrl("/swagger-ui/index.html", true)
+                .permitAll()
             )
             .logout(logout -> logout
-                .logoutUrl("/logout") // URL de logout
-                .logoutSuccessUrl("/login?logout") // Redireciona após logout
-                .permitAll() // Permite logout para todos
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/login?logout")
+                .permitAll()
             );
 
         return http.build();

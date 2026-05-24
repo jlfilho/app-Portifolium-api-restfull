@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TipoCurso implements Serializable {
+public class TipoCurso extends BaseAuditableEntity implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id

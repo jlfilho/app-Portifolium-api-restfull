@@ -28,7 +28,13 @@ import edu.uea.acadmanage.model.Evidencia;
 import edu.uea.acadmanage.repository.AtividadeRepository;
 import edu.uea.acadmanage.repository.EvidenciaRepository;
 import edu.uea.acadmanage.service.exception.AcessoNegadoException;
+import edu.uea.acadmanage.service.exception.ArquivoInvalidoException;
+import edu.uea.acadmanage.service.exception.ErroProcessamentoArquivoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
+import edu.uea.acadmanage.service.exception.ValidacaoException;
+import edu.uea.acadmanage.model.AuditLog;
+import edu.uea.acadmanage.model.ActionLog;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class EvidenciaService {
@@ -36,6 +42,10 @@ public class EvidenciaService {
     private final EvidenciaRepository evidenciaRepository;
     private final AtividadeRepository atividadeRepository;
     private final CursoService cursoService;
+    private final AtividadeAutorizacaoService atividadeAutorizacaoService;
+    private final AuditLogService auditLogService;
+    private final ActionLogService actionLogService;
+    private final ObjectMapper objectMapper;
     private final Path fileStorageLocation;
     private final String baseStorageLocation;
 
@@ -43,10 +53,18 @@ public class EvidenciaService {
             EvidenciaRepository evidenciaRepository,
             AtividadeRepository atividadeRepository,
             CursoService cursoService,
+            AtividadeAutorizacaoService atividadeAutorizacaoService,
+            AuditLogService auditLogService,
+            ActionLogService actionLogService,
+            ObjectMapper objectMapper,
             FileStorageProperties fileStorageProperties) throws IOException {
         this.evidenciaRepository = evidenciaRepository;
         this.atividadeRepository = atividadeRepository;
         this.cursoService = cursoService;
+        this.atividadeAutorizacaoService = atividadeAutorizacaoService;
+        this.auditLogService = auditLogService;
+        this.actionLogService = actionLogService;
+        this.objectMapper = objectMapper;
         this.baseStorageLocation = "/evidencias";
         this.fileStorageLocation = Paths.get(fileStorageProperties.getStorageLocation()+this.baseStorageLocation).toAbsolutePath().normalize();
         Files.createDirectories(this.fileStorageLocation);
@@ -107,21 +125,46 @@ public class EvidenciaService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Evidência não encontrada com o ID: " + evidenciaId));
 
-        // Verificar se a atividade associada existe
-        Atividade atividade = atividadeRepository.findById(evidenciaExistente.getAtividade().getId())
-                .orElseThrow(() -> new RecursoNaoEncontradoException(
-                        "Atividade não encontrada com o ID: " + evidenciaExistente.getAtividade().getId()));
+        // Capturar dados para audit log antes de deletar
+        String evidenciaLegenda = evidenciaExistente.getLegenda();
+        Long evidenciaIdValue = evidenciaExistente.getId();
+        String evidenciaUrlFoto = evidenciaExistente.getUrlFoto();
 
-        // Verificar se o usuário tem permissão para excluir a evidência
-        if (!cursoService.verificarAcessoAoCurso(username, atividade.getCurso().getId())) {
+        // Verificar se a atividade associada existe e obter o ID da atividade
+        Long atividadeId = evidenciaExistente.getAtividade().getId();
+        Atividade atividade = atividadeRepository.findById(atividadeId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Atividade não encontrada com o ID: " + atividadeId));
+
+        // Verificar se o usuário tem permissão para gerenciar evidências desta atividade
+        if (!atividadeAutorizacaoService.podeGerenciarEvidencias(username, atividadeId)) {
             throw new AcessoNegadoException(
-                    "Usuário não tem permissão para excluir a evidência no curso: " + atividade.getCurso().getId());
+                    "Usuário não tem permissão para gerenciar evidências desta atividade: " + atividadeId);
         }
 
         // Excluir a evidência
         evidenciaRepository.deleteById(evidenciaId);
         excluirImagem(evidenciaExistente.getUrlFoto());
         compactarOrdem(atividade.getId());
+
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.DELETE,
+            "Evidencia",
+            evidenciaIdValue,
+            evidenciaExistente,
+            null,
+            "Evidência excluída: " + evidenciaLegenda
+        );
+
+        // CAMADA 3: Action Log - Exclusão de arquivo
+        actionLogService.log(
+            ActionLog.ActionType.FILE_DELETE,
+            true,
+            "Arquivo de evidência excluído: " + evidenciaUrlFoto,
+            null,
+            null
+        );
     }
 
     // Método para salvar uma evidência
@@ -136,10 +179,10 @@ public class EvidenciaService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Atividade não encontrada com o ID: " + atividadeId));
 
-        // Verificar se o usuário tem permissão para salvar a evidência
-        if (!cursoService.verificarAcessoAoCurso(username, atividade.getCurso().getId())) {
+        // Verificar se o usuário tem permissão para gerenciar evidências desta atividade
+        if (!atividadeAutorizacaoService.podeGerenciarEvidencias(username, atividadeId)) {
             throw new AcessoNegadoException(
-                    "Usuário não tem permissão para salvar a evidência no curso: " + atividade.getCurso().getId());
+                    "Usuário não tem permissão para gerenciar evidências desta atividade: " + atividadeId);
         }
 
         // salva a foto no disco
@@ -155,6 +198,25 @@ public class EvidenciaService {
         // Salvar no banco
         Evidencia evidenciaSalva = evidenciaRepository.save(evidencia);
 
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.CREATE,
+            "Evidencia",
+            evidenciaSalva.getId(),
+            null,
+            evidenciaSalva,
+            "Evidência criada: " + evidenciaSalva.getLegenda()
+        );
+
+        // CAMADA 3: Action Log - Upload de arquivo
+        actionLogService.log(
+            ActionLog.ActionType.FILE_UPLOAD,
+            true,
+            "Arquivo de evidência enviado: " + uniqueFileName + " para atividade ID: " + atividadeId,
+            null,
+            null
+        );
+
         // Retornar o DTO da evidência salva
         return toEvidenciaDTO(evidenciaSalva);
     }
@@ -168,11 +230,15 @@ public class EvidenciaService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Evidência não encontrada com o ID: " + evidenciaId));
 
-        // Verificar se o usuário tem permissão para alterar a evidência
-        if (!cursoService.verificarAcessoAoCurso(username, evidenciaExistente.getAtividade().getCurso().getId())) {
+        // Capturar estado antigo para audit log
+        Evidencia oldState = copyEvidenciaForAudit(evidenciaExistente);
+        String oldUrlFoto = evidenciaExistente.getUrlFoto();
+
+        // Buscar a atividade da evidência e verificar permissão
+        Long atividadeId = evidenciaExistente.getAtividade().getId();
+        if (!atividadeAutorizacaoService.podeGerenciarEvidencias(username, atividadeId)) {
             throw new AcessoNegadoException(
-                    "Usuário não tem permissão para alterar a evidência no curso: "
-                            + evidenciaExistente.getAtividade().getCurso().getId());
+                    "Usuário não tem permissão para gerenciar evidências desta atividade: " + atividadeId);
         }
 
         // Atualizar os dados da evidência
@@ -180,7 +246,7 @@ public class EvidenciaService {
 
         if (file != null) {
             if (!excluirImagem(evidenciaExistente.getUrlFoto())) {
-                throw new IllegalArgumentException("O arquivo anterior não pode ser removido.");
+                throw new ErroProcessamentoArquivoException("O arquivo anterior não pode ser removido.");
             }
             evidenciaExistente.setUrlFoto(salvarImagem(evidenciaExistente.getAtividade(), file));
             evidenciaExistente.setCriadoPor(username);
@@ -189,6 +255,27 @@ public class EvidenciaService {
         // Salvar a evidência atualizada
         Evidencia evidenciaAtualizada = evidenciaRepository.save(evidenciaExistente);
 
+        // CAMADA 2: Audit Log
+        auditLogService.log(
+            AuditLog.AuditAction.UPDATE,
+            "Evidencia",
+            evidenciaAtualizada.getId(),
+            oldState,
+            evidenciaAtualizada,
+            "Evidência atualizada: " + evidenciaAtualizada.getLegenda()
+        );
+
+        // CAMADA 3: Action Log - Upload de arquivo (se arquivo foi substituído)
+        if (file != null && !evidenciaAtualizada.getUrlFoto().equals(oldUrlFoto)) {
+            actionLogService.log(
+                ActionLog.ActionType.FILE_UPLOAD,
+                true,
+                "Arquivo de evidência atualizado: " + evidenciaAtualizada.getUrlFoto(),
+                null,
+                null
+            );
+        }
+
         // Retornar o DTO da evidência atualizada
         return toEvidenciaDTO(evidenciaAtualizada);
     }
@@ -196,15 +283,14 @@ public class EvidenciaService {
     @Transactional
     public List<EvidenciaDTO> atualizarOrdemEvidencias(Long atividadeId, List<EvidenciaOrdemDTO> ordens, String username) {
         if (ordens == null || ordens.isEmpty()) {
-            throw new IllegalArgumentException("A lista de ordens não pode ser vazia.");
+            throw new ValidacaoException("A lista de ordens não pode ser vazia.");
         }
 
-        Atividade atividade = atividadeRepository.findById(atividadeId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Atividade não encontrada com o ID: " + atividadeId));
-
-        if (!cursoService.verificarAcessoAoCurso(username, atividade.getCurso().getId())) {
+        // Verificar se o usuário tem permissão para gerenciar evidências desta atividade
+        // (o método podeGerenciarEvidencias já verifica se a atividade existe)
+        if (!atividadeAutorizacaoService.podeGerenciarEvidencias(username, atividadeId)) {
             throw new AcessoNegadoException(
-                    "Usuário não tem permissão para reordenar evidências no curso: " + atividade.getCurso().getId());
+                    "Usuário não tem permissão para gerenciar evidências desta atividade: " + atividadeId);
         }
 
         List<Evidencia> evidencias = evidenciaRepository.findByAtividadeIdOrderByOrdemAsc(atividadeId);
@@ -216,7 +302,7 @@ public class EvidenciaService {
                 .collect(Collectors.toMap(Evidencia::getId, evidencia -> evidencia));
 
         if (ordens.size() != evidenciasPorId.size()) {
-            throw new IllegalArgumentException("A lista de ordens deve conter todas as evidências da atividade.");
+            throw new ValidacaoException("A lista de ordens deve conter todas as evidências da atividade.");
         }
 
         Set<Long> idsProcessados = new HashSet<>();
@@ -224,10 +310,10 @@ public class EvidenciaService {
 
         ordens.forEach(ordemDTO -> {
             if (!idsProcessados.add(ordemDTO.evidenciaId())) {
-                throw new IllegalArgumentException("ID de evidência duplicado na requisição: " + ordemDTO.evidenciaId());
+                throw new ValidacaoException("ID de evidência duplicado na requisição: " + ordemDTO.evidenciaId());
             }
             if (!ordensProcessadas.add(ordemDTO.ordem())) {
-                throw new IllegalArgumentException("Valor de ordem duplicado na requisição: " + ordemDTO.ordem());
+                throw new ValidacaoException("Valor de ordem duplicado na requisição: " + ordemDTO.ordem());
             }
 
             Evidencia evidencia = evidenciasPorId.get(ordemDTO.evidenciaId());
@@ -250,6 +336,25 @@ public class EvidenciaService {
                 .map(Evidencia::getAtividade) // Recupera a atividade associada
                 .orElseThrow(
                         () -> new RecursoNaoEncontradoException("Evidência não encontrada com ID: " + evidenciaId));
+    }
+
+    // Método auxiliar para copiar evidência para audit log
+    private Evidencia copyEvidenciaForAudit(Evidencia evidencia) {
+        try {
+            // Usar ObjectMapper para criar uma cópia profunda do objeto
+            String json = objectMapper.writeValueAsString(evidencia);
+            return objectMapper.readValue(json, Evidencia.class);
+        } catch (Exception e) {
+            // Se falhar a cópia profunda, criar manualmente uma cópia superficial
+            Evidencia copy = new Evidencia();
+            copy.setId(evidencia.getId());
+            copy.setUrlFoto(evidencia.getUrlFoto());
+            copy.setLegenda(evidencia.getLegenda());
+            copy.setOrdem(evidencia.getOrdem());
+            copy.setCriadoPor(evidencia.getCriadoPor());
+            copy.setAtividade(evidencia.getAtividade());
+            return copy;
+        }
     }
 
     private EvidenciaDTO toEvidenciaDTO(Evidencia evidencia) {
@@ -286,7 +391,7 @@ public class EvidenciaService {
         // Verificar se o arquivo enviado é uma imagem JPG ou PNG
         Set<String> allowedContentTypes = Set.of("image/jpg", "image/jpeg", "image/png");
         if (!allowedContentTypes.contains(Objects.requireNonNullElse(file.getContentType(), "").toLowerCase())) {
-            throw new IllegalArgumentException("O arquivo enviado deve ser um JPG, JPEG ou PNG válido.");
+            throw new ArquivoInvalidoException("O arquivo enviado deve ser um JPG, JPEG ou PNG válido.");
         }
 
         return true;
@@ -299,7 +404,7 @@ public class EvidenciaService {
         // Salvar a foto no diretório
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null) {
-            throw new IllegalArgumentException("O arquivo enviado não possui um nome válido.");
+            throw new ArquivoInvalidoException("O arquivo enviado não possui um nome válido.");
         }
         String fileExtension = originalFilename.substring(originalFilename.lastIndexOf('.'));
         String uniqueFileName = atividade.getCurso().getId() + "/" + atividade.getId() + "/"

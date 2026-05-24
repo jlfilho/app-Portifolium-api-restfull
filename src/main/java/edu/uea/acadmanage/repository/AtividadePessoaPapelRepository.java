@@ -43,5 +43,31 @@ public interface AtividadePessoaPapelRepository extends JpaRepository<AtividadeP
         """)
     List<Object[]> countParticipantesByAtividadeIds(@Param("atividadeIds") List<Long> atividadeIds,
                                                    @Param("papeis") List<Papel> papeis);
+
+    /**
+     * Conta o número de participantes de uma atividade específica com os papéis informados.
+     * 
+     * @param atividadeId O ID da atividade.
+     * @param papeis Lista de papéis a serem contados (PARTICIPANTE, BOLSISTA, VOLUNTARIO, COORDENADOR).
+     * @return O número de participantes.
+     */
+    @Query("""
+        SELECT COUNT(ap)
+        FROM AtividadePessoaPapel ap
+        WHERE ap.atividade.id = :atividadeId
+          AND ap.papel IN :papeis
+        """)
+    Long countByAtividadeIdAndPapelIn(@Param("atividadeId") Long atividadeId,
+                                      @Param("papeis") List<Papel> papeis);
+
+    /**
+     * Verifica se uma pessoa é coordenadora de uma atividade específica.
+     * 
+     * @param atividade A atividade a ser verificada.
+     * @param pessoa A pessoa a ser verificada.
+     * @param papel O papel a ser verificado (deve ser Papel.COORDENADOR).
+     * @return true se a associação existir, false caso contrário.
+     */
+    boolean existsByAtividadeAndPessoaAndPapel(Atividade atividade, Pessoa pessoa, Papel papel);
 }
 
