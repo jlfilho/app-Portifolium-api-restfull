@@ -86,11 +86,18 @@ Esta API foi desenvolvida para gerenciar cursos, usuários, atividades, evidênc
 ### Configuração de Banco de Dados
 
 - **H2 (Desenvolvimento):**
-  - URL: `jdbc:h2:mem:acadmanage`
+  - Arquivo: `application.properties`
+  - URL: `jdbc:h2:file:./data/testdb`
   - Usuário: `sa`
-  - Senha: `senha`
+  - Senha: (vazio)
+  - Hibernate: `spring.jpa.hibernate.ddl-auto=create-drop`
+  - Carga inicial: `spring.sql.init.mode=always`
 - **PostgreSQL (Produção):**
-  - Configurar no `application.properties` ou `application.yml`.
+  - Arquivo: `application-docker.properties`
+  - Hibernate padrão: `spring.jpa.hibernate.ddl-auto=validate`
+  - Carga inicial padrão: `spring.sql.init.mode=never`
+  - SQL em log desabilitado por padrão: `spring.jpa.show-sql=false`
+  - Sobrescrever por variáveis de ambiente somente quando necessário: `SPRING_JPA_HIBERNATE_DDL_AUTO`, `SPRING_SQL_INIT_MODE`, `SPRING_JPA_SHOW_SQL`.
 
 ### Dependências Importantes no `pom.xml`
 ```xml
