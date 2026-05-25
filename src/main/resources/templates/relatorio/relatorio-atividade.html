@@ -1,0 +1,100 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="author" content="AcadManage"/>
+  <meta name="title" th:attr="content=${tituloPagina}"/>
+  <title th:text="${tituloPagina}">Relatório de Atividade</title>
+  <link rel="stylesheet" href="print.css"/>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 16mm;
+      @top-center { content: element(report-header); }
+      @bottom-center { content: element(report-footer); }
+    }
+    header {
+      position: running(report-header);
+      height: 0;
+      visibility: hidden;
+      margin: 0;
+      padding: 0;
+    }
+    footer {
+      position: running(report-footer);
+      font-size: 10px;
+      color: #666;
+      text-align: center;
+      height: 0;
+      visibility: hidden;
+      margin: 0;
+      padding: 0;
+    }
+    .pagenum::before { content: counter(page); }
+    .pagetotal::before { content: counter(pages); }
+  </style>
+</head>
+<body>
+  <th:block th:fragment="report-header-content">
+    <div class="header-title">
+      <h1 th:text="${tituloCurso}">Relatório de Atividade</h1>
+      <h2 th:text="${tituloPagina}">Relatório de Atividade</h2>
+    </div>
+    <div class="course-highlight">
+      <div class="course-details">
+        <p th:if="${unidadeAcademica}"><strong>Unidade acadêmica:</strong> <span th:text="${unidadeAcademica}"></span></p>
+      </div>
+      <p class="course-description" th:if="${descricaoCurso}" style="text-align: justify;" th:text="${descricaoCurso}">Descrição do curso</p>
+    </div>
+  </th:block>
+
+  <header th:insert="~{::report-header-content}"></header>
+
+  <main>
+    <div th:if="${!#lists.isEmpty(introducaoParagrafos)}" class="intro">
+      <p th:each="paragrafo : ${introducaoParagrafos}" th:text="${paragrafo}">Parágrafo</p>
+    </div>
+
+    <section class="summary">
+      <strong>Resumo da atividade</strong>
+      <ul>
+        <li>Categoria: <span th:text="${categoriaNome}">Categoria</span></li>
+        <li>Total de evidências: <span th:text="${totalEvidencias}">0</span></li>
+        <li>Total de participantes: <span th:text="${participantes}">0</span></li>
+      </ul>
+    </section>
+
+    <article class="activity-card">
+      <div class="activity-header">
+        <div class="activity-title" th:text="${atividadeNome}">Atividade</div>
+        <div class="activity-date" th:text="${dataFormatada}">dd/MM/yyyy</div>
+      </div>
+      <div class="activity-body">
+        <p th:if="${atividadeObjetivo}"><strong>Objetivo:</strong> <span th:text="${atividadeObjetivo}"></span></p>
+        <p th:if="${atividadePublicoAlvo}"><strong>Público-alvo:</strong> <span th:text="${atividadePublicoAlvo}"></span></p>
+        <p th:if="${coordenador}"><strong>Coordenador:</strong> <span th:text="${coordenador}"></span></p>
+        <p th:if="${!#lists.isEmpty(fontes)}"><strong>Fontes financiadoras:</strong>
+          <span th:text="${#strings.listJoin(fontes, ', ')}"></span></p>
+        <p><strong>Status:</strong> <span th:text="${status}">Status</span></p>
+        <p><strong>Participantes:</strong> <span th:text="${participantes}">0</span></p>
+      </div>
+
+      <div th:if="${!#lists.isEmpty(evidencias)}" class="evidence-grid">
+        <div class="evidence-item" th:each="ev : ${evidencias}"
+             th:classappend="' ' + (${ev.orientacao} == 'vertical' ? 'vertical' : (${ev.orientacao} == 'horizontal' ? 'horizontal' : 'quadrada'))">
+          <div class="evidence-image-wrapper">
+            <span th:if="${ev.imgDataUri}">
+              <img th:src="${ev.imgDataUri}" alt="Evidência"/>
+            </span>
+          </div>
+          <div class="evidence-caption" th:text="${ev.legenda}">Legenda</div>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <footer>
+    Página <span class="pagenum"></span> de <span class="pagetotal"></span>
+  </footer>
+</body>
+</html>
+

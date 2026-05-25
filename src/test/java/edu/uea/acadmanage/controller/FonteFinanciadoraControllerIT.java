@@ -163,7 +163,7 @@ class FonteFinanciadoraControllerIT {
 
     @Test
     void deveCriarFonteFinanciadoraComoAdministrador() {
-        String nomeNovo = "Nova Fonte Teste";
+        String nomeNovo = "Nova Fonte Teste " + System.currentTimeMillis();
         String jsonBody = """
             {
               "nome": "%s"
@@ -198,7 +198,7 @@ class FonteFinanciadoraControllerIT {
 
     @Test
     void deveCriarFonteFinanciadoraComoGerente() {
-        String nomeNovo = "Fonte Gerente Teste";
+        String nomeNovo = "Fonte Gerente Teste " + System.currentTimeMillis();
         String jsonBody = """
             {
               "nome": "%s"
@@ -239,7 +239,7 @@ class FonteFinanciadoraControllerIT {
             return;
         }
 
-        String nomeNovo = "Fonte Secretario Teste";
+        String nomeNovo = "Fonte Secretario Teste " + System.currentTimeMillis();
         String jsonBody = """
             {
               "nome": "%s"
@@ -437,7 +437,7 @@ class FonteFinanciadoraControllerIT {
     @Test
     void deveDeletarFonteFinanciadoraComoAdministrador() {
         // Primeiro criar uma fonte para deletar
-        String nomeTemp = "Fonte Temporária";
+        String nomeTemp = "Fonte Temporária " + System.currentTimeMillis();
         String jsonBodyCriar = """
             {
               "nome": "%s"

@@ -1,233 +1,190 @@
-# API AcadManage
+# API Portifolium
 
-Esta API foi desenvolvida para gerenciar cursos, usuários, atividades, evidências e categorias em um sistema acadêmico. O objetivo é fornecer endpoints RESTful para operações CRUD, consultas avançadas e gerenciamento de arquivos, com autenticação e autorização implementadas.
+API Spring Boot para gerenciar cursos, usuarios, atividades, evidencias, relatorios e arquivos do Portifolium.
 
-## Tecnologias Utilizadas
+## Stack
 
-- **Java 17**
-- **Spring Boot 3.x**
-- **Hibernate/JPA**
-- **H2 Database (Desenvolvimento)**
-- **PostgreSQL (Produção)**
-- **Spring Security**
-- **Swagger/OpenAPI**
+- Java 17
+- Spring Boot 3
+- Spring Security com JWT
+- Spring Data JPA/Hibernate
+- H2 para execucao local via Maven
+- PostgreSQL para execucao via Docker Compose
+- Swagger/OpenAPI
 
-## Recursos Disponíveis
+## Como Executar
 
-### 1. Usuários
+### Opcao 1: local com H2
 
-#### Endpoints
-- **POST** `/api/usuarios` - Criar um novo usuário.
-- **GET** `/api/usuarios` - Listar todos os usuários.
-- **PUT** `/api/usuarios/{usuarioId}` - Atualizar informações de um usuário.
-- **DELETE** `/api/usuarios/{usuarioId}` - Deletar um usuário.
-- **PUT** `/api/usuarios/{usuarioId}/change-password` - Alterar a senha de um usuário.
-- **GET** `/api/usuarios/checkAuthorities` - Verificar as permissões do usuário logado.
+Use este caminho para desenvolvimento rapido sem Docker.
 
-### 2. Cursos
+```powershell
+.\mvnw.cmd spring-boot:run
+```
 
-#### Endpoints
-- **POST** `/api/cursos` - Criar um novo curso.
-- **GET** `/api/cursos` - Listar todos os cursos.
-- **GET** `/api/cursos/{cursoId}` - Buscar detalhes de um curso pelo ID.
-- **PUT** `/api/cursos/{cursoId}` - Atualizar informações de um curso.
-- **DELETE** `/api/cursos/{cursoId}` - Deletar um curso.
-- **GET** `/api/cursos/usuario` - Listar cursos associados ao usuário logado.
-
-### 3. Atividades
-
-#### Endpoints
-- **POST** `/api/atividades` - Criar uma nova atividade.
-- **GET** `/api/atividades` - Listar todas as atividades com filtros opcionais (cursoId, categoriaId, nome, dataInicio, dataFim, statusPublicacao).
-- **GET** `/api/atividades/{atividadeId}` - Buscar detalhes de uma atividade pelo ID.
-- **PUT** `/api/atividades/{atividadeId}` - Atualizar informações de uma atividade.
-- **DELETE** `/api/atividades/{atividadeId}` - Deletar uma atividade.
-- **GET** `/api/atividades/{atividadeId}/usuario/{usuarioId}` - Listar atividades associadas a um usuário específico.
-- **GET** `/api/atividades/curso/{cursoId}` - Listar atividades associadas a um curso específico.
-
-### 4. Evidências
-
-#### Endpoints
-- **POST** `/api/evidencias` - Salvar uma evidência com upload de arquivo (JPG ou PNG).
-- **GET** `/api/evidencias` - Listar todas as evidências.
-- **GET** `/api/evidencias/{evidenciaId}` - Buscar detalhes de uma evidência pelo ID.
-- **PUT** `/api/evidencias/{evidenciaId}` - Atualizar informações de uma evidência com opção de alterar o arquivo associado.
-- **DELETE** `/api/evidencias/{evidenciaId}` - Deletar uma evidência e o arquivo associado.
-- **GET** `/api/evidencias/atividade/{atividadeId}` - Listar evidências associadas a uma atividade específica.
-
-### 5. Categorias
-
-#### Endpoints
-- **POST** `/categorias` - Criar uma nova categoria.
-- **GET** `/categorias` - Listar todas as categorias.
-- **GET** `/categorias/{categoriaId}` - Buscar detalhes de uma categoria pelo ID.
-- **PUT** `/categorias/{categoriaId}` - Atualizar informações de uma categoria.
-- **DELETE** `/categorias/{categoriaId}` - Deletar uma categoria.
-- **GET** `/categorias/usuario` - Listar categorias associadas ao usuário logado.
-
-### 6. Recuperação de Senha
-
-#### Endpoints
-- **POST** `/api/recovery/reset-password` - Redefinir a senha do usuário com base em um código de recuperação.
-- **POST** `/api/recovery/generate` - Gerar um código de recuperação de senha e enviá-lo por e-mail.
-
-## Autenticação e Autorização
-
-- **Autenticação:** Basic Authentication.
-- **Autorização:** Baseada em roles (ADMINISTRADOR, GERENTE, SECRETÁRIO).
-
-### Permissões
-- **ADMINISTRADOR:** Acesso total a todos os recursos.
-- **GERENTE:** CRUD nos cursos associados e consultas nos demais recursos.
-- **SECRETÁRIO:** Consulta em cursos associados e CRUD em atividades e evidências associadas.
-
-## Configuração
-
-### Configuração de Banco de Dados
-
-- **H2 (Desenvolvimento):**
-  - URL: `jdbc:h2:mem:acadmanage`
-  - Usuário: `sa`
-  - Senha: `senha`
-- **PostgreSQL (Produção):**
-  - Configurar no `application.properties` ou `application.yml`.
-
-### Variáveis de Ambiente
-
-- `JWT_SECRET_KEY`: chave Base64 usada para assinar tokens JWT. Obrigatória para iniciar a API; em produção, não use valor compartilhado com desenvolvimento.
-- `JWT_EXPIRATION_TIME`: tempo de expiração do JWT em milissegundos. Padrão local: `3600000`.
-- `APP_CORS_ALLOWED_ORIGINS`: origens permitidas no CORS, separadas por vírgula. Exemplo local: `http://localhost:4200`.
-- `EMAIL_PASSWORD`: senha da conta SMTP usada para envio de e-mails.
-
-Exemplo:
+Linux/macOS:
 
 ```bash
-JWT_SECRET_KEY=$(openssl rand -base64 32)
-APP_CORS_ALLOWED_ORIGINS=https://app.exemplo.com
+./mvnw spring-boot:run
+```
+
+URLs:
+
+- API: http://localhost:8080
+- Swagger: http://localhost:8080/swagger-ui/index.html
+- Health: http://localhost:8080/actuator/health
+- H2 Console: http://localhost:8080/h2-console
+
+H2:
+
+- JDBC URL: `jdbc:h2:file:./data/testdb`
+- Usuario: `sa`
+- Senha: vazia
+
+### Opcao 2: Docker Compose com PostgreSQL
+
+Use este caminho para validar a API em container com banco real.
+
+```powershell
+docker compose up -d --build
+```
+
+Comandos uteis:
+
+```powershell
+docker compose logs -f app
+docker compose ps
+docker compose down
+docker compose down -v
+```
+
+URLs:
+
+- API: http://localhost:8080
+- Swagger: http://localhost:8080/swagger-ui/index.html
+- Health: http://localhost:8080/actuator/health
+
+O compose sobe apenas:
+
+- `app`: API Spring Boot
+- `db`: PostgreSQL 15
+
+## Configuracao
+
+O arquivo `.env` nao deve ser versionado. Para customizar portas, credenciais ou e-mail:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Principais variaveis:
+
+```env
+APP_PORT=8080
+POSTGRES_DB=portifolium
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_PORT=5432
+SPRING_JPA_HIBERNATE_DDL_AUTO=update
+SPRING_SQL_INIT_MODE=always
+JWT_SECRET_KEY=troque-por-uma-chave-segura
 JWT_EXPIRATION_TIME=3600000
+APP_CORS_ALLOWED_ORIGINS=http://localhost:4200
+FRONTEND_URL=http://localhost:4200
+MAIL_USERNAME=
+MAIL_PASSWORD=
 ```
 
-### Dependências Importantes no `pom.xml`
-```xml
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-data-jpa</artifactId>
-</dependency>
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-security</artifactId>
-</dependency>
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-web</artifactId>
-</dependency>
-<dependency>
-    <groupId>org.springdoc</groupId>
-    <artifactId>springdoc-openapi-ui</artifactId>
-    <version>1.7.0</version>
-</dependency>
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-mail</artifactId>
-</dependency>
+`APP_CORS_ALLOWED_ORIGINS` aceita multiplas origens separadas por virgula. Para producao, defina segredos por variaveis de ambiente do ambiente de deploy. Nao commite `.env` com senhas reais.
+
+## Arquivos Essenciais de Execucao
+
+- `mvnw` e `mvnw.cmd`: execucao local e testes via Maven Wrapper.
+- `Dockerfile`: build da imagem da API.
+- `docker-compose.yml`: ambiente local conteinerizado com PostgreSQL.
+- `.env.example`: exemplo de configuracao local sem segredos.
+
+Arquivos alternativos de MySQL, scripts de deploy e stacks de monitoramento foram removidos para manter um unico fluxo claro.
+
+## Testes
+
+Unitarios:
+
+```powershell
+.\mvnw.cmd test
 ```
 
-## Documentação da API
+Teste especifico:
 
-A documentação da API pode ser acessada através do Swagger:
-- URL: `/swagger-ui/index.html`
-
-## Execução do Projeto
-
-### Opção 1: Execução Local
-1. Clone o repositório.
-2. Configure o arquivo `application.properties` conforme seu ambiente.
-3. Execute o projeto usando o comando:
-   ```bash
-   ./mvnw spring-boot:run
-   ```
-4. Acesse a aplicação em `http://localhost:8080`.
-
-### Opção 2: Execução com Docker
-1. Clone o repositório.
-2. Execute o ambiente completo com:
-   ```bash
-   docker-compose up -d
-   ```
-3. Acesse:
-   - **Aplicação:** http://localhost:8080
-   - **Grafana:** http://localhost:3000 (admin/admin)
-   - **Prometheus:** http://localhost:9090
-   - **H2 Console:** http://localhost:8080/h2-console
-
-### Opção 3: Deploy Automatizado
-Use o script de deploy:
-```bash
-# Deploy em staging
-./scripts/deploy.sh staging
-
-# Deploy em produção
-./scripts/deploy.sh production
+```powershell
+.\mvnw.cmd -Dtest=CursoControllerIT#deveCriarCursoComoAdministrador test
 ```
 
-## Estrutura de Pastas
+Integracao:
 
-```
-acadmanage/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── edu/uea/acadmanage/
-│   │   │       ├── controller/
-│   │   │       ├── model/
-│   │   │       ├── repository/
-│   │   │       ├── service/
-│   │   │       ├── security/
-│   │   │       └── config/
-│   └── resources/
-│       ├── application.properties
-│       ├── application-docker.properties
-│       └── data.sql
-├── monitoring/
-│   ├── prometheus.yml
-│   └── grafana/
-│       ├── dashboards/
-│       └── datasources/
-├── scripts/
-│   └── deploy.sh
-├── .github/
-│   └── workflows/
-├── Dockerfile
-├── docker-compose.yml
-├── docker-compose.staging.yml
-└── pom.xml
+```powershell
+.\mvnw.cmd verify
 ```
 
-## DevOps e Monitoramento
+## Build
 
-### Docker
-- **Containerização:** Aplicação containerizada com Docker multi-stage build
-- **Orquestração:** Docker Compose para desenvolvimento e staging
-- **Segurança:** Usuário não-root e health checks nativos
+Jar local:
 
-### CI/CD Pipeline
-- **GitHub Actions:** Pipeline automatizado para build, teste e deploy
-- **Segurança:** Scan de vulnerabilidades com Trivy
-- **Ambientes:** Deploy automático para staging e produção
+```powershell
+.\mvnw.cmd clean package
+```
 
-### Monitoramento
-- **Health Checks:** Spring Boot Actuator com endpoints de saúde
-- **Métricas:** Prometheus para coleta de métricas
-- **Visualização:** Grafana com dashboards personalizados
-- **Cache:** Redis para melhorar performance
+Imagem Docker:
 
-### Métricas Disponíveis
-- **Aplicação:** HTTP requests, response time, JVM memory
-- **Banco:** Conexões ativas, performance de queries
-- **Sistema:** CPU, memória, disco
-- **Customizadas:** Métricas de negócio específicas
+```powershell
+docker build -t portifolium-api:local .
+```
 
-## Contato
-Para dúvidas ou sugestões, entre em contato:
-- **E-mail:** jlfilho@uea.edu.br
-- **GitHub:** [github.com/acadmanage](https://github.com/acadmanage)
+## Dados Iniciais
+
+Na execucao local H2, `data.sql` popula dados basicos.
+
+Na execucao Docker com PostgreSQL, `SPRING_SQL_INIT_MODE=always` faz o Spring Boot executar `data-postgresql.sql`.
+
+Usuario administrador inicial:
+
+- Email: `admin@uea.edu.br`
+- Senha: `secretario123`
+
+## Estrutura Principal
+
+```text
+src/main/java/edu/uea/acadmanage/
+  controller/
+  service/
+  repository/
+  model/
+  DTO/
+  security/
+  config/
+
+src/main/resources/
+  application.properties
+  application-postgresql.properties
+  application-mysql.properties
+  data.sql
+  data-postgresql.sql
+  data-mysql.sql
+```
+
+## Tratamento de Erros
+
+As excecoes sao tratadas centralmente por `GlobalExceptionHandler` e retornam `ApiErrorResponse`:
+
+```json
+{
+  "timestamp": "2026-05-24T18:30:18.1341478",
+  "statusCode": 400,
+  "status": "BAD_REQUEST",
+  "error": "Erro de validacao",
+  "message": "O nome do curso e obrigatorio",
+  "path": "/api/cursos",
+  "details": null,
+  "action": null
+}
+```

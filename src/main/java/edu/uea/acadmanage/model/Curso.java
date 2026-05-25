@@ -28,17 +28,18 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(exclude = "usuarios")
 @AllArgsConstructor
 @NoArgsConstructor
-public class Curso implements Serializable {
+public class Curso extends BaseAuditableEntity implements Serializable {
     private static final long serialVersionUID = 1L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 255)
     private String nome;
 
     @Column(columnDefinition = "TEXT")
     private String descricao;
 
+    @Column(name = "foto_capa", columnDefinition = "VARCHAR(500)")
     private String fotoCapa;
 
     private Boolean ativo = true;

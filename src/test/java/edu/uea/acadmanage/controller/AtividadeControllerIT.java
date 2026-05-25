@@ -96,17 +96,38 @@ class AtividadeControllerIT {
 
     @Test
     void deveListarAtividadesPorCurso() {
-        Long cursoId = 1L; // ID de um curso do data.sql
+        Long cursoId = 1L; // ID de um curso do data-test.sql
         
-        given()
+        // Primeiro verificar o status code
+        Integer statusCode = given()
             .port(port)
             .log().all()
         .when()
             .get("/api/atividades/curso/{cursoId}", cursoId)
         .then()
             .log().all()
-            .statusCode(anyOf(is(200), is(204)))
-            .body("$", is(instanceOf(java.util.List.class)));
+            .extract()
+            .statusCode();
+        
+        // Apenas valida o body se retornar 200 (tem content-type)
+        // Se retornar 204, não tenta fazer parsing do body (evita erro de parsing)
+        if (statusCode == 200) {
+            given()
+                .port(port)
+            .when()
+                .get("/api/atividades/curso/{cursoId}", cursoId)
+            .then()
+                .statusCode(200)
+                .body("$", is(instanceOf(java.util.List.class)));
+        } else {
+            // Se retornar 204, apenas verificar o status
+            given()
+                .port(port)
+            .when()
+                .get("/api/atividades/curso/{cursoId}", cursoId)
+            .then()
+                .statusCode(204);
+        }
     }
 
     @Test
@@ -125,10 +146,8 @@ class AtividadeControllerIT {
     }
 
     @Test
-    void deveRetornar204QuandoNaoHaAtividadesParaCurso() {
-        // Assumindo que pode haver um curso sem atividades
-        // Por padrão, todos os cursos têm atividades no data.sql
-        Long cursoId = 10L; // Pode não ter atividades
+    void deveRetornar404QuandoCursoInexistenteNaoTemAtividades() {
+        Long cursoId = 9999L;
         
         given()
             .port(port)
@@ -137,7 +156,7 @@ class AtividadeControllerIT {
             .get("/api/atividades/curso/{cursoId}", cursoId)
         .then()
             .log().all()
-            .statusCode(anyOf(is(200), is(204)));
+            .statusCode(404);
     }
 
     // ========== GET /api/atividades/{atividadeId} ==========

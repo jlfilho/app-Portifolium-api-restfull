@@ -159,7 +159,7 @@ class TipoCursoControllerIT {
 
     @Test
     void deveCriarTipoCursoComoAdministrador() {
-        String nomeNovo = "Pós-Graduação Teste";
+        String nomeNovo = "Pós-Graduação Teste " + System.currentTimeMillis();
         String jsonBody = """
             {
               "nome": "%s"
@@ -229,7 +229,7 @@ class TipoCursoControllerIT {
     @Test
     void deveAtualizarTipoCurso() {
         // Primeiro criar um tipo de curso para atualizar
-        String nomeOriginal = "Tipo Temporário";
+        String nomeOriginal = "Tipo Temporário " + System.currentTimeMillis();
         String jsonBodyCriar = """
             {
               "nome": "%s"
@@ -283,7 +283,7 @@ class TipoCursoControllerIT {
     @Test
     void deveRetornar409QuandoAtualizarComNomeDuplicado() {
         // Criar um tipo para atualizar
-        String nomeTemporario = "Tipo Temp Atualização";
+        String nomeTemporario = "Tipo Temp Atualização " + System.currentTimeMillis();
         Integer tipoCursoId = given()
             .port(port)
             .header("Authorization", "Bearer " + getAdminToken())
@@ -356,7 +356,7 @@ class TipoCursoControllerIT {
     @Test
     void deveDeletarTipoCursoSemCursosAssociados() {
         // Primeiro criar um tipo de curso sem cursos associados
-        String nomeTemporario = "Tipo Para Deletar";
+        String nomeTemporario = "Tipo Para Deletar " + System.currentTimeMillis();
         Integer tipoCursoId = given()
             .port(port)
             .header("Authorization", "Bearer " + getAdminToken())

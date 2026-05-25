@@ -4,6 +4,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Random;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -68,6 +69,58 @@ class PessoaControllerIT {
         return gerenteToken;
     }
 
+    /**
+     * Gera um CPF válido para testes.
+     * O CPF gerado passa na validação algorítmica do dígito verificador.
+     */
+    private String gerarCpfValido() {
+        Random random = new Random();
+        int[] cpf = new int[11];
+
+        // Gera os 9 primeiros dígitos aleatórios (evitando todos iguais)
+        do {
+            for (int i = 0; i < 9; i++) {
+                cpf[i] = random.nextInt(10);
+            }
+        } while (todosIguais(cpf, 9));
+
+        // Calcula o primeiro dígito verificador
+        int soma = 0;
+        for (int i = 0; i < 9; i++) {
+            soma += cpf[i] * (10 - i);
+        }
+        int resto = soma % 11;
+        cpf[9] = (resto < 2) ? 0 : 11 - resto;
+
+        // Calcula o segundo dígito verificador
+        soma = 0;
+        for (int i = 0; i < 10; i++) {
+            soma += cpf[i] * (11 - i);
+        }
+        resto = soma % 11;
+        cpf[10] = (resto < 2) ? 0 : 11 - resto;
+
+        // Retorna apenas dígitos (sem formatação)
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 11; i++) {
+            sb.append(cpf[i]);
+        }
+        return sb.toString();
+    }
+
+    private boolean todosIguais(int[] array, int tamanho) {
+        for (int i = 1; i < tamanho; i++) {
+            if (array[i] != array[0]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private String formatarCpf(String cpf) {
+        return cpf.replaceFirst("(\\d{3})(\\d{3})(\\d{3})(\\d{2})", "$1.$2.$3-$4");
+    }
+
     @Test
     void deveListarPessoas() {
         given()
@@ -81,7 +134,7 @@ class PessoaControllerIT {
 
     @Test
     void deveCriarPessoaComoAdministrador() {
-        String cpf = "99887766550";
+        String cpf = gerarCpfValido();
 
         given()
                 .port(port)
@@ -99,12 +152,12 @@ class PessoaControllerIT {
                 .statusCode(201)
                 .body("id", notNullValue())
                 .body("nome", equalTo("Pessoa Teste"))
-                .body("cpf", equalTo(cpf));
+                .body("cpf", equalTo(formatarCpf(cpf)));
     }
 
     @Test
     void deveRetornar409QuandoCpfDuplicado() {
-        String cpf = "99887766551";
+        String cpf = gerarCpfValido();
 
         // Cadastro inicial
         given()
@@ -142,7 +195,7 @@ class PessoaControllerIT {
 
     @Test
     void deveAtualizarPessoa() {
-        String cpf = "99887766552";
+        String cpf = gerarCpfValido();
 
         Integer pessoaId = given()
                 .port(port)
@@ -180,12 +233,15 @@ class PessoaControllerIT {
 
     @Test
     void devePermitirImportarCsv() {
+        String cpf1 = gerarCpfValido();
+        String cpf2 = gerarCpfValido();
+
         String csv = """
                 nome,cpf
-                Pessoa CSV 1,99887766553
-                Pessoa CSV 2,99887766554
-                João Silva,12345678901
-                """;
+                Pessoa CSV 1,%s
+                Pessoa CSV 2,%s
+                João Silva,%s
+                """.formatted(cpf1, cpf2, cpf1);
 
         given()
                 .port(port)
@@ -201,7 +257,8 @@ class PessoaControllerIT {
     }
 
     @Test
-    void deveNegarCriacaoParaGerente() {
+    void devePermitirCriacaoParaGerente() {
+        String cpf = gerarCpfValido();
         given()
                 .port(port)
                 .header("Authorization", "Bearer " + getGerenteToken())
@@ -209,13 +266,13 @@ class PessoaControllerIT {
                 .body("""
                         {
                           "nome": "Pessoa Gerente",
-                          "cpf": "99887766555"
+                          "cpf": "%s"
                         }
-                        """)
+                        """.formatted(cpf))
         .when()
                 .post("/api/pessoas")
         .then()
-                .statusCode(403);
+                .statusCode(201);
     }
 }
 

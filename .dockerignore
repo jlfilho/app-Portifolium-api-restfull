@@ -1,47 +1,21 @@
-# Maven
 target/
-!target/*.jar
+!.mvn/wrapper/maven-wrapper.jar
 
-# IDE
-.idea/
-*.iml
-.vscode/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Git
 .git/
-.gitignore
+.github/
+.vscode/
+.idea/
 
-# Logs
+data/
+test-files/
+portifolium-files/
+
 *.log
 logs/
 
-# Runtime
-*.pid
-*.port
-
-# Docker
-Dockerfile*
-docker-compose*.yml
-.dockerignore
-
-# Documentation
-README.md
-*.md
-
-# Scripts
-scripts/
-monitoring/
-
-# GitHub Actions
-.github/
-
-# Environment files
 .env
 .env.local
-.env.production
+.env.*.local
+
+README*.md
+ANALISE_TESTES.md

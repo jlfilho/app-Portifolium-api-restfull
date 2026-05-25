@@ -7,21 +7,29 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import edu.uea.acadmanage.model.TipoCurso;
+import edu.uea.acadmanage.model.AuditLog;
 import edu.uea.acadmanage.repository.TipoCursoRepository;
 import edu.uea.acadmanage.repository.CursoRepository;
 import edu.uea.acadmanage.service.exception.ConflitoException;
 import edu.uea.acadmanage.service.exception.TipoCursoEmUsoException;
 import edu.uea.acadmanage.service.exception.RecursoNaoEncontradoException;
+import edu.uea.acadmanage.service.exception.ValidacaoException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class TipoCursoService {
 
         private final TipoCursoRepository tipoCursoRepository;
         private final CursoRepository cursoRepository;
+        private final AuditLogService auditLogService;
+        private final ObjectMapper objectMapper;
 
-        public TipoCursoService(TipoCursoRepository tipoCursoRepository, CursoRepository cursoRepository) {
+        public TipoCursoService(TipoCursoRepository tipoCursoRepository, CursoRepository cursoRepository,
+                                AuditLogService auditLogService, ObjectMapper objectMapper) {
                 this.tipoCursoRepository = tipoCursoRepository;
                 this.cursoRepository = cursoRepository;
+                this.auditLogService = auditLogService;
+                this.objectMapper = objectMapper;
         }
         
         public List<TipoCurso> listarTodos() {
@@ -46,31 +54,103 @@ public class TipoCursoService {
         }
 
         public TipoCurso salvar(TipoCurso tipoCurso) {
-                if (tipoCursoRepository.existsByNomeIgnoreCase(tipoCurso.getNome())) {
-                        throw new ConflitoException("Já existe um tipo de curso com o nome: " + tipoCurso.getNome());
+                // Normalizar o nome (trim e validar)
+                if (tipoCurso.getNome() == null || tipoCurso.getNome().trim().isEmpty()) {
+                        throw new ValidacaoException("O nome do tipo de curso é obrigatório.");
                 }
-                return tipoCursoRepository.save(tipoCurso);
+                String nomeNormalizado = tipoCurso.getNome().trim();
+                tipoCurso.setNome(nomeNormalizado);
+                
+                if (tipoCursoRepository.existsByNomeIgnoreCase(nomeNormalizado)) {
+                        throw new ConflitoException("Já existe um tipo de curso com o nome: " + nomeNormalizado);
+                }
+                TipoCurso tipoSalvo = tipoCursoRepository.save(tipoCurso);
+                
+                // CAMADA 2: Audit Log
+                auditLogService.log(
+                    AuditLog.AuditAction.CREATE,
+                    "TipoCurso",
+                    tipoSalvo.getId(),
+                    null,
+                    tipoSalvo,
+                    "Tipo de curso criado: " + tipoSalvo.getNome()
+                );
+                
+                return tipoSalvo;
         }
 
         public TipoCurso atualizar(Long id, TipoCurso novo) {
                 TipoCurso existente = this.recuperarPorId(id);
 
-                if (!existente.getNome().equalsIgnoreCase(novo.getNome()) && tipoCursoRepository.existsByNomeIgnoreCase(novo.getNome())) {
-                        throw new ConflitoException("Já existe um tipo de curso com o nome: " + novo.getNome());
+                // Capturar estado antigo para audit log
+                TipoCurso oldState = copyTipoCursoForAudit(existente);
+
+                // Normalizar o nome (trim e validar)
+                if (novo.getNome() == null || novo.getNome().trim().isEmpty()) {
+                        throw new ValidacaoException("O nome do tipo de curso é obrigatório.");
+                }
+                String nomeNormalizado = novo.getNome().trim();
+                novo.setNome(nomeNormalizado);
+
+                if (!existente.getNome().equalsIgnoreCase(nomeNormalizado) && tipoCursoRepository.existsByNomeIgnoreCase(nomeNormalizado)) {
+                        throw new ConflitoException("Já existe um tipo de curso com o nome: " + nomeNormalizado);
                 }
 
-                existente.setNome(novo.getNome());
-                return tipoCursoRepository.save(existente);
+                existente.setNome(nomeNormalizado);
+                TipoCurso tipoAtualizado = tipoCursoRepository.save(existente);
+                
+                // CAMADA 2: Audit Log
+                auditLogService.log(
+                    AuditLog.AuditAction.UPDATE,
+                    "TipoCurso",
+                    tipoAtualizado.getId(),
+                    oldState,
+                    tipoAtualizado,
+                    "Tipo de curso atualizado: " + tipoAtualizado.getNome()
+                );
+                
+                return tipoAtualizado;
         }
 
         public void deletar(Long id) {
                 if (!tipoCursoRepository.existsById(id)) {
                         throw new RecursoNaoEncontradoException("Tipo de curso não encontrado com o ID: " + id);
                 }
+                
+                // Capturar dados para audit log antes de deletar
+                TipoCurso tipoCurso = tipoCursoRepository.findById(id).orElse(null);
+                String tipoCursoNome = tipoCurso != null ? tipoCurso.getNome() : "ID: " + id;
+                
                 if (cursoRepository.existsByTipoCurso_Id(id)) {
                         throw new TipoCursoEmUsoException(id);
                 }
                 tipoCursoRepository.deleteById(id);
+                
+                // CAMADA 2: Audit Log
+                if (tipoCurso != null) {
+                    auditLogService.log(
+                        AuditLog.AuditAction.DELETE,
+                        "TipoCurso",
+                        id,
+                        tipoCurso,
+                        null,
+                        "Tipo de curso excluído: " + tipoCursoNome
+                    );
+                }
+        }
+
+        // Método auxiliar para copiar tipo curso para audit log
+        private TipoCurso copyTipoCursoForAudit(TipoCurso tipoCurso) {
+            try {
+                String json = objectMapper.writeValueAsString(tipoCurso);
+                return objectMapper.readValue(json, TipoCurso.class);
+            } catch (Exception e) {
+                // Se falhar a cópia profunda, criar manualmente uma cópia superficial
+                TipoCurso copy = new TipoCurso();
+                copy.setId(tipoCurso.getId());
+                copy.setNome(tipoCurso.getNome());
+                return copy;
+            }
         }
 }
 
