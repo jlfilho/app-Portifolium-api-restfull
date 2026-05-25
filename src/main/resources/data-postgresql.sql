@@ -47,7 +47,11 @@ ON CONFLICT (id) DO NOTHING;
 -- Senha: admin123 (criptografada com BCrypt)
 INSERT INTO usuario (id, email, senha, pessoa_id, created_at, updated_at) VALUES
 (1, 'admin@uea.edu.br', '$2a$10$hVfJIfpLdpbxwPiRfT2eheqDQlgklnzXZu81UYBa3bjOb5QtAAz.W', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+email = EXCLUDED.email,
+senha = EXCLUDED.senha,
+pessoa_id = EXCLUDED.pessoa_id,
+updated_at = CURRENT_TIMESTAMP;
 
 -- Populando a tabela Usuario_Roles (associação admin com role de administrador)
 INSERT INTO usuario_roles (usuario_id, role_id) VALUES

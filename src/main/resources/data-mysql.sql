@@ -35,8 +35,13 @@ INSERT IGNORE INTO pessoa (id, nome, cpf, created_at, created_by, updated_at, up
 (1, 'Administrador do Sistema', '31452012040', NOW(), 'system', NOW(), 'system');
 
 -- Populando a tabela Usuario com níveis de acesso e senhas criptografadas
-INSERT IGNORE INTO usuario (id, email, senha, pessoa_id, created_at, updated_at) VALUES
-(1, 'admin@uea.edu.br', '$2a$10$hVfJIfpLdpbxwPiRfT2eheqDQlgklnzXZu81UYBa3bjOb5QtAAz.W', 1, NOW(), NOW()); -- Senha: admin123
+INSERT INTO usuario (id, email, senha, pessoa_id, created_at, updated_at) VALUES
+(1, 'admin@uea.edu.br', '$2a$10$hVfJIfpLdpbxwPiRfT2eheqDQlgklnzXZu81UYBa3bjOb5QtAAz.W', 1, NOW(), NOW()) -- Senha: admin123
+ON DUPLICATE KEY UPDATE
+email = VALUES(email),
+senha = VALUES(senha),
+pessoa_id = VALUES(pessoa_id),
+updated_at = NOW();
 
 
 
