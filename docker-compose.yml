@@ -35,8 +35,9 @@ services:
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       MANAGEMENT_HEALTH_MAIL_ENABLED: false
+      FILE_STORAGE_LOCATION: ${FILE_STORAGE_LOCATION:-/var/lib/portifolium/files}
     volumes:
-      - ./portifolium-files:/portifolium-files
+      - ../portifolium-files:/var/lib/portifolium/files
     depends_on:
       db:
         condition: service_healthy
