@@ -23,6 +23,8 @@ public interface CursoRepository extends JpaRepository<Curso, Long> {
 
     boolean existsByUnidadeAcademica_Id(Long unidadeId);
 
+    boolean existsByNomeIgnoreCase(String nome);
+
     @Query("""
             SELECT c FROM Curso c
             WHERE (:ativo IS NULL OR c.ativo = :ativo)
