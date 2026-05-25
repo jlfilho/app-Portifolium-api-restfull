@@ -90,9 +90,12 @@ SPRING_SQL_INIT_MODE=always
 JWT_SECRET_KEY=troque-por-uma-chave-segura
 JWT_EXPIRATION_TIME=3600000
 FRONTEND_URL=http://localhost:4200
+FILE_STORAGE_LOCATION=/var/lib/portifolium/files
 MAIL_USERNAME=
 MAIL_PASSWORD=
 ```
+
+Por padrao, arquivos enviados ficam fora do repositorio Git. No Docker Compose, o volume local fica em `../portifolium-files` e e montado em `/var/lib/portifolium/files` dentro do container.
 
 Para producao, defina segredos por variaveis de ambiente do ambiente de deploy. Nao commite `.env` com senhas reais.
 
