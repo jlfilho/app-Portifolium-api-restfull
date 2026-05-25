@@ -36,7 +36,7 @@ MERGE INTO pessoa (id, nome, cpf, created_at, created_by, updated_at, updated_by
 
 -- Populando a tabela Usuario com níveis de acesso e senhas criptografadas
 MERGE INTO usuario (id, email, senha, pessoa_id, created_at, updated_at) KEY(id) VALUES
-(1, 'admin@uea.edu.br', '$2a$10$Ebmi/uPZlhTEB7e39gsPTOfADOsL0IdEcEQllZyogM/WI/WKUMYdW', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP); -- Senha: secretario123
+(1, 'admin@uea.edu.br', '$2a$10$hVfJIfpLdpbxwPiRfT2eheqDQlgklnzXZu81UYBa3bjOb5QtAAz.W', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP); -- Senha: admin123
 
 
 

@@ -36,7 +36,7 @@ INSERT IGNORE INTO pessoa (id, nome, cpf, created_at, created_by, updated_at, up
 
 -- Populando a tabela Usuario com níveis de acesso e senhas criptografadas
 INSERT IGNORE INTO usuario (id, email, senha, pessoa_id, created_at, updated_at) VALUES
-(1, 'admin@uea.edu.br', '$2a$10$Ebmi/uPZlhTEB7e39gsPTOfADOsL0IdEcEQllZyogM/WI/WKUMYdW', 1, NOW(), NOW()); -- Senha: secretario123
+(1, 'admin@uea.edu.br', '$2a$10$hVfJIfpLdpbxwPiRfT2eheqDQlgklnzXZu81UYBa3bjOb5QtAAz.W', 1, NOW(), NOW()); -- Senha: admin123
 
 
 

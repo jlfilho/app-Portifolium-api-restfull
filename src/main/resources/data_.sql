@@ -82,7 +82,7 @@ MERGE INTO pessoa (id, nome, cpf, created_at, created_by, updated_at, updated_by
 
 -- Populando a tabela Usuario com níveis de acesso e senhas criptografadas
 MERGE INTO usuario (id, email, senha, pessoa_id, created_at, updated_at) KEY(id) VALUES
-(1, 'admin@uea.edu.br', '$2a$10$Ebmi/uPZlhTEB7e39gsPTOfADOsL0IdEcEQllZyogM/WI/WKUMYdW', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP), -- Senha: admin123
+(1, 'admin@uea.edu.br', '$2a$10$hVfJIfpLdpbxwPiRfT2eheqDQlgklnzXZu81UYBa3bjOb5QtAAz.W', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP), -- Senha: admin123
 (2, 'gerente1@uea.edu.br', '$2a$10$84EaPNF6J.4tAMWF8TrNduVFf7XOuUKJ8OmPMLbUR3vq3FiZilSk2', 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP), -- Senha: gerente123
 (3, 'gerente2@uea.edu.br', '$2a$10$84EaPNF6J.4tAMWF8TrNduVFf7XOuUKJ8OmPMLbUR3vq3FiZilSk2', 3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP), -- Senha: gerente123
 (4, 'gerente3@uea.edu.br', '$2a$10$84EaPNF6J.4tAMWF8TrNduVFf7XOuUKJ8OmPMLbUR3vq3FiZilSk2', 4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP), -- Senha: gerente123

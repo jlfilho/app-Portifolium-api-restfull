@@ -44,9 +44,9 @@ INSERT INTO pessoa (id, nome, cpf, created_at, created_by, updated_at, updated_b
 ON CONFLICT (id) DO NOTHING;
 
 -- Populando a tabela Usuario (admin)
--- Senha: secretario123 (criptografada com BCrypt)
+-- Senha: admin123 (criptografada com BCrypt)
 INSERT INTO usuario (id, email, senha, pessoa_id, created_at, updated_at) VALUES
-(1, 'admin@uea.edu.br', '$2a$10$Ebmi/uPZlhTEB7e39gsPTOfADOsL0IdEcEQllZyogM/WI/WKUMYdW', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+(1, 'admin@uea.edu.br', '$2a$10$hVfJIfpLdpbxwPiRfT2eheqDQlgklnzXZu81UYBa3bjOb5QtAAz.W', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO NOTHING;
 
 -- Populando a tabela Usuario_Roles (associação admin com role de administrador)
