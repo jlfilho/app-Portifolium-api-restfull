@@ -89,12 +89,13 @@ SPRING_JPA_HIBERNATE_DDL_AUTO=update
 SPRING_SQL_INIT_MODE=always
 JWT_SECRET_KEY=troque-por-uma-chave-segura
 JWT_EXPIRATION_TIME=3600000
+APP_CORS_ALLOWED_ORIGINS=http://localhost:4200
 FRONTEND_URL=http://localhost:4200
 MAIL_USERNAME=
 MAIL_PASSWORD=
 ```
 
-Para producao, defina segredos por variaveis de ambiente do ambiente de deploy. Nao commite `.env` com senhas reais.
+`APP_CORS_ALLOWED_ORIGINS` aceita multiplas origens separadas por virgula. Para producao, defina segredos por variaveis de ambiente do ambiente de deploy. Nao commite `.env` com senhas reais.
 
 ## Arquivos Essenciais de Execucao
 
