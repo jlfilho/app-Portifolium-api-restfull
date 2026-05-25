@@ -76,7 +76,7 @@ class PasswordRecoveryControllerIT {
         .then()
             .log().all()
             .statusCode(401)
-            .body("error", notNullValue());
+            .body(containsString("encontrado"));
     }
 
     @Test

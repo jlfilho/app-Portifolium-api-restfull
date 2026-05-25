@@ -1,6 +1,16 @@
 -- Script de dados iniciais para testes (H2)
 -- Versão simplificada e compatível com H2
 
+-- Defaults para entidades auditaveis em inserts SQL diretos
+ALTER TABLE categoria ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE tipo_curso ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE unidade_academica ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE curso ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE fonte_financiadora ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE pessoa ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE atividade ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE evidencia ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP;
+
 -- Populando a tabela Categoria
 MERGE INTO categoria (id, nome) KEY(id) VALUES 
 (1, 'Ensino'),
@@ -59,15 +69,15 @@ MERGE INTO pessoa (id, nome, cpf) KEY(id) VALUES
 
 -- Populando a tabela Usuario com senhas criptografadas
 MERGE INTO usuario (id, email, senha, pessoa_id) KEY(id) VALUES
-(1, 'admin@uea.edu.br', '$2a$10$Ebmi/uPZlhTEB7e39gsPTOfADOsL0IdEcEQllZyogM/WI/WKUMYdW', 1), -- Senha: admin123
-(2, 'gerente1@uea.edu.br', '$2a$10$84EaPNF6J.4tAMWF8TrNduVFf7XOuUKJ8OmPMLbUR3vq3FiZilSk2', 2), -- Senha: gerente123
-(3, 'gerente2@uea.edu.br', '$2a$10$84EaPNF6J.4tAMWF8TrNduVFf7XOuUKJ8OmPMLbUR3vq3FiZilSk2', 3), -- Senha: gerente123
-(4, 'gerente3@uea.edu.br', '$2a$10$84EaPNF6J.4tAMWF8TrNduVFf7XOuUKJ8OmPMLbUR3vq3FiZilSk2', 4), -- Senha: gerente123
-(5, 'secretario1@uea.edu.br', '$2a$10$X6ex54jciqS6vBx2agfhweVqN730u0R3BLD8wCP21ljBEfN2jZIW.', 5), -- Senha: secretario123
-(6, 'secretario2@uea.edu.br', '$2a$10$X6ex54jciqS6vBx2agfhweVqN730u0R3BLD8wCP21ljBEfN2jZIW.', 6), -- Senha: secretario123
-(7, 'secretario3@uea.edu.br', '$2a$10$X6ex54jciqS6vBx2agfhweVqN730u0R3BLD8wCP21ljBEfN2jZIW.', 7), -- Senha: secretario123
-(8, 'secretario4@uea.edu.br', '$2a$10$X6ex54jciqS6vBx2agfhweVqN730u0R3BLD8wCP21ljBEfN2jZIW.', 8), -- Senha: secretario123
-(9, 'coordenador1@uea.edu.br', '$2a$10$X6ex54jciqS6vBx2agfhweVqN730u0R3BLD8wCP21ljBEfN2jZIW.', 9); -- Senha: secretario123
+(1, 'admin@uea.edu.br', '$2a$10$hVfJIfpLdpbxwPiRfT2eheqDQlgklnzXZu81UYBa3bjOb5QtAAz.W', 1), -- Senha: admin123
+(2, 'gerente1@uea.edu.br', '$2a$10$IOExkdFW0MGhBMHC62PdW.z2rLmX3f618Hy2o5tC7VMlNDOeOtq2S', 2), -- Senha: gerente123
+(3, 'gerente2@uea.edu.br', '$2a$10$IOExkdFW0MGhBMHC62PdW.z2rLmX3f618Hy2o5tC7VMlNDOeOtq2S', 3), -- Senha: gerente123
+(4, 'gerente3@uea.edu.br', '$2a$10$IOExkdFW0MGhBMHC62PdW.z2rLmX3f618Hy2o5tC7VMlNDOeOtq2S', 4), -- Senha: gerente123
+(5, 'secretario1@uea.edu.br', '$2a$10$sBf8hLOvDEkSHbCyZgPPverpDLOQkLNIyW8wVLaP2U0WgVx8Xaw4i', 5), -- Senha: secretario123
+(6, 'secretario2@uea.edu.br', '$2a$10$sBf8hLOvDEkSHbCyZgPPverpDLOQkLNIyW8wVLaP2U0WgVx8Xaw4i', 6), -- Senha: secretario123
+(7, 'secretario3@uea.edu.br', '$2a$10$sBf8hLOvDEkSHbCyZgPPverpDLOQkLNIyW8wVLaP2U0WgVx8Xaw4i', 7), -- Senha: secretario123
+(8, 'secretario4@uea.edu.br', '$2a$10$sBf8hLOvDEkSHbCyZgPPverpDLOQkLNIyW8wVLaP2U0WgVx8Xaw4i', 8), -- Senha: secretario123
+(9, 'coordenador1@uea.edu.br', '$2a$10$sBf8hLOvDEkSHbCyZgPPverpDLOQkLNIyW8wVLaP2U0WgVx8Xaw4i', 9); -- Senha: secretario123
 
 -- Populando a tabela Usuario_Roles
 MERGE INTO usuario_roles (usuario_id, role_id) KEY(usuario_id, role_id) VALUES
@@ -164,3 +174,13 @@ MERGE INTO evidencia (id, atividade_id, ordem, legenda, criado_por, url_foto) KE
 (9, 3, 0, 'Evidência 1 – Semana de Engenharia', 'admin@uea.edu.br', '/evidencias/1/1/test9.jpg'),
 (10, 3, 1, 'Evidência 2 – Semana de Engenharia', 'admin@uea.edu.br', '/evidencias/1/1/test10.jpg');
 
+-- Evita colisao entre IDs fixos do seed e IDs gerados durante os testes
+ALTER TABLE categoria ALTER COLUMN id RESTART WITH 1000;
+ALTER TABLE tipo_curso ALTER COLUMN id RESTART WITH 1000;
+ALTER TABLE unidade_academica ALTER COLUMN id RESTART WITH 1000;
+ALTER TABLE curso ALTER COLUMN id RESTART WITH 1000;
+ALTER TABLE fonte_financiadora ALTER COLUMN id RESTART WITH 1000;
+ALTER TABLE pessoa ALTER COLUMN id RESTART WITH 1000;
+ALTER TABLE usuario ALTER COLUMN id RESTART WITH 1000;
+ALTER TABLE atividade ALTER COLUMN id RESTART WITH 1000;
+ALTER TABLE evidencia ALTER COLUMN id RESTART WITH 1000;

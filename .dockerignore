@@ -1,52 +1,21 @@
-# Maven
 target/
-!target/*.jar
+!.mvn/wrapper/maven-wrapper.jar
 
-# IDE
-.idea/
-*.iml
-.vscode/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Git
 .git/
-.gitignore
+.github/
+.vscode/
+.idea/
 
-# Logs
+data/
+test-files/
+portifolium-files/
+
 *.log
 logs/
 
-# Runtime
-*.pid
-*.port
-
-# Docker (manter Dockerfile.production e docker-compose.production.yml)
-Dockerfile.simple
-docker-compose.yml
-docker-compose.staging.yml
-.dockerignore
-
-# Documentation (manter apenas alguns arquivos essenciais)
-README.md
-*.md
-!ENV_VARIABLES.md
-
-# Scripts (manter scripts de build)
-scripts/
-!scripts/build-production.sh
-!scripts/deploy-production.sh
-monitoring/
-
-# GitHub Actions
-.github/
-
-# Environment files
 .env
 .env.local
-.env.production
-# Manter ENV_VARIABLES.md para referência
+.env.*.local
+
+README*.md
+ANALISE_TESTES.md

@@ -58,7 +58,9 @@ public class JwtSecurityConfig {
                                                         "/api/evidencias/**",
                                                         "/api/unidades-academicas/**")
                                                         .permitAll();
-                                        auth.requestMatchers("/actuator/health", "/actuator/health/**")
+                                        // Endpoints minimos do Actuator para healthcheck e monitoramento
+                                        auth.requestMatchers("/actuator/health", "/actuator/health/**",
+                                                        "/actuator/info", "/actuator/prometheus")
                                                         .permitAll();
                                         auth.requestMatchers("/actuator/**")
                                                         .authenticated();

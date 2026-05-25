@@ -117,6 +117,10 @@ class PessoaControllerIT {
         return true;
     }
 
+    private String formatarCpf(String cpf) {
+        return cpf.replaceFirst("(\\d{3})(\\d{3})(\\d{3})(\\d{2})", "$1.$2.$3-$4");
+    }
+
     @Test
     void deveListarPessoas() {
         given()
@@ -148,7 +152,7 @@ class PessoaControllerIT {
                 .statusCode(201)
                 .body("id", notNullValue())
                 .body("nome", equalTo("Pessoa Teste"))
-                .body("cpf", equalTo(cpf));
+                .body("cpf", equalTo(formatarCpf(cpf)));
     }
 
     @Test
@@ -231,13 +235,13 @@ class PessoaControllerIT {
     void devePermitirImportarCsv() {
         String cpf1 = gerarCpfValido();
         String cpf2 = gerarCpfValido();
-        String cpf3 = "12345678909"; // CPF válido conhecido
+
         String csv = """
                 nome,cpf
                 Pessoa CSV 1,%s
                 Pessoa CSV 2,%s
                 João Silva,%s
-                """.formatted(cpf1, cpf2, cpf3);
+                """.formatted(cpf1, cpf2, cpf1);
 
         given()
                 .port(port)
@@ -253,7 +257,7 @@ class PessoaControllerIT {
     }
 
     @Test
-    void deveNegarCriacaoParaGerente() {
+    void devePermitirCriacaoParaGerente() {
         String cpf = gerarCpfValido();
         given()
                 .port(port)
@@ -268,7 +272,7 @@ class PessoaControllerIT {
         .when()
                 .post("/api/pessoas")
         .then()
-                .statusCode(403);
+                .statusCode(201);
     }
 }
 

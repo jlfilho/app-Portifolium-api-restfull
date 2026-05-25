@@ -197,17 +197,23 @@ public class CursoService {
 
 
     @CacheEvict(value = "cursos", allEntries = true)
+    @Transactional
     public CursoDTO saveCurso(CursoDTO cursoDTO, Usuario usuario) {
         // Validar que o nome não seja nulo ou vazio
         if (cursoDTO.nome() == null || cursoDTO.nome().trim().isEmpty()) {
             throw new ValidacaoException("O nome do curso é obrigatório");
         }
-        
+        String nome = cursoDTO.nome().trim();
+        if (cursoRepository.existsByNomeIgnoreCase(nome)) {
+            throw new ConflitoException("Ja existe um curso cadastrado com este nome.");
+        }
+
         // Criar uma entidade Curso a partir do DTO
         Curso novoCurso = new Curso();
-        novoCurso.setNome(cursoDTO.nome());
+        novoCurso.setNome(nome);
         novoCurso.setDescricao(cursoDTO.descricao());
         novoCurso.setFotoCapa(cursoDTO.fotoCapa());
+        novoCurso.setAtivo(cursoDTO.ativo() != null ? cursoDTO.ativo() : true);
         if (cursoDTO.tipoId() == null) {
             throw new ValidacaoException("O tipo do curso é obrigatório");
         }
@@ -219,11 +225,18 @@ public class CursoService {
         }
         novoCurso.setUnidadeAcademica(unidadeAcademicaService.buscarEntidade(cursoDTO.unidadeAcademicaId()));
         Set<Usuario> usuarios = this.usuarioRepository.findAllByRoleName("ROLE_ADMINISTRADOR");
-        usuarios.add(usuario);
+        if (usuario != null && usuarios.stream().noneMatch(u -> Objects.equals(u.getId(), usuario.getId()))) {
+            usuarios.add(usuario);
+        }
         novoCurso.setUsuarios(usuarios);
 
         // Salvar no banco de dados
-        Curso cursoSalvo = cursoRepository.save(novoCurso);
+        Curso cursoSalvo;
+        try {
+            cursoSalvo = cursoRepository.save(novoCurso);
+        } catch (DataIntegrityViolationException e) {
+            throw new ConflitoException("Nao foi possivel salvar o curso devido a dados duplicados ou relacoes invalidas.");
+        }
 
         // CAMADA 2: Audit Log
         auditLogService.log(
