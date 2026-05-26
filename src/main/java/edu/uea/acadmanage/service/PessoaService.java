@@ -14,6 +14,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import edu.uea.acadmanage.DTO.PessoaDTO;
@@ -158,22 +159,25 @@ public class PessoaService {
     }
 
     @CacheEvict(value = "pessoas", allEntries = true)
+    @Transactional
     public PessoaImportResponseDTO importarCsv(MultipartFile arquivo) {
         if (arquivo == null || arquivo.isEmpty()) {
-            throw new ValidacaoException("Arquivo CSV não informado.");
+            throw new ValidacaoException("Arquivo CSV nao informado.");
         }
 
-        List<String> cadastrados = new ArrayList<>();
-        List<String> duplicados = new ArrayList<>();
+        List<PessoaCsvRow> pessoasValidas = new ArrayList<>();
+        List<String> erros = new ArrayList<>();
         Set<String> cpfsProcessados = new HashSet<>();
         int totalProcessados = 0;
 
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(arquivo.getInputStream(), StandardCharsets.UTF_8))) {
             String linha;
+            int numeroLinha = 0;
             boolean cabecalhoVerificado = false;
 
             while ((linha = reader.readLine()) != null) {
+                numeroLinha++;
                 String texto = linha.trim();
                 if (texto.isEmpty()) {
                     continue;
@@ -191,19 +195,30 @@ public class PessoaService {
                 totalProcessados++;
                 String[] partes = dividirLinhaCsv(texto);
                 if (partes.length < 2) {
-                    duplicados.add("Linha inválida: " + texto);
+                    erros.add("Linha " + numeroLinha + ": formato invalido. Informe nome e CPF.");
                     continue;
                 }
 
                 String nome = partes[0].trim();
                 String cpfNormalizado = normalizarCpf(partes[1]);
-                if (nome.isEmpty() || cpfNormalizado.isEmpty()) {
-                    duplicados.add("Dados incompletos: " + texto);
+                boolean linhaValida = true;
+
+                if (nome.isEmpty()) {
+                    erros.add("Linha " + numeroLinha + ": nome e obrigatorio.");
+                    linhaValida = false;
+                }
+
+                if (!isCpfValido(cpfNormalizado)) {
+                    erros.add("Linha " + numeroLinha + ": CPF invalido.");
+                    linhaValida = false;
+                }
+
+                if (!linhaValida) {
                     continue;
                 }
 
                 if (cpfsProcessados.contains(cpfNormalizado)) {
-                    duplicados.add(nome + " (CPF duplicado no arquivo)");
+                    erros.add("Linha " + numeroLinha + ": CPF duplicado no arquivo para " + nome + ".");
                     continue;
                 }
 
@@ -211,29 +226,13 @@ public class PessoaService {
 
                 Pessoa existente = pessoaRepository.findByCpf(cpfNormalizado).orElse(null);
                 if (existente != null) {
-                    duplicados.add(nome + " - já cadastrada como " + existente.getNome());
+                    erros.add("Linha " + numeroLinha + ": CPF ja cadastrado para a pessoa " + existente.getNome() + ".");
                     continue;
                 }
 
-                Pessoa nova = new Pessoa();
-                nova.setNome(nome);
-                nova.setCpf(cpfNormalizado);
-                Pessoa salva = pessoaRepository.save(nova);
-                
-                // CAMADA 2: Audit Log - registrar cada pessoa criada
-                auditLogService.log(
-                    AuditLog.AuditAction.CREATE,
-                    "Pessoa",
-                    salva.getId(),
-                    null,
-                    salva,
-                    "Pessoa criada via importação CSV: " + salva.getNome()
-                );
-                
-                cadastrados.add(nome);
+                pessoasValidas.add(new PessoaCsvRow(nome, cpfNormalizado));
             }
         } catch (IOException e) {
-            // CAMADA 3: Action Log - importação falhou
             actionLogService.log(
                 ActionLog.ActionType.IMPORT_CSV,
                 false,
@@ -241,27 +240,69 @@ public class PessoaService {
                 e.getMessage(),
                 new HashMap<>()
             );
-            throw new ErroProcessamentoArquivoException("Não foi possível ler o arquivo CSV.", e);
+            throw new ErroProcessamentoArquivoException("Nao foi possivel ler o arquivo CSV.", e);
         }
 
-        // CAMADA 3: Action Log - importação concluída com sucesso
+        if (totalProcessados == 0) {
+            erros.add("O arquivo CSV nao possui registros para importar.");
+        }
+
+        if (!erros.isEmpty()) {
+            HashMap<String, Object> metadata = new HashMap<>();
+            metadata.put("totalProcessados", totalProcessados);
+            metadata.put("totalErros", erros.size());
+            metadata.put("nomeArquivo", arquivo.getOriginalFilename());
+            metadata.put("tamanhoArquivo", arquivo.getSize());
+
+            actionLogService.log(
+                ActionLog.ActionType.IMPORT_CSV,
+                false,
+                "Importacao de pessoas via CSV cancelada por erros de validacao",
+                String.join("; ", erros),
+                metadata
+            );
+
+            throw new ValidacaoException(
+                "Importacao cancelada. Nenhuma pessoa foi cadastrada porque o arquivo possui erros.",
+                erros
+            );
+        }
+
+        List<String> cadastrados = new ArrayList<>();
+        for (PessoaCsvRow pessoaCsv : pessoasValidas) {
+            Pessoa nova = new Pessoa();
+            nova.setNome(pessoaCsv.nome());
+            nova.setCpf(pessoaCsv.cpf());
+            Pessoa salva = pessoaRepository.save(nova);
+
+            auditLogService.log(
+                AuditLog.AuditAction.CREATE,
+                "Pessoa",
+                salva.getId(),
+                null,
+                salva,
+                "Pessoa criada via importacao CSV: " + salva.getNome()
+            );
+
+            cadastrados.add(pessoaCsv.nome());
+        }
+
         HashMap<String, Object> metadata = new HashMap<>();
         metadata.put("totalProcessados", totalProcessados);
         metadata.put("totalCadastrados", cadastrados.size());
-        metadata.put("totalDuplicados", duplicados.size());
+        metadata.put("totalDuplicados", 0);
         metadata.put("nomeArquivo", arquivo.getOriginalFilename());
         metadata.put("tamanhoArquivo", arquivo.getSize());
-        
+
         actionLogService.log(
             ActionLog.ActionType.IMPORT_CSV,
             true,
-            "Importação de pessoas via CSV concluída: " + cadastrados.size() + " cadastradas, " + 
-            duplicados.size() + " duplicadas/ignoradas",
+            "Importacao de pessoas via CSV concluida: " + cadastrados.size() + " cadastradas, 0 duplicadas/ignoradas",
             null,
             metadata
         );
 
-        return new PessoaImportResponseDTO(totalProcessados, cadastrados.size(), cadastrados, duplicados);
+        return new PessoaImportResponseDTO(totalProcessados, cadastrados.size(), cadastrados, List.of());
     }
 
     private String[] dividirLinhaCsv(String texto) {
@@ -287,6 +328,26 @@ public class PessoaService {
         return cpf.replaceAll("\\D", "");
     }
 
+    private boolean isCpfValido(String cpf) {
+        if (cpf == null || !cpf.matches("\\d{11}") || cpf.chars().distinct().count() == 1) {
+            return false;
+        }
+
+        int primeiroDigito = calcularDigitoCpf(cpf, 9, 10);
+        int segundoDigito = calcularDigitoCpf(cpf, 10, 11);
+        return primeiroDigito == Character.getNumericValue(cpf.charAt(9))
+                && segundoDigito == Character.getNumericValue(cpf.charAt(10));
+    }
+
+    private int calcularDigitoCpf(String cpf, int quantidadeDigitos, int pesoInicial) {
+        int soma = 0;
+        for (int i = 0; i < quantidadeDigitos; i++) {
+            soma += Character.getNumericValue(cpf.charAt(i)) * (pesoInicial - i);
+        }
+        int resto = soma % 11;
+        return resto < 2 ? 0 : 11 - resto;
+    }
+
     // Método auxiliar para copiar pessoa para audit log
     private Pessoa copyPessoaForAudit(Pessoa pessoa) {
         try {
@@ -306,5 +367,7 @@ public class PessoaService {
         boolean possuiUsuario = pessoa.getUsuario() != null;
         return new PessoaDTO(pessoa.getId(), pessoa.getNome(), pessoa.getCpf(), possuiUsuario);
     }
+
+    private record PessoaCsvRow(String nome, String cpf) {}
 }
 
