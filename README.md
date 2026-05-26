@@ -87,7 +87,7 @@ POSTGRES_PASSWORD=postgres
 POSTGRES_PORT=5432
 SPRING_JPA_HIBERNATE_DDL_AUTO=update
 SPRING_SQL_INIT_MODE=always
-JWT_SECRET_KEY=troque-por-uma-chave-segura
+JWT_SECRET_KEY=MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
 JWT_EXPIRATION_TIME=3600000
 APP_CORS_ALLOWED_ORIGINS=http://localhost:4200
 FRONTEND_URL=http://localhost:4200
@@ -97,6 +97,8 @@ MAIL_PASSWORD=
 ```
 
 Por padrao, arquivos enviados ficam fora do repositorio Git. No Docker Compose, o volume local fica em `../portifolium-files` e e montado em `/var/lib/portifolium/files` dentro do container.
+
+`JWT_SECRET_KEY` deve ser uma chave em Base64 com pelo menos 32 bytes para HS256. O valor acima e apenas para desenvolvimento local; use outro valor em ambientes compartilhados ou producao.
 
 `APP_CORS_ALLOWED_ORIGINS` aceita multiplas origens separadas por virgula.
 

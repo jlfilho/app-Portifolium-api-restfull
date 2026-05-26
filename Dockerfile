@@ -10,7 +10,7 @@ RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:17-jre-alpine
 
-RUN apk add --no-cache wget
+RUN apk add --no-cache su-exec wget
 
 RUN addgroup -g 1001 -S appgroup && \
     adduser -u 1001 -S appuser -G appgroup
@@ -19,10 +19,13 @@ WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
 
-RUN mkdir -p /portifolium-files && \
-    chown -R appuser:appgroup /portifolium-files /app
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
-USER appuser
+RUN mkdir -p /portifolium-files /var/lib/portifolium/files && \
+    chown -R appuser:appgroup /portifolium-files /var/lib/portifolium /app && \
+    chmod +x /usr/local/bin/docker-entrypoint.sh
+
+USER root
 
 EXPOSE 8080
 
@@ -31,4 +34,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 
 ENV JAVA_OPTS="-Xmx512m -Xms256m"
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
