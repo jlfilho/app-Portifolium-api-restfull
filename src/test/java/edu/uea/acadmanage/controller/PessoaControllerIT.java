@@ -190,7 +190,7 @@ class PessoaControllerIT {
                 .post("/api/pessoas")
         .then()
                 .statusCode(409)
-                .body("error", containsString("Pessoa"));
+                .body("message", containsString("CPF"));
     }
 
     @Test
@@ -235,13 +235,14 @@ class PessoaControllerIT {
     void devePermitirImportarCsv() {
         String cpf1 = gerarCpfValido();
         String cpf2 = gerarCpfValido();
+        String cpf3 = gerarCpfValido();
 
         String csv = """
                 nome,cpf
                 Pessoa CSV 1,%s
                 Pessoa CSV 2,%s
                 João Silva,%s
-                """.formatted(cpf1, cpf2, cpf1);
+                """.formatted(cpf1, cpf2, cpf3);
 
         given()
                 .port(port)
@@ -252,8 +253,43 @@ class PessoaControllerIT {
         .then()
                 .statusCode(201)
                 .body("totalProcessados", equalTo(3))
-                .body("totalCadastrados", equalTo(2))
-                .body("duplicados", hasSize(greaterThanOrEqualTo(1)));
+                .body("totalCadastrados", equalTo(3))
+                .body("duplicados", empty());
+    }
+
+    @Test
+    void deveRejeitarImportacaoCsvInteiraQuandoHouverLinhaInvalida() {
+        String cpfValido = gerarCpfValido();
+
+        String csv = """
+                nome,cpf
+                Pessoa Atomic Valida,%s
+                Pessoa Atomic Invalida,11111111111
+                ,%s
+                """.formatted(cpfValido, gerarCpfValido());
+
+        given()
+                .port(port)
+                .header("Authorization", "Bearer " + getAdminToken())
+                .multiPart("file", "pessoas-invalidas.csv", csv.getBytes(StandardCharsets.UTF_8), "text/csv")
+        .when()
+                .post("/api/pessoas/import")
+        .then()
+                .statusCode(400)
+                .body("message", containsString("Importacao cancelada"))
+                .body("details", hasSize(2))
+                .body("details", hasItems(
+                        containsString("CPF invalido"),
+                        containsString("nome e obrigatorio")));
+
+        given()
+                .port(port)
+                .header("Authorization", "Bearer " + getAdminToken())
+                .queryParam("nome", "Pessoa Atomic Valida")
+        .when()
+                .get("/api/pessoas")
+        .then()
+                .statusCode(204);
     }
 
     @Test

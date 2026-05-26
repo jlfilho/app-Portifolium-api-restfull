@@ -65,7 +65,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleValidacao(
             ValidacaoException ex,
             HttpServletRequest request) {
-        return build(HttpStatus.BAD_REQUEST, "Erro de validacao", ex.getMessage(), request);
+        return build(HttpStatus.BAD_REQUEST, "Erro de validacao", ex.getMessage(), request, ex.getDetails(), null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
