@@ -67,7 +67,24 @@ URLs:
 O compose sobe apenas:
 
 - `app`: API Spring Boot
+- `frontend`: Angular servido por Nginx
 - `db`: PostgreSQL 15
+
+### Testes E2E com Playwright
+
+No repositorio frontend, use:
+
+```powershell
+npm run e2e
+```
+
+Esse comando executa o ambiente integrado via Docker Compose e retorna o exit code do servico `e2e`:
+
+```powershell
+docker compose --profile e2e up --build --abort-on-container-exit --exit-code-from e2e
+```
+
+Para rodar diretamente a partir deste diretorio, defina as variaveis necessarias e use o mesmo comando com o profile `e2e`.
 
 ## Configuracao
 

@@ -10,7 +10,30 @@ services:
     depends_on:
       app:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/ >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
     restart: unless-stopped
+
+  e2e:
+    build:
+      context: ../app-Portifolium-frontend
+      dockerfile: Dockerfile
+      target: e2e
+    image: portifolium-e2e:local
+    environment:
+      PLAYWRIGHT_BASE_URL: http://frontend
+    volumes:
+      - ../app-Portifolium-frontend/playwright-report:/app/playwright-report
+      - ../app-Portifolium-frontend/test-results:/app/test-results
+    depends_on:
+      frontend:
+        condition: service_healthy
+    profiles:
+      - e2e
 
   app:
     build:
