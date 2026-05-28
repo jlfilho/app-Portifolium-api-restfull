@@ -3,6 +3,9 @@ package edu.uea.acadmanage.controller;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Random;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -86,6 +89,46 @@ class AtividadePessoaPapelControllerIT {
             .statusCode(200)
             .extract()
             .path("token");
+    }
+
+    private String gerarCpfValido() {
+        Random random = new Random();
+        int[] cpf = new int[11];
+
+        do {
+            for (int i = 0; i < 9; i++) {
+                cpf[i] = random.nextInt(10);
+            }
+        } while (todosIguais(cpf, 9));
+
+        int soma = 0;
+        for (int i = 0; i < 9; i++) {
+            soma += cpf[i] * (10 - i);
+        }
+        int resto = soma % 11;
+        cpf[9] = (resto < 2) ? 0 : 11 - resto;
+
+        soma = 0;
+        for (int i = 0; i < 10; i++) {
+            soma += cpf[i] * (11 - i);
+        }
+        resto = soma % 11;
+        cpf[10] = (resto < 2) ? 0 : 11 - resto;
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 11; i++) {
+            sb.append(cpf[i]);
+        }
+        return sb.toString();
+    }
+
+    private boolean todosIguais(int[] array, int tamanho) {
+        for (int i = 1; i < tamanho; i++) {
+            if (array[i] != array[0]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     // ========== GET /api/atividades-pessoas/{atividadeId}/pessoas ==========
@@ -271,6 +314,47 @@ class AtividadePessoaPapelControllerIT {
         .then()
             .log().all()
             .statusCode(anyOf(is(201), is(403), is(409))); // Pode variar dependendo do acesso ao curso
+    }
+
+    @Test
+    void deveImportarParticipantesCsvComCabecalhoNomeCpfSemPapel() {
+        Long atividadeId = 15L;
+        String csv = """
+            nome;cpf
+            Participante CSV Cabecalho;%s
+            """.formatted(gerarCpfValido());
+
+        given()
+            .port(port)
+            .header("Authorization", "Bearer " + getAdminToken())
+            .multiPart("file", "participantes-com-cabecalho.csv", csv.getBytes(StandardCharsets.UTF_8), "text/csv")
+            .log().all()
+        .when()
+            .post("/api/atividades-pessoas/{atividadeId}/pessoas/import", atividadeId)
+        .then()
+            .log().all()
+            .statusCode(201)
+            .body("$", hasSize(1))
+            .body("[0].papel", equalTo("PARTICIPANTE"));
+    }
+
+    @Test
+    void deveImportarParticipantesCsvSemCabecalhoComPapel() {
+        Long atividadeId = 15L;
+        String csv = "Participante CSV Sem Cabecalho;%s;BOLSISTA%n".formatted(gerarCpfValido());
+
+        given()
+            .port(port)
+            .header("Authorization", "Bearer " + getAdminToken())
+            .multiPart("file", "participantes-sem-cabecalho.csv", csv.getBytes(StandardCharsets.UTF_8), "text/csv")
+            .log().all()
+        .when()
+            .post("/api/atividades-pessoas/{atividadeId}/pessoas/import", atividadeId)
+        .then()
+            .log().all()
+            .statusCode(201)
+            .body("$", hasSize(1))
+            .body("[0].papel", equalTo("BOLSISTA"));
     }
 
     // ========== PUT /api/atividades-pessoas/{atividadeId}/pessoas/{pessoaId} ==========

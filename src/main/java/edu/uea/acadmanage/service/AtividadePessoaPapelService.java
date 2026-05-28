@@ -146,25 +146,29 @@ public class AtividadePessoaPapelService {
                     continue;
                 }
 
+                String[] partes = dividirLinhaCsv(texto);
+
                 if (!cabecalhoVerificado) {
-                    String lower = texto.toLowerCase(Locale.ROOT);
-                    if (lower.contains("nome") && lower.contains("cpf") && lower.contains("papel")) {
+                    if (isCabecalhoCsv(partes)) {
                         cabecalhoVerificado = true;
                         continue;
                     }
                     cabecalhoVerificado = true;
                 }
 
-                String[] partes = dividirLinhaCsv(texto);
-                if (partes.length < 3) {
+                if (partes.length < 2) {
                     throw new ValidacaoException("Linha inválida no CSV: " + texto);
                 }
 
                 String nome = partes[0].trim();
                 String cpf = normalizarCpf(partes[1]);
-                String papelTexto = partes[2].trim();
+                String papelTexto = partes.length >= 3 ? partes[2].trim() : Papel.PARTICIPANTE.name();
 
-                if (nome.isEmpty() || cpf.isEmpty() || papelTexto.isEmpty()) {
+                if (papelTexto.isEmpty()) {
+                    papelTexto = Papel.PARTICIPANTE.name();
+                }
+
+                if (nome.isEmpty() || cpf.isEmpty()) {
                     throw new ValidacaoException("Dados incompletos no CSV: " + texto);
                 }
 
@@ -198,6 +202,28 @@ public class AtividadePessoaPapelService {
             partes = texto.split(",");
         }
         return partes;
+    }
+
+    private boolean isCabecalhoCsv(String[] partes) {
+        if (partes.length < 2) {
+            return false;
+        }
+
+        return normalizarCabecalho(partes[0]).equals("nome")
+                && normalizarCabecalho(partes[1]).equals("cpf")
+                && (partes.length < 3 || normalizarCabecalho(partes[2]).equals("papel"));
+    }
+
+    private String normalizarCabecalho(String valor) {
+        if (valor == null) {
+            return "";
+        }
+
+        return valor
+                .replace("\uFEFF", "")
+                .replace("\"", "")
+                .trim()
+                .toLowerCase(Locale.ROOT);
     }
 
     private Papel parsePapel(String texto) {
